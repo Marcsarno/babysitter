@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createNavigation} from '../src/navigation.js';
+import {makeTask,taskStep,advanceTask,PLACES,EVENTS,rating} from '../src/simulation.js';
+const layout=JSON.parse(readFileSync(new URL('../public/assets/navigation.json',import.meta.url)));
+const nav=createNavigation(layout.obstacles);
+test('all rooms and chore stations are reachable from the hallway without crossing furniture',()=>{for(const p of [...layout.rooms,...Object.values(PLACES)]){const route=nav.path({x:0,z:0},p);assert.ok(route.length>0,JSON.stringify(p));assert.ok(route.every(q=>!nav.blocked(q.x,q.z)));const end=route.at(-1);assert.ok(Math.hypot(end.x-p.x,end.z-p.z)<1,p.name+' target is too far from walkable space')}});
+test('snacks require preparation, collection, then delivery',()=>{const t=makeTask(1,'snack',0);const kid={name:'Jax',x:3,z:3};assert.equal(taskStep(t,kid).name,'Kitchen');assert.equal(advanceTask(t),false);assert.equal(taskStep(t,kid).name,'Jax');assert.equal(advanceTask(t),false);assert.equal(taskStep(t,kid).name,'Dining room');assert.equal(advanceTask(t),true)});
+test('every chore has usable stages and completes exactly once at the final stage',()=>{for(const type of Object.keys(EVENTS)){const t=makeTask(1,type,0);for(let i=0;i<EVENTS[type].steps;i++){const s=taskStep(t,{name:'Harper',x:0,z:0});assert.ok(s.duration>0);assert.ok(Number.isFinite(s.x)&&Number.isFinite(s.z));assert.equal(advanceTask(t),i===EVENTS[type].steps-1)}}});
+test('difficulty never gives less than 28 seconds and stars reward completed care',()=>{assert.equal(makeTask(1,'spill',0,false,99).total,28);assert.equal(rating(9,0),3);assert.equal(rating(6,1),2);assert.equal(rating(0,8),1)});
+test('Blender exports are valid GLB v2 assets with actual mesh data',()=>{for(const n of ['house','kayla','harper','jax','arianna','lilah']){const b=readFileSync(new URL('../public/assets/'+n+'.glb',import.meta.url));assert.equal(b.toString('ascii',0,4),'glTF');assert.equal(b.readUInt32LE(4),2);assert.equal(b.readUInt32LE(8),b.length);const j=JSON.parse(b.toString('utf8',20,20+b.readUInt32LE(12)));assert.ok(j.meshes.length>0);assert.ok(j.asset.generator.includes('Blender'))}});
