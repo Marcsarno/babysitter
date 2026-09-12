@@ -1,7 +1,7 @@
-export function createNavigation(obstacles,step=.25){
-  const minX=-5.7,maxX=5.7,minZ=-9.7,maxZ=9.7;
+export function createNavigation(obstacles,step=.25,layout={}){
+  const [minX,maxX,minZ,maxZ]=layout.bounds??[-5.7,5.7,-9.7,9.7];
   const cols=Math.round((maxX-minX)/step)+1,rows=Math.round((maxZ-minZ)/step)+1;
-  const blocked=(x,z)=>x<minX||x>maxX||z<minZ||z>maxZ||obstacles.some(([a,b,w,d])=>Math.abs(x-a)<w/2+.19&&Math.abs(z-b)<d/2+.19);
+  const blocked=(x,z)=>x<minX||x>maxX||z<minZ||z>maxZ||(layout.regions&&!layout.regions.some(([a,b,w,d])=>Math.abs(x-a)<=w/2&&Math.abs(z-b)<=d/2))||obstacles.some(([a,b,w,d])=>Math.abs(x-a)<w/2+.19&&Math.abs(z-b)<d/2+.19);
   const pos=i=>({x:minX+(i%cols)*step,z:minZ+Math.floor(i/cols)*step});
   const grid=Array.from({length:cols*rows},(_,i)=>{const p=pos(i);return blocked(p.x,p.z)});
   function nearest(p){let best=-1,dist=Infinity;for(let i=0;i<grid.length;i++){if(grid[i])continue;const v=pos(i),d=(v.x-p.x)**2+(v.z-p.z)**2;if(d<dist){dist=d;best=i}}return best}
