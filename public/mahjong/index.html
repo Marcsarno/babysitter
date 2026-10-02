@@ -128,7 +128,8 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 .g-tag.super{background:linear-gradient(#b98bff,#7340d8);color:#fff}
 .g-tag.daily{background:linear-gradient(#7fe0ff,var(--sky-d));color:#fff}
 .g-hud{display:flex;align-items:center;gap:10px;padding:2px 14px 4px}
-.g-score{font-size:25px;font-weight:700;min-width:84px;text-shadow:0 2px 0 rgba(0,0,0,.28);font-variant-numeric:tabular-nums}
+.g-score{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:76px;height:40px;padding:0 10px;border-radius:14px;background:var(--panel);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14),0 2px 0 rgba(0,0,0,.25);font-size:19px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.g-score::before{content:'Score';font-size:9.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
 .g-score.bump{animation:bump .25s}
 @keyframes bump{50%{transform:scale(1.18)}}
 .starbar{position:relative;flex:1;height:14px;border-radius:99px;background:rgba(8,20,20,.62);box-shadow:inset 0 2px 3px rgba(0,0,0,.45),0 0 0 2px rgba(255,255,255,.12)}
@@ -345,7 +346,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 .sw.on{background:var(--leaf)}
 .sw.on::after{transform:translateX(24px)}
 .legend{font-size:12px;color:var(--muted)}
-@media (max-height:700px){.bst{width:60px;height:60px;font-size:28px}.g-score{font-size:22px}}
+@media (max-height:700px){.bst{width:60px;height:60px;font-size:28px}.g-score{font-size:17px;height:36px}}
 @media (prefers-reduced-motion:reduce){.node.cur,.node.cur::after,.chestnode.ready,.tile.gold .face::before,.hand{animation:none}}
 
 @keyframes drain{to{transform:scaleX(0)}}
@@ -1030,7 +1031,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
   }
 
   /* ---------- level specs & difficulty curve ---------- */
-  const THEMES = ['farm', 'bakery', 'garden', 'critters', 'polish'];
+  const THEMES = ['polish', 'farm', 'bakery', 'garden', 'critters'];
   const REGION_LEN = 10;
   const REGION_NAMES = {
     farm: 'Meadowbrook Farm', bakery: 'Sugar & Flour', garden: 'Bloom Garden', critters: 'Critter Cove', polish: "Babcia's Kitchen",
@@ -1077,7 +1078,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
       if (n >= 6) s.gold = 2 + Math.floor(ramp * 3);
       if (n >= 25) s.mystery = Math.round(2 + ramp * 8);
       if (s.breather) { s.ice = Math.floor((s.ice || 0) / 2); s.mystery = Math.floor((s.mystery || 0) / 2); }
-      if (n % 10 === 0) { s.kind = 'hard'; s.size *= 1.16; s.types += 3; s.layers += 0; s.mix = Math.min(1, s.mix + 0.12); s.ice = (s.ice || 0) + 2; s.timer = n >= 30; }
+      if (n % 10 === 0) { s.kind = 'hard'; s.size *= 1.16; s.types += 3; s.layers += 0; s.mix = Math.min(1, s.mix + 0.12); s.ice = (s.ice || 0) + 2; s.timer = n >= 30; s.shuffles = 1; }
       if (n >= 50 && n % 25 === 0) { s.kind = 'super'; s.size = Math.min(144, s.size * 1.1); s.types += 3; s.mystery = (s.mystery || 0) + 6; s.ice = (s.ice || 0) + 3; s.timer = true; s.shuffles = 1; }
       s.size = Math.min(144, even(s.size));
       s.types = Math.max(3, Math.min(40, Math.round(s.types), s.size / 2));
@@ -1089,16 +1090,18 @@ svg.i{width:1em;height:1em;display:block;flex:none}
     s.seed = (n * 2654435761) >>> 0;
     s.region = reg;
     s.gold = s.gold || 0; s.ice = s.ice || 0; s.mystery = s.mystery || 0;
-    if (s.timer) s.time = Math.round(s.size * (s.kind === 'super' ? 3.1 : 3.6) + 20);
+    if (s.timer) s.time = Math.round(s.size / 2 * (s.kind === 'super' ? 9 : 10) + 30);
     s.par = Math.round(s.size / 2 * 100 * 1.7);   // score for 3 stars
     return s;
   }
 
   /* ---------- tile-type selection ---------- */
   // groups: [{ids:[...], max:1}] -> never more than max tiles of a group in one level
+  const LEAD = ['polish_42', 'polish_62', 'polish_00', 'polish_41', 'polish_65', 'polish_43', 'polish_13', 'polish_15', 'polish_34', 'polish_44', 'polish_05', 'polish_63', 'polish_23', 'polish_12'];
   function pickTypes(spec, tilesBySet, groups, rnd) {
     const reg = spec.region, count = spec.types;
-    const prim = shuffle(tilesBySet[reg.primary].slice(), rnd);
+    let prim = shuffle(tilesBySet[reg.primary].slice(), rnd);
+    if (spec.n <= REGION_LEN) { const lead = LEAD.filter(id => prim.includes(id)); prim = lead.concat(prim.filter(id => !lead.includes(id))); }
     const secName = reg.secondary || THEMES[(reg.index + 1) % 5];
     const sec = shuffle(tilesBySet[secName].slice(), rnd);
     const others = shuffle([].concat(...THEMES.filter(t => t !== reg.primary && t !== secName).map(t => tilesBySet[t])), rnd);
@@ -1324,11 +1327,11 @@ const TILES = window.__TILES__, GROUPS = window.__GROUPS__;
 const TI = {}; TILES.forEach(t => TI[t.id] = t);
 const BY = {}; TILES.forEach(t => (BY[t.s] = BY[t.s] || []).push(t.id));
 const SETS = [
+  { k: 'polish', n: "Babcia's Kitchen", bg: ['#4666c4', '#1c2f78'] },
   { k: 'farm', n: 'Farm Life', bg: ['#62b366', '#2d7a4c'] },
   { k: 'bakery', n: 'Sugar & Flour', bg: ['#e8728c', '#97406a'] },
   { k: 'garden', n: 'Bloom Garden', bg: ['#38b39f', '#196a68'] },
   { k: 'critters', n: 'Critter Cove', bg: ['#5cb1f2', '#2e63b8'] },
-  { k: 'polish', n: "Babcia's Kitchen", bg: ['#4666c4', '#1c2f78'] },
 ];
 const SET = {}; SETS.forEach(s => SET[s.k] = s);
 (function injectTileCss() {
@@ -2152,9 +2155,13 @@ function afterMove() {
 /* ---------- boosters ---------- */
 function renderDock() {
   const d = $('#dock'); d.innerHTML = '';
+  const isLocked = k => !S.unlocked[k] && (G.n || 1) < BOOST[k].unlock && !G.daily;
+  const next = BKEYS.find(isLocked);
   BKEYS.forEach(k => {
-    const B = BOOST[k], locked = !S.unlocked[k] && (G.n || 1) < B.unlock && !G.daily, cnt = S.boost[k];
+    const B = BOOST[k], locked = isLocked(k), cnt = S.boost[k];
+    if (locked && k !== next) return;
     const b = document.createElement('button'); b.className = 'bst' + (locked ? ' lock' : '') + (B.kid ? ' kid' : ''); b.dataset.k = k;
+    if (locked) b.setAttribute('aria-label', `${B.n} unlocks at level ${B.unlock}`);
     b.innerHTML = (locked ? ico('lock') : ico(B.ic)) + (locked ? `<small>Lv ${B.unlock}</small>` : `<span class="ct ${cnt ? '' : 'zero'}">${cnt ? cnt : '+'}</span><small>${B.n}</small>`);
     b.onclick = () => useBooster(k);
     d.appendChild(b);
@@ -2592,7 +2599,7 @@ $('#mSettings').onclick = () => { Snd.click(); settingsModal(); };
 $('#mCoinsBtn').onclick = () => { Snd.click(); go('shop'); };
 
 /* ---------- collection ---------- */
-let colTab = 'farm';
+let colTab = 'polish';
 const MILE = [
   { at: .25, r: { c: 60 }, l: '+60' }, { at: .5, r: { c: 100, b: { hint: 2 } }, l: 'Hint ×2' },
   { at: .75, r: { c: 200, b: { wand: 1 } }, l: 'Wand' }, { at: 1, r: { chest: 'set' }, l: 'Chest' },
