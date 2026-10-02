@@ -1078,12 +1078,13 @@ svg.i{width:1em;height:1em;display:block;flex:none}
       if (n >= 6) s.gold = 2 + Math.floor(ramp * 3);
       if (n >= 25) s.mystery = Math.round(2 + ramp * 8);
       if (s.breather) { s.ice = Math.floor((s.ice || 0) / 2); s.mystery = Math.floor((s.mystery || 0) / 2); }
-      if (n % 10 === 0) { s.kind = 'hard'; s.size *= 1.16; s.types += 3; s.layers += 0; s.mix = Math.min(1, s.mix + 0.12); s.ice = (s.ice || 0) + 2; s.timer = n >= 30; s.shuffles = 1; }
-      if (n >= 50 && n % 25 === 0) { s.kind = 'super'; s.size = Math.min(144, s.size * 1.1); s.types += 3; s.mystery = (s.mystery || 0) + 6; s.ice = (s.ice || 0) + 3; s.timer = true; s.shuffles = 1; }
+      if (n % 10 === 0) { s.kind = 'hard'; s.size *= 1.16; s.types += 3; s.layers += 0; s.mix = Math.min(1, s.mix + 0.12); s.ice = (s.ice || 0) + 2; s.timer = n >= 30; }
+      if (n >= 50 && n % 25 === 0) { s.kind = 'super'; s.size = Math.min(144, s.size * 1.1); s.types += 3; s.mystery = (s.mystery || 0) + 6; s.ice = (s.ice || 0) + 3; s.timer = true; }
       s.size = Math.min(144, even(s.size));
       s.types = Math.max(3, Math.min(40, Math.round(s.types), s.size / 2));
       s.layers = Math.min(5, Math.max(2, s.layers));
       s.mix = Math.max(0, Math.min(1, s.mix));
+      s.shuffles = n <= 20 ? 1 : 0;
     }
     s.n = n; s.kind = s.kind || (n <= 9 ? 'tutorial' : 'normal');
     s.size = even(s.size); s.types = Math.min(s.types, s.size / 2);
@@ -1375,7 +1376,7 @@ const DEF = () => ({
   boost: { hint: 0, shuffle: 0, undo: 0, wand: 0, giggle: 0, flutter: 0 }, unlocked: {},
   streak: 0, best: 0, chest: 0, totalStars: 0, disc: {}, fresh: {}, claimed: {}, regionChest: {},
   daily: { last: '', day: 0, quests: [], qday: '', chDay: '' }, gift: 0,
-  set: { sfx: 1, music: 1, vib: 1, dim: 1, calm: 0, nudge: 1, buddy: 'lilah' },
+  set: { sfx: 1, music: 1, vib: 1, dim: 1, calm: 0, nudge: 1, pairs: 0, buddy: 'lilah' },
   run: null, met: {}, last: 0,
   stat: { matches: 0, wins: 0, combo: 0, gold: 0, ice: 0, hardWins: 0 }, tips: {},
 });
@@ -2020,9 +2021,9 @@ function armIdle() {
   G.idleT = setTimeout(() => {
     if (!G.on || !G.running) return;
     if (G.paused || G.busy || G.tut || $('#modal').classList.contains('on')) return armIdle();
-    const m = E.safeMove(G.board, 5000);
-    if (m && m.pair) m.pair.forEach(k => G.el[k] && G.el[k].classList.add('nudge'));
-  }, 8500);
+    const mv = E.movesAvailable(G.board);
+    if (mv.length) rpick(mv).forEach(k => G.el[k] && G.el[k].classList.add('nudge'));
+  }, G.n <= 5 ? 8500 : 20000);
 }
 function shake(i) { const e = G.el[i]; e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); setTimeout(() => e.classList.remove('shake'), 340); }
 function select(i) {
@@ -2031,7 +2032,7 @@ function select(i) {
   G.sel = i; if (i >= 0) {
     G.el[i].classList.add('sel');
     const b = G.board, ty = b.tiles[i].type;
-    b.selectable().forEach(k => { if (k !== i && b.tiles[k].type === ty) G.el[k].classList.add('pair'); });
+    if (S.set.pairs || (!G.daily && G.n <= 5)) b.selectable().forEach(k => { if (k !== i && b.tiles[k].type === ty) G.el[k].classList.add('pair'); });
   }
   if (G.tut) { if (i === G.tut.a) placeHand(G.tut.b); else if (i < 0) placeHand(G.tut.a); }
 }
@@ -2928,7 +2929,7 @@ async function settingsModal() {
     const sw = (k, t, d) => `<div class="set"><div style="text-align:left"><b>${t}</b><small>${d}</small></div><button class="sw ${S.set[k] ? 'on' : ''}" data-sw="${k}" aria-label="${t}"></button></div>`;
     const st = S.stat;
     return `<h2>Settings</h2>
-      ${sw('sfx', 'Sound effects', 'Taps, matches and chimes')}${sw('music', 'Music', 'Soft ambient loop')}${sw('vib', 'Vibration', 'Works on devices that support it')}${sw('dim', 'Dim stuck tiles', 'Helps you spot free tiles')}${sw('nudge', 'Idle hints', 'Matching tiles glow if you pause a while')}${sw('calm', 'Calm mode', 'Less shaking and fewer sparkles')}
+      ${sw('sfx', 'Sound effects', 'Taps, matches and chimes')}${sw('music', 'Music', 'Soft ambient loop')}${sw('vib', 'Vibration', 'Works on devices that support it')}${sw('dim', 'Dim stuck tiles', 'Helps you spot free tiles')}${sw('pairs', 'Show matching tiles', 'Picking a tile lights up its free partners')}${sw('nudge', 'Idle hints', 'A matching pair glows if you pause for 20 seconds')}${sw('calm', 'Calm mode', 'Less shaking and fewer sparkles')}
       ${S.met.lilah || S.met.arianna ? `<div class="set"><div style="text-align:left"><b>Map buddy</b><small>Who walks with you on the map</small></div><div class="buds">${['lilah', 'arianna'].filter(k => S.met[k]).map(k => `<button class="bud ${S.set.buddy === k ? 'on' : ''}" data-bud="${k}" aria-label="${KID[k].name}">${kidHead(k)}</button>`).join('')}</div></div>` : ''}
       <p class="legend" style="margin:12px 0 0;text-align:left">Levels cleared ${st.wins} · Pairs matched ${fmt(st.matches)} · Best combo ×${st.combo} · Tiles found ${TILES.filter(t => S.disc[t.id]).length}/${TILES.length}</p>
       <p class="legend" style="margin:8px 0 0;text-align:left">Made with love for Babcia’s grandkids, Lilah &amp; Arianna.</p>
