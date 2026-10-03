@@ -2648,7 +2648,7 @@ async function resultModal(r) {
     ${r.daily ? '' : `<div style="margin-top:10px;text-align:left;font-size:13px;color:var(--muted);display:flex;justify-content:space-between"><span>${ico('chest')} Star Chest</span><span>${S.chest}/20</span></div><div class="progress gold"><i id="rChest" style="width:0"></i></div>`}
     ${r.daily ? '' : goalHtml()}
     <div class="row"><button class="btn green big" id="rMap">Continue</button></div>
-    <div class="row" style="margin-top:8px">${r.daily ? '' : `<button class="btn ghost sm" id="rReplay">Replay</button><button class="btn ghost sm" id="rNext">Next level ${ico('play')}</button>`}</div>`;
+    <div class="row" style="margin-top:8px">${r.daily ? '' : `<button class="btn ghost sm" id="rReplay">Replay</button>`}</div>`;
   const p = openModal(html, {});
   // sequenced reveal: stars, coin count-up, chest bar
   const sfx = [];
