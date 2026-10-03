@@ -117,7 +117,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 @keyframes wiggle{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
 .playbar{position:absolute;left:0;right:0;bottom:78px;display:flex;justify-content:center;z-index:12;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)}
 .playbar .btn{pointer-events:auto}
-.mapfade{position:absolute;left:0;right:0;bottom:0;height:150px;pointer-events:none;background:linear-gradient(transparent,rgba(8,20,20,.55));z-index:6}
+.mapfade{position:absolute;left:0;right:0;bottom:0;height:230px;pointer-events:none;background:linear-gradient(transparent,rgba(8,20,20,.5) 45%,rgba(8,20,20,.82));z-index:6}
 
 /* ----- game ----- */
 #game .g-top{display:flex;align-items:center;gap:8px;padding:8px 12px 4px}
@@ -350,6 +350,70 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 .in-pro{display:block;margin:12px auto 0;font-size:14px;font-weight:500;color:#6b4a1c;text-decoration:underline;text-underline-offset:3px;opacity:0;transition:opacity .3s}
 .in-pro b{color:#b8860b}
 .in-bub.done .in-pro{opacity:1}
+/* ---------- map, folk-art pass ---------- */
+.region::after{background:linear-gradient(180deg,rgba(40,18,4,.30),rgba(40,18,4,.04) 22%,rgba(40,18,4,.04) 78%,rgba(40,18,4,.30)),linear-gradient(90deg,rgba(40,18,4,.28),transparent 22%,transparent 78%,rgba(40,18,4,.28))}
+.rg-head{margin:30px 22px 8px;padding:12px 16px;border-radius:18px;background:linear-gradient(#f8e8c4,#e8cf9c);color:#5a3410;
+  box-shadow:inset 0 0 0 3px #fff6e0,0 0 0 3px #a8743a,0 7px 0 #7a4f22,0 12px 18px rgba(0,0,0,.35)}
+.rg-head::before{content:"";position:absolute;left:12px;right:12px;top:6px;bottom:6px;border-radius:12px;border:1.5px dashed rgba(178,38,30,.45);pointer-events:none}
+.rg-head h3{color:#b3261e;font-size:21px;letter-spacing:.2px;text-shadow:0 1px 0 #fff6e0}
+.rg-head p{color:#7a5a2c;font-weight:600}
+.rg-head .rope{position:absolute;top:-24px;width:4px;height:26px;background:repeating-linear-gradient(45deg,#8a5a2a 0 4px,#c9965a 4px 8px);border-radius:2px}
+.rg-head .rope.l{left:22%}.rg-head .rope.r{right:22%}
+.rg-prev i{box-shadow:0 3px 0 #c9a96a,0 4px 0 #8f7440,0 0 0 2px #fff6e0}
+.node{width:52px;height:60px;margin:-30px 0 0 -26px;border-radius:12px;font-size:23px;color:#b3261e;
+  background:linear-gradient(170deg,#fffdf6,#f2e4c4);box-shadow:inset 0 0 0 2px rgba(255,255,255,.8),0 5px 0 #d8bd84,0 7px 0 #8f7440,0 10px 14px rgba(0,0,0,.32)}
+.node .nn{position:relative;z-index:1}
+.node.done{background:linear-gradient(170deg,#fffdf6,#f2e4c4);color:#2e7a43;box-shadow:inset 0 0 0 2px rgba(255,255,255,.8),inset 0 0 0 4px rgba(46,122,67,.25),0 5px 0 #d8bd84,0 7px 0 #8f7440,0 10px 14px rgba(0,0,0,.32)}
+.node.lock{color:rgba(255,246,224,.85);font-size:18px;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.18) 0 5px,transparent 6px) 0 0/16px 16px,linear-gradient(170deg,#3a68c2,#22428a);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.35),inset 0 0 0 5px rgba(34,66,138,1),inset 0 0 0 6px rgba(255,246,224,.4),0 5px 0 #d8bd84,0 7px 0 #8f7440,0 9px 12px rgba(0,0,0,.25)}
+.node.cur{width:62px;height:72px;margin:-36px 0 0 -31px;font-size:28px;color:#7a2a00;background:linear-gradient(170deg,#fff3b8,#ffc93a);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.9),0 5px 0 #e0a21f,0 8px 0 #8f5a10,0 0 0 5px rgba(255,214,80,.45),0 12px 22px rgba(0,0,0,.4)}
+.node.cur::after{inset:-10px;border-radius:18px}
+.node.hard:not(.lock){width:58px;height:66px;margin:-33px 0 0 -29px;color:#b3261e;text-shadow:none;background:linear-gradient(170deg,#fffdf6,#f2e4c4);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.8),inset 0 0 0 4px #e2402e,0 5px 0 #d8bd84,0 7px 0 #8f7440,0 10px 14px rgba(0,0,0,.32)}
+.node.super:not(.lock){box-shadow:inset 0 0 0 2px rgba(255,255,255,.8),inset 0 0 0 4px #7340d8,0 5px 0 #d8bd84,0 7px 0 #8f7440,0 10px 14px rgba(0,0,0,.32)}
+.node.hard.done:not(.lock){color:#2e7a43;background:linear-gradient(170deg,#fffdf6,#f2e4c4);box-shadow:inset 0 0 0 2px rgba(255,255,255,.8),inset 0 0 0 4px rgba(46,122,67,.5),0 5px 0 #d8bd84,0 7px 0 #8f7440,0 10px 14px rgba(0,0,0,.32)}
+.node.cur.hard{width:66px;height:76px;margin:-38px 0 0 -33px}
+.node .nst{bottom:-24px}
+.node .pin{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:46px;height:46px;border-radius:50%;padding:3px;background:#fff6e0;box-shadow:0 4px 10px rgba(0,0,0,.35);animation:bob 1.3s ease-in-out infinite}
+.node .pin i{display:block;width:100%;height:100%;border-radius:50%;background:url(/mahjong/apple-touch-icon.png) center/cover}
+.node .pin::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#fff6e0}
+.mfl{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;pointer-events:none;transform:rotate(var(--rt)) scale(var(--s));filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));
+  background:radial-gradient(circle,#f2b91c 0 3.5px,transparent 4px),
+    radial-gradient(circle at 50% 18%,var(--c) 0 5.5px,transparent 6px),radial-gradient(circle at 84% 42%,var(--c) 0 5.5px,transparent 6px),
+    radial-gradient(circle at 71% 82%,var(--c) 0 5.5px,transparent 6px),radial-gradient(circle at 29% 82%,var(--c) 0 5.5px,transparent 6px),
+    radial-gradient(circle at 16% 42%,var(--c) 0 5.5px,transparent 6px)}
+.fammark{position:absolute;width:86px;margin-left:-43px;display:flex;flex-direction:column;align-items:center;gap:2px;z-index:2;color:#fff6e0;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.fammark i{width:58px;height:58px;border-radius:50%;background-size:cover;box-shadow:0 0 0 3px #fff6e0,0 0 0 6px #b3261e,0 6px 12px rgba(0,0,0,.4);filter:saturate(.6) brightness(.85)}
+.fammark b{font-size:13px;margin-top:6px}.fammark small{font-size:11px;font-weight:600;opacity:.9}
+.fammark.ready i{filter:none;animation:bob 1.3s ease-in-out infinite;box-shadow:0 0 0 3px #fff6e0,0 0 0 6px #ffc93a,0 0 18px #ffc93a}
+.fammark.have i{filter:none;box-shadow:0 0 0 3px #fff6e0,0 0 0 6px #2e7a43,0 6px 12px rgba(0,0,0,.4)}
+.playbar{flex-direction:column;align-items:center;gap:8px}
+.mp-tag{margin-left:8px;padding:3px 8px;border-radius:8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;background:#e2402e;color:#fff}
+.mp-tag.super{background:#7340d8}
+.goal{display:flex;align-items:center;gap:10px;width:100%;margin:10px 0 12px;padding:9px 12px;border-radius:16px;text-align:left;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
+.goal .gface{flex:none;width:44px;height:44px;border-radius:50%;background-size:cover;box-shadow:0 0 0 2.5px #fff6e0}
+.goal .gtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.goal .gtx b{font-size:14px;line-height:1.1}.goal .gtx small{font-size:12px;color:var(--muted)}
+.goal .progress{height:7px;margin:0}
+.goal .gbtn{flex:none;padding:7px 12px;border-radius:12px;font-weight:700;font-size:14px;color:#3b2300;background:linear-gradient(var(--gold-l),var(--gold-d));box-shadow:0 3px 0 #8f5a10}
+.goal.ready{box-shadow:inset 0 0 0 2px #ffc93a,0 0 16px rgba(255,201,58,.45)}
+.goal.chip{pointer-events:auto;width:min(340px,calc(100% - 32px));margin:0;background:rgba(14,30,30,.86);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#gCoinsBtn{cursor:pointer}
+.coach{position:absolute;inset:0;z-index:120;animation:fade .25s}
+.coach.out{opacity:0;transition:opacity .25s}
+.ch-hole{position:absolute;border-radius:18px;box-shadow:0 0 0 9999px rgba(5,14,14,.72);cursor:pointer;animation:chPulse 1.4s ease-in-out infinite}
+@keyframes chPulse{50%{outline:3px solid rgba(255,214,80,.9);outline-offset:4px}}
+.ch-hand{position:absolute;font-size:34px;pointer-events:none;animation:chTap 1s ease-in-out infinite;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}
+@keyframes chTap{50%{transform:translateY(-8px)}}
+.ch-bub{position:absolute;left:14px;right:14px;display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:20px;background:#fff8e8;color:#35260f;box-shadow:0 0 0 3px #1f4aa0,0 0 0 6px #fff3da,0 14px 30px rgba(0,0,0,.45);animation:inBub .45s cubic-bezier(.3,1.5,.5,1) both}
+.ch-bub.high{top:calc(80px + env(safe-area-inset-top,0px))}.ch-bub.low{bottom:150px}
+.ch-bub .ch-face{flex:none;width:58px;height:58px;border-radius:50%;background-size:cover;background-position:50% 22%;box-shadow:0 0 0 3px #fff,0 3px 8px rgba(0,0,0,.3)}
+.ch-bub b{color:#c4231f;font-size:17px}.ch-bub p{margin:3px 0 0;font-size:15px;font-weight:500;line-height:1.32}
+.ch-row{display:flex;gap:8px;margin-top:10px}.ch-row .btn{min-height:40px;font-size:15px;padding:0 16px}
+.ch-row .btn.ghost{color:#6b4a1c;box-shadow:inset 0 0 0 2px rgba(107,74,28,.3)}
+
 .dzcard{display:flex;align-items:center;gap:14px;margin-bottom:12px;background:linear-gradient(135deg,rgba(208,70,60,.35),rgba(110,23,23,.45))}
 .dzcard{padding:12px 14px;gap:12px!important}.dzcard h3{font-size:18px;line-height:1.15;margin:0}
 .dzcard p{margin:3px 0 0;font-size:12.5px;line-height:1.3;color:var(--muted)}
@@ -628,7 +692,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
     <div class="scroll" id="mapScroll"></div>
     <div class="amb" id="amb" aria-hidden="true"></div>
     <div class="mapfade"></div>
-    <div class="playbar"><button class="btn green big" id="mapPlay">Play</button></div>
+    <div class="playbar"><div id="mapGoal"></div><button class="btn green big" id="mapPlay">Play</button></div>
   </section>
 
   <!-- COLLECTION -->
@@ -658,7 +722,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
     <div class="g-top">
       <button class="icon-btn" id="gPause" aria-label="Pause"><svg class="i"><use href="#i-pause"/></svg></button>
       <div class="g-title"><div class="g-level" id="gLevel">Level 1</div><span class="g-tag" id="gTag">Normal</span></div>
-      <div class="pill"><svg class="i"><use href="#i-coin"/></svg><span id="gCoins">0</span></div>
+      <button class="pill" id="gCoinsBtn" aria-label="Shop"><svg class="i"><use href="#i-coin"/></svg><span id="gCoins">0</span></button>
     </div>
     <div class="g-hud">
       <div class="g-score" id="gScore">0</div>
@@ -1375,6 +1439,62 @@ const FAM = [
     wave: 'Chris says: beast mode!' },
 ];
 const owns = f => !!S[f.flag];
+const canBuy = f => !owns(f) && S.level >= f.from && S.coins >= f.cost;
+const nextFam = () => FAM.find(f => !owns(f));
+async function buyFam(f) {
+  if (!canBuy(f)) return false;
+  S.coins -= f.cost; S[f.flag] = 1; save(); Snd.coin(); Snd.unlock(); updateCoins(); FX.confetti(60);
+  await charHello(Object.assign({ img: f.img }, f.hello));
+  colTab = f.k; if (curScreen === 'shop') renderShop(); if (curScreen === 'map') renderMap(); checkDots();
+  return true;
+}
+// the next family set as a progress bar (win screen) or a chip (map)
+function goalHtml(chip) {
+  const f = nextFam(); if (!f) return '';
+  const ready = canBuy(f), early = S.level < f.from, pct = clamp(S.coins / f.cost, 0, 1) * 100;
+  const sub = early ? `Unlocks after level ${f.from - 1}` : ready ? 'Ready to unlock!' : `${fmt(S.coins)} / ${fmt(f.cost)} coins`;
+  return `<button class="goal ${chip ? 'chip' : ''} ${ready ? 'ready' : ''}" data-goal><i class="gface ty-${f.star}"></i>
+    <span class="gtx"><b>${f.name}</b><small>${sub}</small>${early ? '' : `<span class="progress gold"><i style="width:${pct}%"></i></span>`}</span>
+    ${ready ? `<span class="gbtn">Unlock</span>` : ''}</button>`;
+}
+// a spotlight on one element, with a family member talking
+function coach(target, o) {
+  return new Promise(done => {
+    if (!target) return done('skip');
+    const r = target.getBoundingClientRect(), app = $('#app').getBoundingClientRect(), pad = 8;
+    const el = document.createElement('div'); el.className = 'coach';
+    const below = r.top - app.top < app.height * .5;
+    el.innerHTML = `<div class="ch-hole" style="left:${r.left - app.left - pad}px;top:${r.top - app.top - pad}px;width:${r.width + pad * 2}px;height:${r.height + pad * 2}px"></div>
+      <div class="ch-hand" style="left:${r.left - app.left + r.width / 2 - 14}px;top:${below ? r.bottom - app.top + 6 : r.top - app.top - 56}px">${'\u{1F446}'}</div>
+      <div class="ch-bub ${below ? 'low' : 'high'}"><i class="ch-face ${o.cls || ''}" style="${o.cls ? '' : `background-image:url(${o.img})`}"></i><div><b>${o.name}</b><p>${o.text}</p>
+        <div class="ch-row"><button class="btn green sm" data-ch="go">${o.go || 'Show me'}</button><button class="btn ghost sm" data-ch="later">Later</button></div></div></div>`;
+    $('#app').appendChild(el); Snd.hint();
+    const end = v => { el.classList.add('out'); setTimeout(() => el.remove(), 250); done(v); };
+    el.querySelector('.ch-hole').onclick = () => end('go');
+    el.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => end(b.dataset.ch));
+  });
+}
+// guided moments after clearing certain levels for the first time
+async function mapCoach(n) {
+  if (curScreen !== 'map') return;
+  if (n === 5 && !S.tips['coach:shop']) {
+    S.tips['coach:shop'] = 1; if (Date.now() < S.gift) S.gift = Date.now(); save(); checkDots();
+    const c = await coach($('#nav [data-go=shop]'), { img: '/mahjong/apple-touch-icon.png', name: 'Babcia', go: 'Open the Shop',
+      text: 'Kochanie, my shop is open! Tap here any time to spend your coins. I left a free gift for you inside.' });
+    if (c !== 'go') return;
+    go('shop'); await sleep(350);
+    await coach($('#giftBtn'), { img: '/mahjong/apple-touch-icon.png', name: 'Babcia', go: 'Got it', text: 'Tap <b>Open</b> to collect it. A new gift waits here every few hours.' });
+    return;
+  }
+  const f = FAM.find(x => x.from - 1 === n && !owns(x));
+  if (f && !S.tips['coach:' + f.k]) {
+    S.tips['coach:' + f.k] = 1; save();
+    const who = f.hello.title.replace(/^.*I’m |[.!]$/g, '');
+    const c = await coach($('#mapGoal .goal') || $('#nav [data-go=shop]'), { cls: 'ty-' + f.star, name: who, go: 'Take a look',
+      text: canBuy(f) ? `You have enough coins! Unlock ${f.name} and my tiles join your boards.` : `Save up ${fmt(f.cost)} coins and I’ll bring ${f.name.replace(/^.*’s /, 'my ')} to your boards. Find me in the Shop.` });
+    if (c === 'go') { go('shop'); }
+  }
+}
 const BY = {}; TILES.forEach(t => (BY[t.s] = BY[t.s] || []).push(t.id));
 const SETS = [
   { k: 'polish', n: "Babcia's Kitchen", bg: ['#4666c4', '#1c2f78'] },
@@ -1886,6 +2006,7 @@ function dailySpec() {
 async function playLevel(n, opts) {
   opts = opts || {};
   tickHearts();
+  if (!opts.daily && S.run && !S.run.daily && S.run.n === n) { await startLevel(n, E.levelSpec(n), { resume: true }); toast('Picking up where you left off'); return; }
   if (!opts.daily && n > 3 && S.hearts <= 0) { await noHeartsModal(); return; }
   const spec = opts.daily ? dailySpec() : E.levelSpec(n);
   if (!opts.daily) {
@@ -2397,14 +2518,29 @@ async function pauseGame() {
   const r = await openModal(`<h2>Paused</h2><p class="sub">${G.daily ? 'Daily Challenge' : 'Level ' + G.n} · ${G.board.aliveCount} tiles left</p>
     <div class="stack"><button class="btn green big" data-close="resume">${ico('play')}Resume</button>
     <button class="btn ghost" data-close="restart">Restart</button>
+    ${G.daily ? '' : `<button class="btn ghost" data-close="shop">${ico('bag')} Shop</button>`}
     <button class="btn ghost" data-close="settings">Settings</button>
     <button class="btn ghost" data-close="quit">${G.heart ? 'Quit (lose a heart)' : 'Quit'}</button></div>`);
   if (r === 'settings') { G.paused = false; await settingsModal(); return pauseGame(); }
+  if (r === 'shop') { G.paused = false; leaveToShop(); return; }
   if (r === 'restart') { G.paused = false; if (G.heart) loseHeart(); G.on = false; clearTimeout(G.ctimer); const n = G.n, sp = G.spec, d = G.daily; if (G.heart && S.hearts <= 0) { go('map'); return; } startLevel(n, sp, { daily: d }); return; }
   if (r === 'quit') { G.paused = false; if (G.heart) loseHeart(); leaveGame(); return; }
   G.paused = false; G.last = performance.now();
 }
 $('#gPause').onclick = pauseGame;
+// pop out to the Shop mid-level; the board is saved and picks up again from the map
+function leaveToShop() {
+  saveRun(); G.on = false; G.running = false; clearTimeout(G.idleT); clearInterval(G.tim); clearTimeout(G.ctimer);
+  $('#app').classList.remove('fever'); go('shop'); toast('Your board is saved');
+}
+$('#gCoinsBtn').onclick = async () => {
+  if (!G.on || !G.running || G.paused || G.daily) return;
+  G.paused = true; Snd.click();
+  const r = await openModal(`<h2>Visit the Shop?</h2><p class="sub">Your board will be saved, ${G.board.aliveCount} tiles just as you left them.</p>
+    <div class="stack"><button class="btn green big" data-close="shop">${ico('bag')} Go to Shop</button><button class="btn ghost" data-close="stay">Keep playing</button></div>`);
+  G.paused = false; G.last = performance.now();
+  if (r === 'shop') leaveToShop();
+};
 function leaveGame() { S.run = null; save(); G.on = false; G.running = false; clearTimeout(G.idleT); clearInterval(G.tim); clearTimeout(G.ctimer); $('#app').classList.remove('fever'); go('map'); }
 
 /* ---------- tips & tutorial ---------- */
@@ -2510,8 +2646,9 @@ async function resultModal(r) {
     <div class="reward-rows">${rows}<div class="r tot"><span>${ico('coin')} Coins</span><b id="rTot">0</b></div></div>
     ${nt}
     ${r.daily ? '' : `<div style="margin-top:10px;text-align:left;font-size:13px;color:var(--muted);display:flex;justify-content:space-between"><span>${ico('chest')} Star Chest</span><span>${S.chest}/20</span></div><div class="progress gold"><i id="rChest" style="width:0"></i></div>`}
-    <div class="row"><button class="btn green big" id="rNext">${r.daily ? 'Continue' : 'Next Level'}</button></div>
-    <div class="row" style="margin-top:8px">${r.daily ? '' : `<button class="btn ghost sm" id="rReplay">Replay</button>`}<button class="btn ghost sm" id="rMap">${ico('map')} Map</button></div>`;
+    ${r.daily ? '' : goalHtml()}
+    <div class="row"><button class="btn green big" id="rMap">Continue</button></div>
+    <div class="row" style="margin-top:8px">${r.daily ? '' : `<button class="btn ghost sm" id="rReplay">Replay</button><button class="btn ghost sm" id="rNext">Next level ${ico('play')}</button>`}</div>`;
   const p = openModal(html, {});
   // sequenced reveal: stars, coin count-up, chest bar
   const sfx = [];
@@ -2525,7 +2662,8 @@ async function resultModal(r) {
   const act = (kind) => async () => {
     Snd.click(); closeModal(kind);
   };
-  $('#rNext').onclick = act('next'); $('#rMap').onclick = act('map'); const rp = $('#rReplay'); if (rp) rp.onclick = act('replay');
+  $('#rMap').onclick = act('map'); const rn = $('#rNext'); if (rn) rn.onclick = act('next'); const rp = $('#rReplay'); if (rp) rp.onclick = act('replay');
+  const gb = $('#modal [data-goal]'); if (gb) gb.onclick = act('goal');
   const choice = await p;
   G.on = false; updateCoins();
   // follow-ups, in order
@@ -2537,7 +2675,8 @@ async function resultModal(r) {
   updateCoins(); checkDots();
   if (choice === 'next' && !r.daily) { playLevel(S.level > n ? (n + 1) : n); }
   else if (choice === 'replay') { playLevel(n); }
-  else { if (r.firstClear) ARRIVE = n; go('map'); }
+  else if (choice === 'goal') { go('shop'); const f = nextFam(); if (f && canBuy(f)) await buyFam(f); }
+  else { if (r.firstClear) ARRIVE = n; go('map'); if (r.firstClear) { await sleep(1900); await mapCoach(n); } }
 }
 
 /* ---------- fail ---------- */
@@ -2629,8 +2768,12 @@ function renderMap() {
   let html = '';
   for (let r = topR; r >= 0; r--) html += regionHtml(r, W);
   sc.innerHTML = html + '<div style="height:150px"></div>';
-  $('#mapPlay').innerHTML = `${ico('play')} Level ${cur}`;
+  const ck = levelKind(cur);
+  $('#mapPlay').innerHTML = `${ico('play')} Level ${cur}${ck === 'hard' ? '<span class="mp-tag">Hard</span>' : ck === 'super' ? '<span class="mp-tag super">Super hard</span>' : ''}`;
+  $('#mapGoal').innerHTML = S.level > 5 ? goalHtml(true) : '';
+  const mg = $('#mapGoal [data-goal]'); if (mg) mg.onclick = async () => { Snd.click(); const f = nextFam(); go('shop'); if (f && canBuy(f)) await buyFam(f); };
   sc.onclick = e => {
+    if (e.target.closest('[data-fam-go]')) { Snd.click(); go('shop'); return; }
     const nd = e.target.closest('.node'); if (!nd) return;
     const n = +nd.dataset.n; Snd.init(); Snd.click();
     if (n <= S.level) playLevel(n); else toast('Clear level ' + S.level + ' first');
@@ -2648,17 +2791,27 @@ function renderMap() {
     } else sc.scrollTop = target();
   });
 }
+// a family member's portrait at the end of the region where their set unlocks
+function famMarks(r) {
+  return FAM.filter(f => f.from - 1 === (r + 1) * E.REGION_LEN).map((f, i) => {
+    const have = owns(f), ready = canBuy(f), early = S.level < f.from;
+    return `<button class="fammark ${have ? 'have' : ready ? 'ready' : ''}" data-fam-go="${f.k}" style="left:${i % 2 ? 80 : 20}%;top:30px">
+      <i class="ty-${f.star}"></i><b>${f.name.split('’')[0]}</b><small>${have ? 'Unlocked' : early ? 'After level ' + (f.from - 1) : ready ? 'Ready!' : fmt(f.cost) + ' coins'}</small></button>`;
+  }).join('');
+}
 function regionHtml(r, W) {
   const info = E.regionOf(r * E.REGION_LEN + 1), set = SET[info.primary], H = E.REGION_LEN * ROW + 70;
-  const pts = []; let nodes = '';
+  const pts = []; let nodes = '', flowers = '';
   for (let k = 0; k < E.REGION_LEN; k++) {
     const n = r * E.REGION_LEN + k + 1, y = H - 52 - k * ROW, xf = .5 + .27 * Math.sin(n * .92 + .6), x = xf * W;
     pts.push([x, y, n]);
     const kind = levelKind(n), hard = kind === 'hard' || kind === 'super';
     const done = !!S.stars[n], lock = n > S.level, curN = n === S.level;
     const st = S.stars[n] || 0;
-    nodes += `<button class="node ${hard ? 'hard' : ''} ${done ? 'done' : ''} ${lock ? 'lock' : ''} ${curN ? 'cur' : ''}" data-n="${n}" style="left:${(xf * 100).toFixed(2)}%;top:${y}px">
-      ${curN && buddy() ? `<span class="walker">${kidImg(buddy())}</span>` : ''}${hard && !lock ? `<span class="flame">${ico('flame')}</span>` : ''}${lock ? ico('lock') : n}
+    const fx = xf > .5 ? .14 + ((n * 37) % 9) / 100 : .78 + ((n * 53) % 9) / 100, fc = ['#e2402e', '#3d63d6', '#fff8e8', '#f2b91c'][n % 4];
+    flowers += `<i class="mfl" style="left:${(fx * 100).toFixed(1)}%;top:${y - 18 + (n * 29) % 30}px;--c:${fc};--s:${(.7 + ((n * 13) % 6) / 10).toFixed(2)};--rt:${(n * 47) % 360}deg"></i>`;
+    nodes += `<button class="node ${kind === 'super' ? 'super' : ''} ${hard ? 'hard' : ''} ${done ? 'done' : ''} ${lock ? 'lock' : ''} ${curN ? 'cur' : ''}" data-n="${n}" style="left:${(xf * 100).toFixed(2)}%;top:${y}px">
+      ${curN ? (buddy() ? `<span class="walker">${kidImg(buddy())}</span>` : `<span class="pin"><i></i></span>`) : ''}${hard && !lock ? `<span class="flame">${ico('flame')}</span>` : ''}<span class="nn">${n}</span>
       ${done ? `<span class="nst">${[0, 1, 2].map(i => `<svg class="i" style="width:17px;height:17px"><use href="#i-${i < st ? 'star' : 'star0'}"/></svg>`).join('')}</span>` : ''}</button>`;
   }
   const path = pts.map((p, i) => i === 0 ? `M${p[0]} ${p[1]}` : `C${pts[i - 1][0]} ${(pts[i - 1][1] + p[1]) / 2} ${p[0]} ${(pts[i - 1][1] + p[1]) / 2} ${p[0]} ${p[1]}`).join(' ');
@@ -2669,12 +2822,16 @@ function regionHtml(r, W) {
   const cx = (W * .5);
   const ra = ART.of(info.primary);
   return `<div class="region" style="--artimg:${ra.img};--flip:${ra.flip};background-color:${set.bg[1]}">
-    <div class="rg-head"><div class="tt"><h3>${info.name}</h3><p>Levels ${info.first}–${info.last}</p></div>
+    <div class="rg-head"><span class="rope l"></span><span class="rope r"></span><div class="tt"><h3>${info.name}</h3><p>Levels ${info.first}–${info.last}</p></div>
     <div class="rg-prev">${prev.map((t, j) => `<i class="ty-${t}" style="--r:${(j - 1) * 7}deg"></i>`).join('')}</div></div>
     <div class="path" style="height:${H}px"><svg class="pth" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-      <path d="${path}" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="13" stroke-linecap="round" stroke-dasharray="1 16" transform="translate(0 2)"/>
-      <path d="${path}" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="9" stroke-linecap="round" stroke-dasharray="1 16"/>
-      ${dpath ? `<path d="${dpath}" fill="none" stroke="rgba(255,236,160,.85)" stroke-width="9" stroke-linecap="round" stroke-dasharray="1 16"/>` : ''}</svg>
+      <path d="${path}" fill="none" stroke="rgba(40,20,5,.25)" stroke-width="22" stroke-linecap="round" transform="translate(0 3)"/>
+      <path d="${path}" fill="none" stroke="#fbf1dc" stroke-width="18" stroke-linecap="round"/>
+      <path d="${path}" fill="none" stroke="#2f5fb0" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 6" transform="translate(-6 0)" opacity=".55"/>
+      <path d="${path}" fill="none" stroke="#2f5fb0" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 6" transform="translate(6 0)" opacity=".55"/>
+      <path d="${path}" fill="none" stroke="#c9b48c" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 9"/>
+      ${dpath ? `<path d="${dpath}" fill="none" stroke="#d22b2b" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="9 9"/>` : ''}</svg>
+      ${flowers}${famMarks(r)}
       <div class="chestnode ${chestDone ? '' : ''}" style="left:50%;top:${26}px;opacity:${chestDone ? .45 : 1}">${ico('chest')}</div>
       ${nodes}</div></div>`;
 }
@@ -3002,11 +3159,7 @@ function renderShop() {
   });
   const h = $('#shopBody [data-hearts]'); if (h) h.onclick = () => { if (S.coins < 100 || S.hearts >= 5) return; S.coins -= 100; S.hearts = 5; S.heartT = 0; save(); Snd.unlock(); updateCoins(); renderShop(); };
   $$('#shopBody [data-fam]').forEach(b => b.onclick = async () => {
-    const f = FAM[+b.dataset.fam];
-    if (owns(f) || S.level < f.from || S.coins < f.cost) return;
-    S.coins -= f.cost; S[f.flag] = 1; save(); Snd.coin(); Snd.unlock(); updateCoins(); FX.confetti(60);
-    await charHello(Object.assign({ img: f.img }, f.hello));
-    colTab = f.k; renderShop(); checkDots();
+    await buyFam(FAM[+b.dataset.fam]);
   });
   const g = $('#giftBtn'); if (g) g.onclick = async () => {
     if (Date.now() < S.gift) return; S.gift = Date.now() + GIFT_MS; save();
