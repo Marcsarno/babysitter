@@ -167,8 +167,11 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 /* ----- tiles ----- */
 .tile{position:absolute;left:0;top:0;will-change:transform}
 .tile .in{position:absolute;inset:0;transition:transform .14s cubic-bezier(.3,1.5,.5,1)}
-.tile .base{position:absolute;inset:0;border-radius:var(--rad);background:linear-gradient(135deg,#a68a52,var(--tile-base));transform:translate(var(--th),var(--th));box-shadow:0 var(--sh) var(--sh2) rgba(0,0,0,.38)}
-.tile .face{position:absolute;inset:0;border-radius:var(--rad);background-color:var(--tile);background-size:cover;background-position:center;box-shadow:inset 0 0 0 1.5px var(--tile-edge),inset 0 2px 0 rgba(255,255,255,.65)}
+.tile .base{position:absolute;inset:0;border-radius:var(--rad);background:linear-gradient(135deg,#3f6fc8,#1c3f8a 70%);transform:translate(var(--th),var(--th));
+  box-shadow:inset -1px -1px 0 rgba(0,0,0,.35),calc(var(--s)*.05) calc(var(--s)*.07) calc(var(--s)*.1) rgba(25,12,0,.55)}
+.tile .in::before{content:"";position:absolute;inset:0;border-radius:var(--rad);box-shadow:0 0 0 1px rgba(70,40,10,.55),0 0 calc(var(--s)*.06) calc(var(--s)*.015) rgba(30,15,0,.5)}
+.tile .slab{position:absolute;inset:0;border-radius:var(--rad);background:linear-gradient(135deg,#efe2c2,#cdb88a);transform:translate(calc(var(--th)*.55),calc(var(--th)*.55));box-shadow:inset -1px -1px 0 rgba(90,60,20,.35)}
+.tile .face{position:absolute;inset:0;border-radius:var(--rad);background-color:var(--tile);filter:brightness(var(--lit,1));background-size:cover;background-position:center;box-shadow:inset 0 0 0 2px #b8995c,inset 0 3px 0 rgba(255,255,255,.7),inset 0 -2px 0 rgba(120,85,30,.25)}
 .tile .face::after{content:"";position:absolute;inset:0;border-radius:var(--rad);background:linear-gradient(135deg,rgba(255,255,255,.22),transparent 38%);pointer-events:none}
 .tile .shade{position:absolute;inset:0;border-radius:var(--rad);background:rgba(54,34,12,.4);opacity:0;transition:opacity .2s;pointer-events:none}
 .dim .tile.blocked .shade{opacity:1}
@@ -2126,7 +2129,7 @@ function mountBoard() {
     d.className = 'tile dealt' + (t.gold ? ' gold' : '') + (t.hidden ? ' hid' : '');
     d.dataset.i = i;
     d.style.setProperty('--dl', (Math.min(500, (t.z * 90 + Math.random() * 260 + k * 1.2)) | 0) + 'ms');
-    d.innerHTML = `<div class="in"><div class="base"></div><div class="face ty-${t.type}"></div><div class="shade"></div><div class="ice"></div><div class="mys">?</div></div>`;
+    d.innerHTML = `<div class="in"><div class="base"></div><div class="slab"></div><div class="face ty-${t.type}"></div><div class="shade"></div><div class="ice"></div><div class="mys">?</div></div>`;
     frag.appendChild(d); G.el[i] = d;
   });
   board.appendChild(frag);
@@ -2140,18 +2143,18 @@ function layoutBoard() {
   if (!cw || !ch) return;
   let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9, maxZ = 0;
   tiles.forEach(t => { minX = Math.min(minX, t.x); maxX = Math.max(maxX, t.x + 2); minY = Math.min(minY, t.y); maxY = Math.max(maxY, t.y + 2); maxZ = Math.max(maxZ, t.z); });
-  const spanX = (maxX - minX) / 2, spanY = (maxY - minY) / 2, LK = .085, TH = .085;
+  const spanX = (maxX - minX) / 2, spanY = (maxY - minY) / 2, LK = .12, TH = .15;
   const P = clamp(Math.min((cw - 10) / (spanX + maxZ * LK + TH), (ch - 14) / (spanY + maxZ * LK + TH)), 22, 74);
   const size = P * .965, gap = (P - size) / 2;
   const bw = (spanX + maxZ * LK + TH) * P, bh = (spanY + maxZ * LK + TH) * P;
   board.style.width = bw + 'px'; board.style.height = bh + 'px';
   board.style.left = Math.max(0, (cw - bw) / 2) + 'px'; board.style.top = Math.max(0, (ch - bh) / 2) + 'px';
   board.style.setProperty('--s', size + 'px'); board.style.setProperty('--rad', size * .17 + 'px');
-  board.style.setProperty('--th', Math.max(2, P * TH) + 'px'); board.style.setProperty('--sh', Math.max(1, P * .05) + 'px'); board.style.setProperty('--sh2', Math.max(2, P * .12) + 'px');
+  board.style.setProperty('--th', Math.max(3, P * TH) + 'px'); board.style.setProperty('--sh', Math.max(1, P * .05) + 'px'); board.style.setProperty('--sh2', Math.max(2, P * .12) + 'px');
   tiles.forEach((t, i) => {
     const e = G.el[i]; if (!e) return;
     const x = (t.x - minX) / 2 * P + (maxZ - t.z) * P * LK + gap, y = (t.y - minY) / 2 * P + (maxZ - t.z) * P * LK + gap;
-    e.style.width = e.style.height = size + 'px';
+    e.style.width = e.style.height = size + 'px'; e.style.setProperty('--lit', (1 - (maxZ - t.z) * .085).toFixed(3));
     const tf = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`; e.dataset.tf = tf; e.style.transform = tf;
   });
   G.P = P;
