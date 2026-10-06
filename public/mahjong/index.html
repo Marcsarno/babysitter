@@ -1549,7 +1549,7 @@ const DEF = () => ({
   boost: { hint: 0, shuffle: 0, undo: 0, wand: 0, giggle: 0, flutter: 0 }, unlocked: {},
   streak: 0, best: 0, chest: 0, totalStars: 0, disc: {}, fresh: {}, claimed: {}, regionChest: {},
   daily: { last: '', day: 0, quests: [], qday: '', chDay: '' }, gift: 0,
-  set: { sfx: 1, music: 1, vib: 1, dim: 1, calm: 0, nudge: 1, pro: 0, buddy: 'lilah' },
+  set: { sfx: 1, music: 1, vib: 1, dim: 0, dimV: 0, calm: 0, nudge: 1, pro: 0, buddy: 'lilah' },
   run: null, met: {}, last: 0,
   stat: { matches: 0, wins: 0, combo: 0, gold: 0, ice: 0, hardWins: 0 }, tips: {},
 });
@@ -1568,6 +1568,7 @@ function loadSave() {
   return DEF();
 }
 let S = loadSave();
+if (!S.set.dimV) { S.set.dim = 0; S.set.dimV = 1; }   // classic look: free tiles aren't dimmed unless the player turns it on
 const BOOT_AWAY = S.t ? Date.now() - S.t : 0;
 const cloud = { ref: null, busy: false, dirty: false, timer: 0 };
 function save() {
