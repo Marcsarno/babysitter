@@ -353,6 +353,37 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 .in-pro{display:block;margin:12px auto 0;font-size:14px;font-weight:500;color:#6b4a1c;text-decoration:underline;text-underline-offset:3px;opacity:0;transition:opacity .3s}
 .in-pro b{color:#b8860b}
 .in-bub.done .in-pro{opacity:1}
+.sp-jb{right:auto;left:12px}
+.jbsheet{max-height:calc(100% - 24px);overflow-y:auto}
+.jb-head{display:flex;gap:14px;align-items:center;margin:6px 0 12px;text-align:left}
+.jb-disc{flex:none;width:76px;height:76px;border-radius:50%;background:repeating-radial-gradient(circle,#1a1a1a 0 2px,#262626 2px 4px);box-shadow:0 0 0 3px #fff6e0,0 6px 14px rgba(0,0,0,.45);display:grid;place-items:center}
+.jb-disc i{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#fff6e0 0 3px,#d22b2b 4px 100%);box-shadow:0 0 0 2px #1f4aa0}
+.jb-disc.spin{animation:jbspin 3.2s linear infinite}
+@keyframes jbspin{to{transform:rotate(360deg)}}
+.jb-now{flex:1;min-width:0}.jb-now small{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.jb-now b{display:block;font-size:20px;margin:2px 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jb-bar{position:relative;height:8px;border-radius:99px;background:rgba(0,0,0,.35);cursor:pointer}
+.jb-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold-l),var(--gold))}
+.jb-tm{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+.jb-ctl{display:flex;justify-content:center;align-items:center;gap:18px;margin:4px 0 12px}
+.jb-ctl button{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--panel2);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.15)}
+.jb-ctl button[data-jb=prev] .i{transform:scaleX(-1)}
+.jb-ctl button.big{width:68px;height:68px;font-size:32px;color:#3b2300;background:linear-gradient(var(--gold-l),var(--gold-d));box-shadow:0 4px 0 #8f5a10}
+.jb-modes{display:flex;gap:6px;padding:4px;border-radius:14px;background:rgba(0,0,0,.3);margin-bottom:10px}
+.jb-modes button{flex:1;padding:8px 4px;border-radius:10px;font-weight:600;font-size:14px;color:var(--muted)}
+.jb-modes button.on{background:var(--panel2);color:var(--cream);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2)}
+.jb-list{list-style:none;margin:0;padding:0;text-align:left}
+.jb-list button{display:flex;align-items:center;gap:12px;width:100%;padding:11px 10px;border-radius:12px;font-size:16px;font-weight:600}
+.jb-list button.cur{background:rgba(255,200,60,.14);color:var(--gold-l)}
+.jb-n{width:22px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}.jb-t{flex:1;text-align:left}
+.jb-h{display:flex;align-items:center;justify-content:center;gap:10px}.jb-h .i{font-size:26px;color:var(--gold-l)}
+.jb-off{width:18px;font-size:16px;color:var(--leaf)}
+.eq{display:inline-flex;gap:2px;align-items:flex-end;height:14px}.eq i{width:3px;background:var(--gold);animation:eq .8s ease-in-out infinite alternate}
+.eq i:nth-child(2){animation-delay:-.3s}.eq i:nth-child(3){animation-delay:-.55s}
+@keyframes eq{from{height:3px}to{height:14px}}
+.jb-dl{width:100%;margin-top:8px}
+@media (prefers-reduced-motion:reduce){.jb-disc.spin,.eq i{animation:none}}
+
 /* ---------- map, folk-art pass ---------- */
 .region::after{background:linear-gradient(180deg,rgba(40,18,4,.30),rgba(40,18,4,.04) 22%,rgba(40,18,4,.04) 78%,rgba(40,18,4,.30)),linear-gradient(90deg,rgba(40,18,4,.28),transparent 22%,transparent 78%,rgba(40,18,4,.28))}
 .rg-head{margin:30px 22px 8px;padding:12px 16px;border-radius:18px;background:linear-gradient(#f8e8c4,#e8cf9c);color:#5a3410;
@@ -387,6 +418,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
     radial-gradient(circle at 50% 18%,var(--c) 0 5.5px,transparent 6px),radial-gradient(circle at 84% 42%,var(--c) 0 5.5px,transparent 6px),
     radial-gradient(circle at 71% 82%,var(--c) 0 5.5px,transparent 6px),radial-gradient(circle at 29% 82%,var(--c) 0 5.5px,transparent 6px),
     radial-gradient(circle at 16% 42%,var(--c) 0 5.5px,transparent 6px)}
+.node .fvis{position:absolute;right:-12px;top:-12px;width:28px;height:28px;border-radius:50%;background-size:cover;box-shadow:0 0 0 2px #fff6e0,0 0 0 4px #b3261e,0 3px 6px rgba(0,0,0,.4);z-index:2}
 .fammark{position:absolute;width:86px;margin-left:-43px;display:flex;flex-direction:column;align-items:center;gap:2px;z-index:2;color:#fff6e0;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .fammark i{width:58px;height:58px;border-radius:50%;background-size:cover;box-shadow:0 0 0 3px #fff6e0,0 0 0 6px #b3261e,0 6px 12px rgba(0,0,0,.4);filter:saturate(.6) brightness(.85)}
 .fammark b{font-size:13px;margin-top:6px}.fammark small{font-size:11px;font-weight:600;opacity:.9}
@@ -676,7 +708,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="11.5" rx="2" fill="#ff6b81" stroke="#a52035" stroke-width="1.8"/><rect x="2.8" y="6.4" width="18.4" height="4.2" rx="1.4" fill="#ff8ea0" stroke="#a52035" stroke-width="1.8"/><path d="M12 6.4v14M12 6.4c-1-3.2-4.6-3.6-5-1.6s2.8 2 5 1.6zM12 6.4c1-3.2 4.6-3.6 5-1.6s-2.8 2-5 1.6z" fill="none" stroke="#ffe27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="i-hand" viewBox="0 0 24 24"><path d="M9 11V4.8a1.7 1.7 0 0 1 3.4 0V10l.8-.5a1.7 1.7 0 0 1 2.4 1.4l.3-.1a1.7 1.7 0 0 1 2.2 1.6l.1 1a1.7 1.7 0 0 1 1.1 1.7L19 18c-.3 2.3-2 3.7-4.3 3.7h-1.8c-1.6 0-2.7-.7-3.6-1.9l-3.4-4.7c-.6-.9.4-2 1.4-1.4L9 14.4z" fill="#fff6dc" stroke="#6a4a1a" stroke-width="1.5" stroke-linejoin="round"/></symbol>
 <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 3.5h10v5.6a5 5 0 0 1-10 0z" fill="#ffcf3f" stroke="#c27a00" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 5H3.8c0 3 1.4 4.7 3.6 5M17 5h3.2c0 3-1.4 4.7-3.6 5M12 14.2v3.6M8 20.5h8M9.2 17.8h5.6" fill="none" stroke="#c27a00" stroke-width="1.8" stroke-linecap="round"/></symbol>
-<symbol id="i-pin" viewBox="0 0 24 44"><path d="M12 42C4 28 1.5 22 1.5 14A10.5 10.5 0 0 1 22.5 14c0 8-2.5 14-10.5 28z" fill="#ff5468" stroke="#8f1d33" stroke-width="2.5" stroke-linejoin="round"/><circle cx="12" cy="14" r="4.2" fill="#fff6dc"/></symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 17.5V6.2l10-2.2v11.3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><ellipse cx="6.6" cy="17.6" rx="3" ry="2.4" fill="currentColor"/><ellipse cx="16.6" cy="15.4" rx="3" ry="2.4" fill="currentColor"/></symbol><symbol id="i-pin" viewBox="0 0 24 44"><path d="M12 42C4 28 1.5 22 1.5 14A10.5 10.5 0 0 1 22.5 14c0 8-2.5 14-10.5 28z" fill="#ff5468" stroke="#8f1d33" stroke-width="2.5" stroke-linejoin="round"/><circle cx="12" cy="14" r="4.2" fill="#fff6dc"/></symbol>
 </defs></svg>
 
 <div id="app">
@@ -752,6 +784,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
     <div class="sp-art"></div>
     <div class="sp-motes" id="spMotes" aria-hidden="true"></div>
     <div class="sp-scrim"></div>
+    <button class="icon-btn sp-gear sp-jb" id="spJuke" aria-label="Jukebox"><svg class="i"><use href="#i-music"/></svg></button>
     <button class="icon-btn sp-gear" id="spGear" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
     <div class="sp-bottom">
       <div class="sp-load" aria-live="polite"><div class="sp-bar"><i></i></div><span>Babcia is putting the kettle on…</span></div>
@@ -1188,23 +1221,11 @@ svg.i{width:1em;height:1em;display:block;flex:none}
   const LEAD = ['polish_42', 'polish_62', 'polish_00', 'polish_41', 'polish_65', 'polish_43', 'polish_13', 'polish_15', 'polish_34', 'polish_44', 'polish_05', 'polish_63', 'polish_23', 'polish_12'];
   function pickTypes(spec, tilesBySet, groups, rnd) {
     const reg = spec.region, count = spec.types;
-    let prim = shuffle(tilesBySet[reg.primary].slice(), rnd);
-    if (spec.n <= REGION_LEN) { const lead = LEAD.filter(id => prim.includes(id)); prim = lead.concat(prim.filter(id => !lead.includes(id))); }
-    const secName = reg.secondary || THEMES[(reg.index + 1) % 5];
-    const sec = shuffle(tilesBySet[secName].slice(), rnd);
-    const others = shuffle([].concat(...THEMES.filter(t => t !== reg.primary && t !== secName).map(t => tilesBySet[t])), rnd);
-    const share = reg.cycle > 0 ? 0.5 : (count <= 16 ? 1 : 0.72);
-    const wantPrim = Math.min(prim.length, Math.round(count * share));
-    let order = prim.slice(0, wantPrim).concat(sec, prim.slice(wantPrim), others);
-    const extras = (spec.extra || []).filter(x => tilesBySet[x.k]);
-    if (extras.length) {                                   // about a third of the board from unlocked family sets, each one's face tile first
-      const per = Math.max(2, Math.round(count * 0.32 / extras.length));
-      order = [].concat(...extras.map(x => {
-        const ex = shuffle(tilesBySet[x.k].slice(), rnd);
-        if (x.star && ex.includes(x.star)) { ex.splice(ex.indexOf(x.star), 1); ex.unshift(x.star); }
-        return ex.slice(0, per);
-      })).concat(order);
-    }
+    // one theme per board: the region's set, or a family set on a family-visit level
+    let prim = shuffle(tilesBySet[spec.only || reg.primary].slice(), rnd);
+    if (!spec.only && spec.n <= REGION_LEN) { const lead = LEAD.filter(id => prim.includes(id)); prim = lead.concat(prim.filter(id => !lead.includes(id))); }
+    if (spec.star && prim.includes(spec.star)) { prim.splice(prim.indexOf(spec.star), 1); prim.unshift(spec.star); }
+    const order = prim;
     const groupOf = {}; (groups || []).forEach((g, gi) => g.ids.forEach(id => { (groupOf[id] = groupOf[id] || []).push(gi); }));
     const used = (groups || []).map(() => 0), chosen = [], seen = new Set();
     for (const id of order) {
@@ -1442,6 +1463,16 @@ const FAM = [
     wave: 'Chris says: beast mode!' },
 ];
 const owns = f => !!S[f.flag];
+// after level 10, levels ending in 5 become a whole board from one unlocked family set (they take turns)
+function famVisit(n) {
+  if (!n || n <= 10 || n % 10 !== 5) return null;
+  const have = FAM.filter(owns); return have.length ? have[Math.floor(n / 10) % have.length] : null;
+}
+function famVisitSpec(n) {
+  const f = famVisit(n); if (!f) return {};
+  const reg = E.regionOf(n);
+  return { only: f.k, star: f.star, fam: f.k, region: Object.assign({}, reg, { primary: f.k, name: f.name }) };
+}
 const canBuy = f => !owns(f) && S.level >= f.from && S.coins >= f.cost;
 const nextFam = () => FAM.find(f => !owns(f));
 async function buyFam(f) {
@@ -1906,14 +1937,20 @@ const Snd = (() => {
     }
   }
   /* ---- recorded music: plays the song, then plays tracks back to back (gapMs between, currently none) (loops the playlist) ---- */
-  const SG = { st: 'idle', i: 0, a: null, node: null, src: null, gap: 0, gapMs: 0, urls: null, hid: false, pending: false };
+  const SG = { st: 'idle', i: +(S.set.jbI || 0), a: null, node: null, src: null, gap: 0, gapMs: 0, urls: null, hid: false, pending: false };
   const b64u8 = b => { const bin = atob(b), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
   function tracks() {
     if (!SG.urls) SG.urls = (window.__MUSIC__ || []).map(m => m.u);
     return SG.urls;
   }
+  function nextIdx(step) {                       // play all / shuffle / repeat one
+    const n = tracks().length || 1, m = S.set.jbMode || 'all';
+    if (m === 'one' && !step) return SG.i % n;
+    if (m === 'shuffle' && n > 1) { let k; do { k = Math.floor(Math.random() * n); } while (k === SG.i % n); return k; }
+    return ((SG.i + (step || 1)) % n + n) % n;
+  }
   function songEnded() {
-    SG.st = 'gap'; SG.i++; clearTimeout(SG.gap);
+    SG.st = 'gap'; SG.i = nextIdx(); clearTimeout(SG.gap);
     SG.gap = setTimeout(() => { SG.st = 'idle'; if (S.set.music && !document.hidden) startTrack(); else SG.pending = true; }, SG.gapMs);
   }
   async function fallbackBuffer() {            // if the page can't play a blob URL, decode it with WebAudio instead
@@ -1926,7 +1963,8 @@ const Snd = (() => {
   function startTrack() {
     const L = tracks(); if (!R || !L.length || !S.set.music) return;
     SG.st = 'play'; SG.mode = 'el'; SG.pending = false;
-    const a = new Audio(); a.preload = 'auto'; a.src = L[SG.i % L.length]; SG.a = a;
+    SG.i = SG.i % L.length; S.set.jbI = SG.i; save();
+    const a = new Audio(); a.preload = 'auto'; a.src = L[SG.i]; SG.a = a;
     try { if (SG.node) SG.node.disconnect(); SG.node = R.c.createMediaElementSource(a); SG.node.connect(R.song); } catch (e) { a.volume = .6; }
     a.onended = () => { if (SG.a === a) songEnded(); };
     a.onerror = () => { if (SG.a === a) { SG.a = null; fallbackBuffer(); } };
@@ -1959,6 +1997,22 @@ const Snd = (() => {
     if (S.set.music && !musT) musT = setInterval(pump, 120);
   }
   api.applyMusic = applyMusic;
+  function songStop() {
+    clearTimeout(SG.gap);
+    if (SG.a) { try { SG.a.pause(); } catch (e) { } SG.a.onended = SG.a.onerror = null; SG.a = null; }
+    if (SG.src) { const s = SG.src; SG.src = null; s.onended = null; try { s.stop(); } catch (e) { } }
+    SG.st = 'idle';
+  }
+  api.jb = {
+    list: () => window.__MUSIC__ || [],
+    cur: () => SG.i % Math.max(1, tracks().length),
+    playing: () => SG.st === 'play' && !!S.set.music,
+    pos: () => SG.a && SG.mode === 'el' ? { t: SG.a.currentTime || 0, d: SG.a.duration || 0 } : { t: 0, d: 0 },
+    play(i) { api.init(); songStop(); SG.i = i; if (!S.set.music) { S.set.music = 1; save(); } applyMusic(); },
+    toggle() { api.init(); if (SG.st === 'play' && S.set.music) { S.set.music = 0; save(); applyMusic(); } else { S.set.music = 1; save(); applyMusic(); } },
+    skip(d) { api.init(); const k = (S.set.jbMode === 'one') ? ((SG.i + d) % tracks().length + tracks().length) % tracks().length : nextIdx(d); this.play(k); },
+    seek(f) { if (SG.a && SG.a.duration) SG.a.currentTime = f * SG.a.duration; },
+  };
   api._song = SG; api._tracks = tracks;
   api.mood = k => { if (k in MOODS) M.pendingRoot = MOODS[k]; };
   api.intensity = v => { intens = v ? 1 : 0; };
@@ -2036,7 +2090,7 @@ async function playLevel(n, opts) {
 }
 
 async function startLevel(n, spec, opts) {
-  if (!opts.daily) spec = Object.assign({}, spec, { time: S.set.pro ? E.levelSpec(n).time || 0 : 0 }, n > 10 && FAM.some(owns) ? { extra: FAM.filter(owns).map(f => ({ k: f.k, star: f.star })) } : {});   // clocks are for Pro Babcias only
+  if (!opts.daily) spec = Object.assign({}, spec, { time: S.set.pro ? E.levelSpec(n).time || 0 : 0 }, famVisitSpec(n));   // clocks are for Pro Babcias only
   Snd.init();
   clearTimeout(G.ctimer); clearInterval(G.tim);
   go('game');
@@ -2815,7 +2869,7 @@ function regionHtml(r, W) {
     const fx = xf > .5 ? .14 + ((n * 37) % 9) / 100 : .78 + ((n * 53) % 9) / 100, fc = ['#e2402e', '#3d63d6', '#fff8e8', '#f2b91c'][n % 4];
     flowers += `<i class="mfl" style="left:${(fx * 100).toFixed(1)}%;top:${y - 18 + (n * 29) % 30}px;--c:${fc};--s:${(.7 + ((n * 13) % 6) / 10).toFixed(2)};--rt:${(n * 47) % 360}deg"></i>`;
     nodes += `<button class="node ${kind === 'super' ? 'super' : ''} ${hard ? 'hard' : ''} ${done ? 'done' : ''} ${lock ? 'lock' : ''} ${curN ? 'cur' : ''}" data-n="${n}" style="left:${(xf * 100).toFixed(2)}%;top:${y}px">
-      ${curN ? (buddy() ? `<span class="walker">${kidImg(buddy())}</span>` : `<span class="pin"><i></i></span>`) : ''}${hard && !lock ? `<span class="flame">${ico('flame')}</span>` : ''}<span class="nn">${n}</span>
+      ${curN ? (buddy() ? `<span class="walker">${kidImg(buddy())}</span>` : `<span class="pin"><i></i></span>`) : ''}${hard && !lock ? `<span class="flame">${ico('flame')}</span>` : ''}<span class="nn">${n}</span>${famVisit(n) ? `<span class="fvis ty-${famVisit(n).star}"></span>` : ''}
       ${done ? `<span class="nst">${[0, 1, 2].map(i => `<svg class="i" style="width:17px;height:17px"><use href="#i-${i < st ? 'star' : 'star0'}"/></svg>`).join('')}</span>` : ''}</button>`;
   }
   const path = pts.map((p, i) => i === 0 ? `M${p[0]} ${p[1]}` : `C${pts[i - 1][0]} ${(pts[i - 1][1] + p[1]) / 2} ${p[0]} ${(pts[i - 1][1] + p[1]) / 2} ${p[0]} ${p[1]}`).join(' ');
@@ -3180,6 +3234,72 @@ function shopTimers() {
   else { const s = Math.ceil(ms / 1000); el.textContent = 'Next gift in ' + Math.floor(s / 3600) + ':' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
 }
 
+
+
+/* ---------- app install (PWA) ---------- */
+let installEvt = null;
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; });
+addEventListener('appinstalled', () => { installEvt = null; toast('Babcia’s Mahjong is on your home screen!'); });
+function installRow() {
+  if (standalone() || (!installEvt && !isIOS())) return '';
+  return `<div class="set"><div style="text-align:left"><b>Install as an app</b><small>Opens full screen and plays without internet</small></div><button class="btn sm green" id="setInstall">Install</button></div>`;
+}
+async function installApp() {
+  Snd.click();
+  if (installEvt) { const e = installEvt; installEvt = null; e.prompt(); try { await e.userChoice; } catch (er) { } return; }
+  closeModal('ok'); await sleep(250);
+  await openModal(`<h2>Add to Home Screen</h2><p class="sub" style="text-align:left;line-height:1.5">1. Tap the <b>Share</b> button at the bottom of Safari (the square with an arrow).<br>2. Scroll down and tap <b>Add to Home Screen</b>.<br>3. Tap <b>Add</b>. Babcia will be waiting on your home screen.</p><div class="row"><button class="btn green" data-close="ok">Got it</button></div>`);
+}
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.pathname.startsWith('/mahjong')) {
+  addEventListener('load', () => { navigator.serviceWorker.register('/mahjong/sw.js', { scope: '/mahjong/' }).catch(() => { }); });
+}
+
+/* ---------- jukebox ---------- */
+const fmtSec = s => !isFinite(s) || s <= 0 ? '0:00' : Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+async function jukebox() {
+  Snd.init(); Snd.click();
+  const J = Snd.jb, modes = [['all', 'Play all'], ['shuffle', 'Shuffle'], ['one', 'Repeat one']];
+  const draw = () => {
+    const L = J.list(), c = J.cur(), on = J.playing();
+    return `<div class="jb"><div class="jb-head"><div class="jb-disc ${on ? 'spin' : ''}"><i></i></div><div class="jb-now"><small>${on ? 'Now playing' : 'Paused'}</small><b>${L[c] ? L[c].n : ''}</b>
+      <div class="jb-bar" id="jbBar"><i id="jbFill"></i></div><div class="jb-tm"><span id="jbT">0:00</span><span id="jbD">0:00</span></div></div></div>
+      <div class="jb-ctl"><button data-jb="prev" aria-label="Previous song">${ico('play')}</button><button class="big" data-jb="toggle" aria-label="${on ? 'Pause' : 'Play'}">${ico(on ? 'pause' : 'play')}</button><button data-jb="next" aria-label="Next song">${ico('play')}</button></div>
+      <div class="jb-modes">${modes.map(([k, l]) => `<button class="${(S.set.jbMode || 'all') === k ? 'on' : ''}" data-mode="${k}">${l}</button>`).join('')}</div>
+      <ol class="jb-list">${L.map((m, i) => `<li><button class="${i === c ? 'cur' : ''}" data-song="${i}"><span class="jb-n">${i === c && on ? '<span class="eq"><i></i><i></i><i></i></span>' : i + 1}</span><span class="jb-t">${m.n}</span><span class="jb-off" data-off="${i}"></span></button></li>`).join('')}</ol>
+      ${'serviceWorker' in navigator ? `<button class="btn ghost sm jb-dl" id="jbDl">Save all songs for offline</button>` : ''}
+      <div class="row"><button class="btn green" data-close="ok">Done</button></div></div>`;
+  };
+  const p = openModal(`<h2 class="jb-h">${ico('music')} Babcia’s Jukebox</h2>` + draw(), { cls: 'jbsheet' });
+  const sheet = () => $('#modal .sheet');
+  const refresh = () => { const sh = sheet(); if (!sh) return; sh.innerHTML = `<h2 class="jb-h">${ico('music')} Babcia’s Jukebox</h2>` + draw(); bind(); offlineMarks(); };
+  const bind = () => {
+    $$('#modal [data-song]').forEach(b => b.onclick = () => { J.play(+b.dataset.song); setTimeout(refresh, 120); });
+    $$('#modal [data-mode]').forEach(b => b.onclick = () => { S.set.jbMode = b.dataset.mode; save(); Snd.click(); refresh(); });
+    $$('#modal [data-jb]').forEach(b => b.onclick = () => { const k = b.dataset.jb; if (k === 'toggle') J.toggle(); else J.skip(k === 'next' ? 1 : -1); setTimeout(refresh, 120); });
+    const bar = $('#jbBar'); if (bar) bar.onclick = e => { const r = bar.getBoundingClientRect(); J.seek(clamp((e.clientX - r.left) / r.width, 0, 1)); };
+    const dl = $('#jbDl'); if (dl) dl.onclick = async () => {
+      dl.disabled = true; const L = J.list(); let k = 0;
+      for (const m of L) { dl.textContent = `Saving ${++k} of ${L.length}…`; try { await fetch(m.u, { cache: 'reload' }); } catch (e) { } }
+      dl.textContent = 'Songs saved for offline'; offlineMarks();
+    };
+  };
+  const offlineMarks = async () => {
+    if (!window.caches) return;
+    const L = J.list();
+    for (let i = 0; i < L.length; i++) { const hit = await caches.match(L[i].u); const el = $(`#modal [data-off="${i}"]`); if (el) el.innerHTML = hit ? ico('check') : ''; }
+  };
+  bind(); offlineMarks();
+  let last = -1;
+  const tick = setInterval(() => {
+    const { t, d } = J.pos(), f = $('#jbFill'); if (!f) return;
+    f.style.width = (d ? t / d * 100 : 0) + '%'; $('#jbT').textContent = fmtSec(t); $('#jbD').textContent = fmtSec(d);
+    if (J.cur() !== last) { if (last !== -1) refresh(); last = J.cur(); }
+  }, 400);
+  await p; clearInterval(tick);
+}
+
 /* ---------- settings ---------- */
 async function settingsModal() {
   let eraseArm = false;
@@ -3189,7 +3309,9 @@ async function settingsModal() {
     return `<h2>Settings</h2>
       <div class="set mode"><div style="text-align:left"><b>Difficulty</b><small>${S.set.pro ? 'Clocks on hard levels, no free re-deals after level 20, no match glow. Wins pay 50% more coins.' : 'No clocks, free re-deals when you’re stuck, matching tiles light up.'}</small></div>
         <div class="seg" role="radiogroup" aria-label="Difficulty"><button role="radio" aria-checked="${!S.set.pro}" class="${S.set.pro ? '' : 'on'}" data-mode="0">Relaxed</button><button role="radio" aria-checked="${!!S.set.pro}" class="pro ${S.set.pro ? 'on' : ''}" data-mode="1">Pro Babcia</button></div></div>
-      ${sw('sfx', 'Sound effects', 'Taps, matches and chimes')}${sw('music', 'Music', 'Soft ambient loop')}${sw('vib', 'Vibration', 'Works on devices that support it')}${sw('dim', 'Dim stuck tiles', 'Helps you spot free tiles')}${sw('nudge', 'Idle hints', 'A matching pair glows if you pause a while')}${sw('calm', 'Calm mode', 'Less shaking and fewer sparkles')}
+      <div class="set"><div style="text-align:left"><b>Jukebox</b><small>Pick a song, shuffle or repeat</small></div><button class="btn sm" id="setJuke">${ico('music')} Open</button></div>
+      ${installRow()}
+      ${sw('sfx', 'Sound effects', 'Taps, matches and chimes')}${sw('music', 'Music', 'Plays the jukebox songs')}${sw('vib', 'Vibration', 'Works on devices that support it')}${sw('dim', 'Dim stuck tiles', 'Helps you spot free tiles')}${sw('nudge', 'Idle hints', 'A matching pair glows if you pause a while')}${sw('calm', 'Calm mode', 'Less shaking and fewer sparkles')}
       ${S.met.lilah || S.met.arianna ? `<div class="set"><div style="text-align:left"><b>Map buddy</b><small>Who walks with you on the map</small></div><div class="buds">${['lilah', 'arianna'].filter(k => S.met[k]).map(k => `<button class="bud ${S.set.buddy === k ? 'on' : ''}" data-bud="${k}" aria-label="${KID[k].name}">${kidHead(k)}</button>`).join('')}</div></div>` : ''}
       <p class="legend" style="margin:12px 0 0;text-align:left">Levels cleared ${st.wins} · Pairs matched ${fmt(st.matches)} · Best combo ×${st.combo} · Tiles found ${TILES.filter(t => S.disc[t.id]).length}/${TILES.length}</p>
       <p class="legend" style="margin:8px 0 0;text-align:left">Made with love for Babcia’s grandkids, Lilah &amp; Arianna.</p>
@@ -3199,6 +3321,8 @@ async function settingsModal() {
   const p = openModal(draw(), {});
   const bind = () => {
     $$('#modal [data-sw]').forEach(b => b.onclick = () => { const k = b.dataset.sw; S.set[k] = S.set[k] ? 0 : 1; save(); Snd.init(); if (k === 'music') Snd.applyMusic(); Snd.click(); if (k === 'dim' && G.on) $('#board').classList.toggle('dim', !!S.set.dim); if (k === 'calm') $('#app').classList.toggle('calm', !!S.set.calm); if (k === 'nudge' && G.on) armIdle(); refreshSheet(); });
+    const sj = $('#setJuke'); if (sj) sj.onclick = async () => { closeModal('ok'); await sleep(250); await jukebox(); settingsModal(); };
+    const si = $('#setInstall'); if (si) si.onclick = () => installApp();
     $$('#modal [data-mode]').forEach(b => b.onclick = () => { S.set.pro = +b.dataset.mode; save(); Snd.init(); Snd.click(); if (G.on) toast('Takes effect from your next level'); refreshSheet(); });
     $$('#modal [data-bud]').forEach(b => b.onclick = () => { S.set.buddy = b.dataset.bud; save(); Snd.cheer(); refreshSheet(); });
     const er = $('#erase'); if (er) er.onclick = () => {
@@ -3267,6 +3391,7 @@ function checkDots() {
       }, 250);
     };
     $('#spGear').onclick = () => { Snd.init(); Snd.click(); settingsModal(); };
+    $('#spJuke').onclick = () => jukebox();
   })();
   $('#app').classList.toggle('calm', !!S.set.calm);
   go('map');
