@@ -115,7 +115,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 .chestnode{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;display:grid;place-items:center;font-size:52px}
 .chestnode.ready{animation:wiggle 1s ease-in-out infinite}
 @keyframes wiggle{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
-.playbar{position:absolute;left:0;right:0;bottom:78px;display:flex;justify-content:center;z-index:12;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)}
+.playbar{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;z-index:12;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)}
 .playbar .btn{pointer-events:auto}
 .mapfade{position:absolute;left:0;right:0;bottom:0;height:230px;pointer-events:none;background:linear-gradient(transparent,rgba(8,20,20,.5) 45%,rgba(8,20,20,.82));z-index:6}
 
@@ -354,6 +354,59 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 .in-pro b{color:#b8860b}
 .in-bub.done .in-pro{opacity:1}
 .sp-jb{right:auto;left:12px}
+/* ---------- Babcia's Porch ---------- */
+#nav{display:none!important}
+#home{background:#fdf3dc;color:#35260f;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.po-hero{position:relative;flex:none;height:210px;background:url(/mahjong/splash.webp) 50% 0/cover no-repeat}
+.po-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:90px;background:linear-gradient(rgba(253,243,220,0),#fdf3dc)}
+.po-hero .coinpill{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:2}
+.coinpill{background:#fff8e8!important;color:#35260f!important;box-shadow:0 2px 8px rgba(0,0,0,.25)!important;font-size:17px!important;height:40px!important;padding:0 14px 0 8px!important}
+.po-hi{position:relative;z-index:1;display:flex;align-items:flex-start;gap:14px;margin:-40px 18px 0}
+.po-hi>div{padding-top:46px}
+.po-hi img{width:80px;height:80px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 4px #fff8e8,0 0 0 7px #c4231f,0 6px 14px rgba(0,0,0,.3)}
+.po-hi b{display:block;font-size:22px;line-height:1.1;color:#b3261e}.po-hi span{font-size:17px;color:#6b4a1c}
+.po-list{display:flex;flex-direction:column;gap:12px;padding:18px 16px 0}
+.po-play,.po-btn,.po-set{display:flex;align-items:center;gap:14px;width:100%;text-align:left;color:#35260f}
+.po-tx{flex:1;min-width:0;display:flex;flex-direction:column}.po-tx b{font-size:24px;font-weight:700;line-height:1.1}.po-tx small{font-size:16px;color:#6b4a1c;margin-top:2px}
+.po-play{min-height:106px;padding:0 20px;border:3px solid #fff3da;border-radius:26px;color:#fff;background:linear-gradient(180deg,#e2403a,#b51c20);box-shadow:0 6px 0 #7c0f14,0 0 0 3px #1f4aa0,0 12px 20px rgba(0,0,0,.22)}
+.po-play .po-tx b{font-size:38px}.po-play .po-tx small{color:#fff;opacity:.95;font-size:18px}
+.po-play:active{transform:translateY(4px);box-shadow:0 2px 0 #7c0f14,0 0 0 3px #1f4aa0}
+.po-pi{width:64px;height:64px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:34px;background:rgba(255,255,255,.2)}
+.po-btn{position:relative;min-height:84px;padding:10px 16px;border-radius:22px;background:#fff8e8;box-shadow:0 0 0 2px #e4cf9f,0 4px 0 #d8bd84}
+.po-btn:active{transform:translateY(3px);box-shadow:0 0 0 2px #e4cf9f,0 1px 0 #d8bd84}
+.po-ic{width:54px;height:54px;flex:none;border-radius:15px;display:grid;place-items:center;font-size:28px;color:#fff}
+.po-ic.blue{background:#1f4aa0}.po-ic.green{background:#2e7a43}
+.po-ic .i use{color:#fff}
+.po-faces{display:flex;flex:none}.po-faces i{width:34px;height:34px;border-radius:50%;background-size:cover;box-shadow:0 0 0 2.5px #fff}.po-faces i+i{margin-left:-12px}
+.po-chev{width:12px;height:12px;flex:none;border-right:3px solid #a8743a;border-bottom:3px solid #a8743a;transform:rotate(-45deg);margin-right:6px}
+.po-badge{padding:4px 10px;border-radius:99px;background:#c4231f;color:#fff;font-size:14px;font-weight:600}
+.po-dot{width:14px;height:14px;border-radius:50%;background:#c4231f;box-shadow:0 0 0 3px #fff8e8}
+.po-set{justify-content:center;gap:10px;min-height:60px;border-radius:18px;font-size:20px;font-weight:600;color:#6b4a1c;box-shadow:inset 0 0 0 2px #e4cf9f}
+.po-set .i{font-size:24px}
+.homebtn{display:flex;align-items:center;gap:6px;height:46px;padding:0 16px 0 12px;border-radius:15px;background:#1f4aa0;color:#fff;font-size:19px;font-weight:600;box-shadow:0 4px 0 #163a80}
+.homebtn .i{font-size:22px}
+#collection .homebtn .i{transform:scaleX(-1)}
+.fm-intro{margin:0 4px 12px;font-size:16px;color:var(--muted)}
+.fm-card{display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:10px;border-radius:22px;background:var(--panel);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
+.fm-card.ready{box-shadow:inset 0 0 0 2px #ffc93a,0 0 18px rgba(255,201,58,.35)}
+.fm-face{width:66px;height:66px;flex:none;border-radius:50%;background-size:cover;box-shadow:0 0 0 3px #fff6e0,0 0 0 6px #8f7a55}
+.fm-card.have .fm-face{box-shadow:0 0 0 3px #fff6e0,0 0 0 6px #2e7a43}.fm-card.ready .fm-face{box-shadow:0 0 0 3px #fff6e0,0 0 0 6px #ffc93a}
+.fm-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.fm-tx b{font-size:21px}.fm-tx small{font-size:13px;color:var(--muted)}.fm-tx span{font-size:15px}
+.fm-tx .progress{height:8px;margin-top:4px}
+.fm-h{margin:18px 4px 10px;font-size:22px}
+.fm-set{display:grid;grid-template-columns:1fr auto;gap:6px 10px;width:100%;padding:14px;margin-bottom:10px;border-radius:18px;text-align:left;background:var(--panel);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
+.fm-sn{font-size:18px;font-weight:600}.fm-sn em{margin-left:8px;padding:2px 8px;border-radius:99px;font-style:normal;font-size:12px;background:#c4231f;color:#fff}
+.fm-sc{font-size:16px;color:var(--muted)}.fm-set .progress{grid-column:1/-1;height:8px}
+.giftcard{display:flex;align-items:center;gap:14px}.giftcard .gc-ic{font-size:52px}
+.r-btns{display:flex;flex-direction:column;gap:10px;margin-top:16px}.r-btns .btn{width:100%}
+.btn.homeb{background:linear-gradient(#3a68c2,#1f4aa0);color:#fff;box-shadow:0 5px 0 #163a80}
+.r-replay{display:block;margin:12px auto 0;padding:6px 12px;font-size:15px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.r-bonus{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:15px;background:rgba(255,200,60,.14)}
+.r-bonus .i{font-size:28px;flex:none}
+.peek.win{position:relative;left:auto;top:auto;bottom:auto;width:56px;margin:-8px auto 4px}
+.peek.win .khead{width:56px;height:56px}
+.peek.win span{left:62px;top:16px}
+
 #updateNow{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:rgba(10,20,20,.45);backdrop-filter:blur(14px) saturate(.8);-webkit-backdrop-filter:blur(14px) saturate(.8);animation:fade .3s}
 .up-card{width:min(420px,100%);padding:30px 22px 24px;border-radius:30px;text-align:center;background:#fff8e8;color:#35260f;box-shadow:0 0 0 4px #1f4aa0,0 0 0 8px #fff3da,0 24px 60px rgba(0,0,0,.5);animation:inBub .5s cubic-bezier(.3,1.5,.5,1) both}
 .up-face{display:block;width:110px;height:110px;margin:-86px auto 10px;border-radius:50%;background:url(/mahjong/apple-touch-icon.png) center/cover;box-shadow:0 0 0 5px #fff,0 0 0 9px #d22b2b,0 8px 18px rgba(0,0,0,.35)}
@@ -725,13 +778,31 @@ svg.i{width:1em;height:1em;display:block;flex:none}
   <canvas id="fx"></canvas>
 
   <!-- MAP -->
+  <!-- HOME: Babcia's Porch -->
+  <section id="home" class="screen">
+    <div class="po-hero"><button class="pill coinpill" data-go="shop" aria-label="Shop"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span>&nbsp;coins</button></div>
+    <div class="po-hi"><img src="/mahjong/apple-touch-icon.png" alt="Babcia"><div><b id="poHello">Dzień dobry, kochanie!</b><span>What would you like to do?</span></div></div>
+    <div class="po-list">
+      <button class="po-play" id="poPlay"><span class="po-pi"><svg class="i"><use href="#i-play"/></svg></span><span class="po-tx"><b>Play</b><small id="poPlaySub">Level 1</small></span></button>
+      <button class="po-btn" data-go="family" id="poFam"><span class="po-faces" id="poFaces"></span><span class="po-tx"><b>Family &amp; Tiles</b><small id="poFamSub"></small></span><span class="po-dot" id="poFamDot" hidden></span><span class="po-chev"></span></button>
+      <button class="po-btn" id="poJuke"><span class="po-ic blue"><svg class="i"><use href="#i-music"/></svg></span><span class="po-tx"><b>Jukebox</b><small id="poJukeSub">Tap to listen</small></span><span class="po-chev"></span></button>
+      <button class="po-btn" data-go="daily" id="poDaily"><span class="po-ic green"><svg class="i"><use href="#i-gift"/></svg></span><span class="po-tx"><b>Daily Gift</b><small id="poDailySub"></small></span><span class="po-badge" id="poDailyBadge" hidden>Ready</span><span class="po-chev"></span></button>
+      <button class="po-set" id="poSet"><svg class="i"><use href="#i-gear"/></svg>Settings</button>
+    </div>
+  </section>
+
+  <!-- FAMILY & TILES -->
+  <section id="family" class="screen page">
+    <div class="topbar"><button class="homebtn" data-go="home"><svg class="i"><use href="#i-home"/></svg>Home</button><div class="sp"></div><button class="pill coinpill" data-go="shop" aria-label="Shop"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span>&nbsp;coins</button></div>
+    <div class="screen-title">Family &amp; Tiles</div>
+    <div class="scroll" id="famBody"></div>
+  </section>
+
   <section id="map" class="screen">
     <div class="topbar">
-      <div class="pill hearts" id="mHearts"><svg class="i"><use href="#i-heart"/></svg><span id="mHeartN">5</span><span class="tm" id="mHeartT"></span></div>
+      <button class="homebtn" data-go="home"><svg class="i"><use href="#i-home"/></svg>Home</button>
       <div class="sp"></div>
-      <button class="pill plus" id="mCoinsBtn"><svg class="i"><use href="#i-coin"/></svg><span id="mCoins">0</span><span class="plusb"><svg class="i"><use href="#i-plus"/></svg></span></button>
-      <div class="pill"><svg class="i"><use href="#i-star"/></svg><span id="mStars">0</span></div>
-      <button class="icon-btn" id="mSettings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
+      <button class="pill coinpill" id="mCoinsBtn"><svg class="i"><use href="#i-coin"/></svg><span id="mCoins">0</span>&nbsp;coins</button>
     </div>
     <div class="scroll" id="mapScroll"></div>
     <div class="amb" id="amb" aria-hidden="true"></div>
@@ -741,23 +812,23 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 
   <!-- COLLECTION -->
   <section id="collection" class="screen page">
-    <div class="topbar"><div class="sp"></div><button class="pill plus" data-go="shop"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span><span class="plusb"><svg class="i"><use href="#i-plus"/></svg></span></button></div>
-    <div class="screen-title">Tile Collection</div>
+    <div class="topbar"><button class="homebtn" data-go="family"><svg class="i"><use href="#i-play"/></svg>Back</button><div class="sp"></div><button class="pill coinpill" data-go="shop" aria-label="Shop"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span>&nbsp;coins</button></div>
+    <div class="screen-title">Tiles you’ve found</div>
     <div class="tabs" id="colTabs"></div>
     <div class="scroll" id="colBody"></div>
   </section>
 
   <!-- DAILY -->
   <section id="daily" class="screen page">
-    <div class="topbar"><div class="sp"></div><button class="pill plus" data-go="shop"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span><span class="plusb"><svg class="i"><use href="#i-plus"/></svg></span></button></div>
-    <div class="screen-title">Daily</div>
+    <div class="topbar"><button class="homebtn" data-go="home"><svg class="i"><use href="#i-home"/></svg>Home</button><div class="sp"></div><button class="pill coinpill" data-go="shop" aria-label="Shop"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span>&nbsp;coins</button></div>
+    <div class="screen-title">Daily Gift</div>
     <div class="scroll" id="dailyBody"></div>
   </section>
 
   <!-- SHOP -->
   <section id="shop" class="screen page">
-    <div class="topbar"><div class="sp"></div><div class="pill"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span></div></div>
-    <div class="screen-title">Shop</div>
+    <div class="topbar"><button class="homebtn" data-go="home"><svg class="i"><use href="#i-home"/></svg>Home</button><div class="sp"></div><div class="pill coinpill"><svg class="i"><use href="#i-coin"/></svg><span class="cCoins">0</span>&nbsp;coins</div></div>
+    <div class="screen-title">Helper Shop</div>
     <div class="scroll" id="shopBody"></div>
   </section>
 
@@ -779,12 +850,6 @@ svg.i{width:1em;height:1em;display:block;flex:none}
     <div id="praise"></div>
   </section>
 
-  <nav id="nav">
-    <button data-go="map" class="on"><svg class="i"><use href="#i-map"/></svg>Map</button>
-    <button data-go="collection"><svg class="i"><use href="#i-book"/></svg>Tiles<span class="dot" id="dotCol" hidden></span></button>
-    <button data-go="daily"><svg class="i"><use href="#i-cal"/></svg>Daily<span class="dot" id="dotDaily" hidden></span></button>
-    <button data-go="shop"><svg class="i"><use href="#i-bag"/></svg>Shop<span class="dot" id="dotShop" hidden></span></button>
-  </nav>
 
   <div id="modal"></div>
 
@@ -1503,7 +1568,7 @@ async function buyFam(f) {
   if (!canBuy(f)) return false;
   S.coins -= f.cost; S[f.flag] = 1; save(); Snd.coin(); Snd.unlock(); updateCoins(); FX.confetti(60);
   await charHello(Object.assign({ img: f.img }, f.hello));
-  colTab = f.k; if (curScreen === 'shop') renderShop(); if (curScreen === 'map') renderMap(); checkDots();
+  colTab = f.k; if (curScreen === 'family') renderFamily(); if (curScreen === 'home') renderHome(); if (curScreen === 'map') renderMap(); checkDots();
   return true;
 }
 // the next family set as a progress bar (win screen) or a chip (map)
@@ -1523,7 +1588,7 @@ function coach(target, o) {
     const el = document.createElement('div'); el.className = 'coach';
     const below = r.top - app.top < app.height * .5;
     el.innerHTML = `<div class="ch-hole" style="left:${r.left - app.left - pad}px;top:${r.top - app.top - pad}px;width:${r.width + pad * 2}px;height:${r.height + pad * 2}px"></div>
-      <div class="ch-hand" style="left:${r.left - app.left + r.width / 2 - 14}px;top:${below ? r.bottom - app.top + 6 : r.top - app.top - 56}px">${'\u{1F446}'}</div>
+      <div class="ch-hand" style="left:${r.left - app.left + Math.min(r.width / 2, 120) - 14}px;top:${r.top - app.top + r.height / 2 - 6}px">${'\u{1F446}'}</div>
       <div class="ch-bub ${below ? 'low' : 'high'}"><i class="ch-face ${o.cls || ''}" style="${o.cls ? '' : `background-image:url(${o.img})`}"></i><div><b>${o.name}</b><p>${o.text}</p>
         <div class="ch-row"><button class="btn green sm" data-ch="go">${o.go || 'Show me'}</button><button class="btn ghost sm" data-ch="later">Later</button></div></div></div>`;
     $('#app').appendChild(el); Snd.hint();
@@ -1533,24 +1598,27 @@ function coach(target, o) {
   });
 }
 // guided moments after clearing certain levels for the first time
-async function mapCoach(n) {
-  if (curScreen !== 'map') return;
-  if (n === 5 && !S.tips['coach:shop']) {
-    S.tips['coach:shop'] = 1; if (Date.now() < S.gift) S.gift = Date.now(); save(); checkDots();
-    const c = await coach($('#nav [data-go=shop]'), { img: '/mahjong/apple-touch-icon.png', name: 'Babcia', go: 'Open the Shop',
-      text: 'Kochanie, my shop is open! Tap here any time to spend your coins. I left a free gift for you inside.' });
+// one-time guided moments, shown when the player arrives on the Porch
+async function porchCoach() {
+  const sp = $('#splash'), intro = $('#intro');
+  if ((sp && sp.style.display !== 'none') || (intro && intro.classList.contains('on'))) { setTimeout(porchCoach, 800); return; }
+  if (curScreen !== 'home' || $('#modal').classList.contains('on') || $('.coach')) return;
+  if (S.level > 5 && !S.tips['coach:shop']) {
+    S.tips['coach:shop'] = 1; if (Date.now() < S.gift) S.gift = Date.now(); save(); renderHome();
+    const c = await coach($('#poDaily'), { img: '/mahjong/apple-touch-icon.png', name: 'Babcia', go: 'Open my gift',
+      text: 'Kochanie, I leave you a little gift every few hours. Tap <b>Daily Gift</b> to open it.' });
     if (c !== 'go') return;
-    go('shop'); await sleep(350);
-    await coach($('#giftBtn'), { img: '/mahjong/apple-touch-icon.png', name: 'Babcia', go: 'Got it', text: 'Tap <b>Open</b> to collect it. A new gift waits here every few hours.' });
+    go('daily'); await sleep(350);
+    await coach($('#giftBtn'), { img: '/mahjong/apple-touch-icon.png', name: 'Babcia', go: 'Got it', text: 'Tap <b>Open</b> to collect it.' });
     return;
   }
-  const f = FAM.find(x => x.from - 1 === n && !owns(x));
-  if (f && !S.tips['coach:' + f.k]) {
+  const f = FAM.find(x => S.level >= x.from && !owns(x) && !S.tips['coach:' + x.k]);
+  if (f) {
     S.tips['coach:' + f.k] = 1; save();
     const who = f.hello.title.replace(/^.*I’m |[.!]$/g, '');
-    const c = await coach($('#mapGoal .goal') || $('#nav [data-go=shop]'), { cls: 'ty-' + f.star, name: who, go: 'Take a look',
-      text: canBuy(f) ? `You have enough coins! Unlock ${f.name} and my tiles join your boards.` : `Save up ${fmt(f.cost)} coins and I’ll bring ${f.name.replace(/^.*’s /, 'my ')} to your boards. Find me in the Shop.` });
-    if (c === 'go') { go('shop'); }
+    const c = await coach($('#poFam'), { cls: 'ty-' + f.star, name: who, go: 'Take a look',
+      text: canBuy(f) ? `You have enough coins! Unlock ${f.name} in Family &amp; Tiles and my tiles join your boards.` : `Save up ${fmt(f.cost)} coins and I’ll bring ${f.name.replace(/^.*’s /, 'my ')} to your boards. I’m waiting in Family &amp; Tiles.` });
+    if (c === 'go') go('family');
   }
 }
 const BY = {}; TILES.forEach(t => (BY[t.s] = BY[t.s] || []).push(t.id));
@@ -1668,7 +1736,8 @@ function tickHearts() {
   while (S.hearts < 5 && S.heartT && now >= S.heartT) { S.hearts++; S.heartT = S.hearts < 5 ? S.heartT + HEART_MS : 0; }
   if (S.hearts >= 5) { S.hearts = 5; S.heartT = 0; }
 }
-function loseHeart() {
+function loseHeart() { return;   // hearts were removed: play as much as you like
+
   tickHearts();
   if (S.hearts > 0) { S.hearts--; if (!S.heartT) S.heartT = Date.now() + HEART_MS; save(); }
 }
@@ -2089,7 +2158,6 @@ async function playLevel(n, opts) {
   opts = opts || {};
   tickHearts();
   if (!opts.daily && S.run && !S.run.daily && S.run.n === n) { await startLevel(n, E.levelSpec(n), { resume: true }); toast('Picking up where you left off'); return; }
-  if (!opts.daily && n > 3 && S.hearts <= 0) { await noHeartsModal(); return; }
   const spec = opts.daily ? dailySpec() : E.levelSpec(n);
   if (!opts.daily) {
     await meetKids(n);
@@ -2143,7 +2211,7 @@ async function startLevel(n, spec, opts) {
     win: Math.max(2600, 4300 - n * 9), ctimer: 0, matches: 0, gold: 0, melted: 0, coins: 0, used: {}, newTiles: [],
     freeShuf: opts.daily ? spec.shuffles : S.set.pro && spec.shuffles !== undefined ? spec.shuffles : 99, timed: !!spec.time, timeLeft: spec.time || 0, elapsed: 0,
     paused: false, running: true, busy: false, fever: false, starsOn: 0, tut: null, checking: false, hintEls: [], tim: 0, last: 0,
-    heart: !opts.daily && n > 3, startedAt: Date.now(), praiseAt: 0, buff: {}, cheerAt: 0,
+    heart: false, startedAt: Date.now(), praiseAt: 0, buff: {}, cheerAt: 0,
   };
   if (run) { Object.assign(G, { score: run.score, matches: run.matches, elapsed: run.elapsed, freeShuf: run.freeShuf, best: run.best, coins: run.coins, melted: run.melted, newTiles: run.newTiles || [], used: run.used || {} }); if (G.timed) G.timeLeft = run.timeLeft; }
   { const bf = $('#buff'); bf.classList.remove('on'); bf.innerHTML = kidHead('lilah') + '<b></b>'; $('#app').classList.remove('giggling'); $$('.cameo,.cheer,.bfly').forEach(e => e.remove()); }
@@ -2182,7 +2250,7 @@ async function resumeRun() {
   const r = S.run; if (!r || (r.daily && r.day !== dayNum())) { S.run = null; save(); return false; }
   const left = r.alive.split('').filter(c => c === '1').length;
   const c = await kidScene('arianna', 'Welcome back', r.daily ? 'Daily Challenge' : 'Level ' + r.n, `You left a board half-finished with <b>${left} tiles</b> to go. Want to keep going?`,
-    `<div class="stack" style="margin-top:12px"><button class="btn green big" data-close="resume">${ico('play')}Resume</button><button class="btn ghost" data-close="fresh">Start over (no heart lost)</button></div>`);
+    `<div class="stack" style="margin-top:12px"><button class="btn green big" data-close="resume">${ico('play')}Resume</button><button class="btn ghost" data-close="fresh">Start over</button></div>`);
   if (c === 'resume') { const spec = r.daily ? dailySpec() : E.levelSpec(r.n); await startLevel(r.n, spec, { daily: r.daily, resume: true }); return true; }
   S.run = null; save(); return false;
 }
@@ -2602,7 +2670,7 @@ async function pauseGame() {
     <button class="btn ghost" data-close="restart">Restart</button>
     ${G.daily ? '' : `<button class="btn ghost" data-close="shop">${ico('bag')} Shop</button>`}
     <button class="btn ghost" data-close="settings">Settings</button>
-    <button class="btn ghost" data-close="quit">${G.heart ? 'Quit (lose a heart)' : 'Quit'}</button></div>`);
+    <button class="btn ghost" data-close="quit">${ico('home')} Home</button></div>`);
   if (r === 'settings') { G.paused = false; await settingsModal(); return pauseGame(); }
   if (r === 'shop') { G.paused = false; leaveToShop(); return; }
   if (r === 'restart') { G.paused = false; if (G.heart) loseHeart(); G.on = false; clearTimeout(G.ctimer); const n = G.n, sp = G.spec, d = G.daily; if (G.heart && S.hearts <= 0) { go('map'); return; } startLevel(n, sp, { daily: d }); return; }
@@ -2623,7 +2691,7 @@ $('#gCoinsBtn').onclick = async () => {
   G.paused = false; G.last = performance.now();
   if (r === 'shop') leaveToShop();
 };
-function leaveGame() { S.run = null; save(); G.on = false; G.running = false; clearTimeout(G.idleT); clearInterval(G.tim); clearTimeout(G.ctimer); $('#app').classList.remove('fever'); go('map'); }
+function leaveGame() { S.run = null; save(); G.on = false; G.running = false; clearTimeout(G.idleT); clearInterval(G.tim); clearTimeout(G.ctimer); $('#app').classList.remove('fever'); go('home'); }
 
 /* ---------- tips & tutorial ---------- */
 function tip(html, ms) {
@@ -2711,6 +2779,10 @@ async function winLevel() {
 
 async function resultModal(r) {
   const n = G.n;
+  // small chests open right here instead of as separate pop-ups
+  const bonus = [];
+  if (r.starChest) bonus.push(['Star Chest', applyReward(genChest(1))]);
+  if (r.streakChest) bonus.push(['Streak Chest', applyReward(genChest(1.5))]);
   const rows = [
     `<div class="r"><span>Level clear</span><b>+${r.base}</b></div>`,
     `<div class="r"><span>Stars</span><b>+${r.starC}</b></div>`,
@@ -2729,8 +2801,9 @@ async function resultModal(r) {
     ${nt}
     ${r.daily ? '' : `<div style="margin-top:10px;text-align:left;font-size:13px;color:var(--muted);display:flex;justify-content:space-between"><span>${ico('chest')} Star Chest</span><span>${S.chest}/20</span></div><div class="progress gold"><i id="rChest" style="width:0"></i></div>`}
     ${r.daily ? '' : goalHtml()}
-    <div class="row"><button class="btn green big" id="rMap">Continue</button></div>
-    <div class="row" style="margin-top:8px">${r.daily ? '' : `<button class="btn ghost sm" id="rReplay">Replay</button>`}</div>`;
+    ${bonus.map(b => `<div class="r-bonus">${ico('chest')}<span><b>${b[0]} opened!</b> ${b[1].map(p => p.n + ' ' + p.l.toLowerCase()).join(' · ')}</span></div>`).join('')}
+    <div class="r-btns">${r.daily ? '' : `<button class="btn green big" id="rNext">Next level</button>`}<button class="btn big homeb" id="rMap">${r.daily ? 'Continue' : `${ico('home')} Home`}</button></div>
+    ${r.daily ? '' : `<button class="r-replay" id="rReplay">Replay this level</button>`}`;
   const p = openModal(html, {});
   // sequenced reveal: stars, coin count-up, chest bar
   const sfx = [];
@@ -2750,15 +2823,13 @@ async function resultModal(r) {
   G.on = false; updateCoins();
   // follow-ups, in order
   if (r.hard || r.daily) await wheelModal();
-  if (r.starChest) await chestModal('star');
   if (r.regionDone) await chestModal('region');
-  if (r.streakChest) await chestModal('streak');
   if (r.daily) await chestModal('daily');
   updateCoins(); checkDots();
   if (choice === 'next' && !r.daily) { playLevel(S.level > n ? (n + 1) : n); }
   else if (choice === 'replay') { playLevel(n); }
-  else if (choice === 'goal') { go('shop'); const f = nextFam(); if (f && canBuy(f)) await buyFam(f); }
-  else { if (r.firstClear) ARRIVE = n; go('map'); if (r.firstClear) { await sleep(1900); await mapCoach(n); } }
+  else if (choice === 'goal') { go('family'); const f = nextFam(); if (f && canBuy(f)) await buyFam(f); }
+  else go('home');
 }
 
 /* ---------- fail ---------- */
@@ -2769,7 +2840,7 @@ async function failModal(reason) {
     <p class="sub">${G.board.aliveCount} tiles to go${reason === 'time' ? '. A little more time could save this run.' : '. A shuffle will re-deal what\'s left.'}</p>
     <div class="stack">
       <button class="btn green big" data-close="revive" ${can ? '' : 'disabled'}>${reason === 'time' ? '+30 seconds' : 'Shuffle'} · ${ico('coin')}${cost}</button>
-      <button class="btn ghost" data-close="giveup">${G.heart ? 'Give up (lose a heart)' : 'Give up'}</button>
+      <button class="btn ghost" data-close="giveup">${ico('home')} Go home</button>
     </div>${can ? '' : `<p class="sub" style="margin-top:10px">Not enough coins. Win levels to earn more.</p>`}`);
   if (r === 'revive') {
     S.coins -= cost; save(); updateCoins(); G.paused = false; G.running = true; G.last = performance.now();
@@ -2807,16 +2878,18 @@ function charHello(o) {
 }
 
 /* ===== ui: navigation, map, collection, daily, shop, modals ===== */
-const SCREENS = ['map', 'collection', 'daily', 'shop', 'game'];
-let curScreen = 'map';
+const SCREENS = ['home', 'family', 'map', 'collection', 'daily', 'shop', 'game'];
+let curScreen = 'home';
 function regionFor(n) { return E.regionOf(n).primary; }
 function go(name) {
   curScreen = name;
   SCREENS.forEach(s => $('#' + s).classList.toggle('on', s === name));
-  $('#nav').classList.toggle('on', name !== 'game');
-  $('#app').classList.toggle('ingame', name === 'game'); $('#app').classList.toggle('pagey', name === 'collection' || name === 'daily' || name === 'shop');
-  $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.go === name));
+
+  $('#app').classList.toggle('ingame', name === 'game'); $('#app').classList.toggle('pagey', name === 'collection' || name === 'daily' || name === 'shop' || name === 'family');
+  $('#app').classList.toggle('porch', name === 'home');
   if (name !== 'game') setBg(regionFor(S.level));
+  if (name === 'home') renderHome();
+  if (name === 'family') renderFamily();
   if (name === 'map') renderMap();
   if (name === 'collection') renderCollection();
   if (name === 'daily') renderDaily();
@@ -2830,16 +2903,8 @@ document.addEventListener('pointerdown', () => Snd.init(), { once: true });
 
 function updateCoins() {
   $$('#mCoins,#gCoins,.cCoins').forEach(e => e.textContent = fmt(S.coins));
-  $('#mStars').textContent = fmt(S.totalStars);
-  updateHearts();
 }
-function updateHearts() {
-  tickHearts();
-  $('#mHeartN').textContent = S.hearts;
-  const t = $('#mHeartT');
-  if (S.hearts < 5 && S.heartT) { const s = Math.max(0, Math.ceil((S.heartT - Date.now()) / 1000)); t.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); } else t.textContent = S.hearts >= 5 ? 'Full' : '';
-}
-setInterval(() => { if (curScreen === 'map') updateHearts(); if (curScreen === 'shop') shopTimers(); }, 1000);
+setInterval(() => { if (curScreen === 'daily') shopTimers(); if (curScreen === 'home') homeGiftLine(); }, 1000);
 
 /* ---------- map ---------- */
 const ROW = 98;
@@ -2853,9 +2918,9 @@ function renderMap() {
   const ck = levelKind(cur);
   $('#mapPlay').innerHTML = `${ico('play')} Level ${cur}${ck === 'hard' ? '<span class="mp-tag">Hard</span>' : ck === 'super' ? '<span class="mp-tag super">Super hard</span>' : ''}`;
   $('#mapGoal').innerHTML = S.level > 5 ? goalHtml(true) : '';
-  const mg = $('#mapGoal [data-goal]'); if (mg) mg.onclick = async () => { Snd.click(); const f = nextFam(); go('shop'); if (f && canBuy(f)) await buyFam(f); };
+  const mg = $('#mapGoal [data-goal]'); if (mg) mg.onclick = async () => { Snd.click(); const f = nextFam(); go('family'); if (f && canBuy(f)) await buyFam(f); };
   sc.onclick = e => {
-    if (e.target.closest('[data-fam-go]')) { Snd.click(); go('shop'); return; }
+    if (e.target.closest('[data-fam-go]')) { Snd.click(); go('family'); return; }
     const nd = e.target.closest('.node'); if (!nd) return;
     const n = +nd.dataset.n; Snd.init(); Snd.click();
     if (n <= S.level) playLevel(n); else toast('Clear level ' + S.level + ' first');
@@ -2918,7 +2983,6 @@ function regionHtml(r, W) {
       ${nodes}</div></div>`;
 }
 $('#mapPlay').onclick = () => { Snd.init(); Snd.click(); playLevel(S.level); };
-$('#mSettings').onclick = () => { Snd.click(); settingsModal(); };
 $('#mCoinsBtn').onclick = () => { Snd.click(); go('shop'); };
 
 /* ---------- collection ---------- */
@@ -2966,7 +3030,7 @@ function applyReward(r) {
   const out = [];
   if (r.c) { S.coins += r.c; out.push({ ic: 'coin', n: '+' + r.c, l: 'Coins' }); }
   if (r.b) for (const k in r.b) { S.boost[k] += r.b[k]; S.unlocked[k] = S.unlocked[k] || 0; out.push({ ic: BOOST[k].ic, n: '×' + r.b[k], l: BOOST[k].n }); }
-  if (r.h) { S.hearts = Math.min(5, S.hearts + r.h); if (S.hearts >= 5) S.heartT = 0; out.push({ ic: 'heart', n: '+' + r.h, l: 'Heart' }); }
+  if (r.h) { S.coins += 30 * r.h; out.push({ ic: 'coin', n: '+' + 30 * r.h, l: 'Coins' }); }
   save(); return out;
 }
 function prizeHtml(list) { return `<div class="prizes">${list.map((p, i) => `<div class="prize" style="animation-delay:${i * .12}s">${ico(p.ic)}<b>${p.n}</b><span>${p.l}</span></div>`).join('')}</div>`; }
@@ -2982,7 +3046,6 @@ function genChest(tier) {
   const r = { c: coins, b: {} };
   const nb = tier >= 2 ? 2 : Math.random() < .55 ? 1 : 0;
   for (let i = 0; i < nb; i++) { const k = rpick(pool); r.b[k] = (r.b[k] || 0) + (tier >= 2 ? 2 : 1); }
-  if (Math.random() < (tier >= 2 ? .5 : .22)) r.h = 1;
   if (!Object.keys(r.b).length) delete r.b;
   return r;
 }
@@ -3057,7 +3120,7 @@ const WS = [
   { lab: '+50', ic: 'coin', c: 50, w: 20, col: '#ff9a4a' }, { lab: '+150', ic: 'coin', c: 150, w: 12, col: '#3fa9f5' },
   { lab: 'Hint ×2', ic: 'bulb', b: { hint: 2 }, w: 12, col: '#58c96a' }, { lab: '+75', ic: 'coin', c: 75, w: 18, col: '#a77bf5' },
   { lab: 'Shuffle ×2', ic: 'shuffle', b: { shuffle: 2 }, w: 10, col: '#ff5468' }, { lab: '+300', ic: 'coin', c: 300, w: 4, col: '#f2b100' },
-  { lab: 'Heart', ic: 'heart', h: 1, w: 8, col: '#ff6fa0' }, { lab: '+100', ic: 'coin', c: 100, w: 16, col: '#2fb09a' },
+  { lab: '+75', ic: 'coin', c: 75, w: 8, col: '#ff6fa0' }, { lab: '+100', ic: 'coin', c: 100, w: 16, col: '#2fb09a' },
 ];
 async function wheelModal() {
   const bg = `conic-gradient(${WS.map((s, i) => `${s.col} ${i * 45}deg ${(i + 1) * 45}deg`).join(',')})`;
@@ -3112,7 +3175,6 @@ async function meetKids(n) {
 }
 async function welcomeBack(hours) {
   const coins = 30 + Math.min(24, Math.floor(hours)) * 6, r = { c: coins };
-  if (S.hearts < 5) r.h = 5 - S.hearts;
   const pool = BKEYS.filter(k => S.unlocked[k]); if (pool.length && Math.random() < .6) r.b = { [rpick(pool)]: 1 };
   const list = applyReward(r);
   FX.confetti(50);
@@ -3190,13 +3252,15 @@ function renderDaily() {
     return `<div class="quest"><div class="tx"><b>${q.t}</b><div class="progress"><i style="width:${q.p / q.g * 100}%"></i></div></div>
       ${q.c ? `<span class="legend">Done</span>` : ready ? `<button class="btn green sm" data-q="${i}">${ico('coin')}${q.r}</button>` : `<span class="legend" style="min-width:48px;text-align:right">${q.p}/${q.g}</span>`}</div>`;
   }).join('');
-  const chDone = D.chDay === t;
+  const chDone = D.chDay === t, gReady = Date.now() >= S.gift;
   $('#dailyBody').innerHTML = `
+    <div class="card giftcard"><div class="gc-ic">${ico('gift')}</div><div style="flex:1;min-width:0"><h3>A gift from Babcia</h3><p id="giftT">${gReady ? 'Ready to open!' : ''}</p></div>
+      <button class="btn ${gReady ? 'green' : 'ghost'}" id="giftBtn" ${gReady ? '' : 'disabled'}>Open</button></div>
     <div class="card"><h3>Daily reward</h3><p>${claimed ? 'Claimed today. Come back tomorrow to keep the streak.' : 'Log in every day. Day 7 has a chest.'}</p>
       <div class="days">${days}</div>
       <button class="btn ${claimed ? 'ghost' : 'green'}" id="dClaim" ${claimed ? 'disabled' : ''} style="width:100%">${claimed ? 'Claimed' : 'Claim day ' + (next + 1)}</button></div>
     <div class="card"><h3>Daily quests</h3><p style="margin-bottom:4px">New ones every day</p>${qs}</div>
-    <div class="card"><h3>Daily challenge</h3><p>A fresh board for everyone today: ice, mystery tiles and gold. No hearts needed.</p>
+    <div class="card"><h3>Daily challenge</h3><p>A fresh board for everyone today, with ice, mystery tiles and gold.</p>
       <div class="row" style="display:flex;gap:10px;margin-top:12px"><button class="btn ${chDone ? 'ghost' : 'green'}" id="dChal" style="flex:1">${chDone ? 'Play again' : 'Play challenge'}</button></div>
       ${chDone ? `<p style="margin-top:8px">${ico('check')} Reward claimed today.</p>` : `<p style="margin-top:8px">Win for a chest and +40 coins.</p>`}</div>`;
   const cl = $('#dClaim'); if (cl && !claimed) cl.onclick = async () => {
@@ -3210,6 +3274,13 @@ function renderDaily() {
     await rewardModal('Quest done', q.t, applyReward({ c: q.r })); renderDaily(); updateCoins(); checkDots();
   });
   $('#dChal').onclick = () => { Snd.init(); Snd.click(); playLevel(0, { daily: true }); };
+  const g = $('#giftBtn'); if (g) g.onclick = async () => {
+    if (Date.now() < S.gift) return; S.gift = Date.now() + GIFT_MS; save();
+    const pool = BKEYS.filter(k => S.unlocked[k]); const r = { c: Math.round(rr(40, 120) / 5) * 5 };
+    if (pool.length && Math.random() < .5) r.b = { [rpick(pool)]: 1 };
+    await rewardModal('A gift from Babcia!', 'Come back in 3 hours for another', applyReward(r)); renderDaily(); updateCoins(); checkDots();
+  };
+  shopTimers();
 }
 
 /* ---------- shop ---------- */
@@ -3218,38 +3289,18 @@ const PACKS = [
   { k: 'giggle', n: 2, cost: 130 }, { k: 'flutter', n: 2, cost: 190 },
 ];
 function renderShop() {
-  tickHearts();
-  const ready = Date.now() >= S.gift;
   const items = PACKS.map((p, i) => {
     const B = BOOST[p.k], lock = !S.unlocked[p.k] && S.level < B.unlock;
     return `<div class="item"><div class="ic">${ico(B.ic)}</div><b>${B.n} ×${p.n}</b><small>${lock ? 'Unlocks at level ' + B.unlock : 'You have ' + S.boost[p.k]}</small>
       <button class="btn sm" data-pack="${i}" ${lock || S.coins < p.cost ? 'disabled' : ''}>${ico('coin')}${p.cost}</button></div>`;
   }).join('');
   $('#shopBody').innerHTML = `
-    <div class="card" style="display:flex;align-items:center;gap:14px"><div style="font-size:52px">${ico('gift')}</div><div style="flex:1;min-width:0"><h3>Free gift</h3><p id="giftT">${ready ? 'Ready to open!' : ''}</p></div>
-      <button class="btn ${ready ? 'green' : 'ghost'} sm" id="giftBtn" ${ready ? '' : 'disabled'}>Open</button></div>
-    ${FAM.map((f, i) => owns(f) ? '' : `<div class="card dzcard fam-${f.k}"><div class="dzt ty-${f.star}"></div><div style="flex:1;min-width:0;text-align:left"><h3>${f.name}</h3>
-      <p>${S.level < f.from ? 'Unlocks after level ' + (f.from - 1) + '. ' + f.wait : f.blurb}</p></div>
-      <button class="btn green sm" data-fam="${i}" ${S.level < f.from || S.coins < f.cost ? 'disabled' : ''}>${ico('coin')}${fmt(f.cost)}</button></div>`).join('')}
-    <div class="shopgrid">${items}
-      <div class="item" style="grid-column:1/-1;flex-direction:row;justify-content:space-between;padding:12px 16px"><div style="display:flex;align-items:center;gap:12px;font-size:40px">${ico('heart')}<div style="text-align:left"><b>Refill hearts</b><br><small>${S.hearts}/5 now</small></div></div>
-      <button class="btn sm" data-hearts style="width:auto;padding:0 18px" ${S.hearts >= 5 || S.coins < 100 ? 'disabled' : ''}>${ico('coin')}100</button></div></div>
-    <p class="legend" style="text-align:center;margin-top:14px">Everything here is bought with coins you earn by playing. Nothing costs real money.</p>`;
+    <p class="legend" style="margin:0 2px 12px">Helpers for tricky boards. Everything is bought with coins you earn by playing. Nothing costs real money.</p>
+    <div class="shopgrid">${items}</div>`;
   $$('#shopBody [data-pack]').forEach(b => b.onclick = () => {
     const p = PACKS[+b.dataset.pack]; if (S.coins < p.cost) return;
     S.coins -= p.cost; S.boost[p.k] += p.n; save(); Snd.coin(); Snd.unlock(); updateCoins(); renderShop(); toast(`${BOOST[p.k].n} ×${p.n} added`);
   });
-  const h = $('#shopBody [data-hearts]'); if (h) h.onclick = () => { if (S.coins < 100 || S.hearts >= 5) return; S.coins -= 100; S.hearts = 5; S.heartT = 0; save(); Snd.unlock(); updateCoins(); renderShop(); };
-  $$('#shopBody [data-fam]').forEach(b => b.onclick = async () => {
-    await buyFam(FAM[+b.dataset.fam]);
-  });
-  const g = $('#giftBtn'); if (g) g.onclick = async () => {
-    if (Date.now() < S.gift) return; S.gift = Date.now() + GIFT_MS; save();
-    const pool = BKEYS.filter(k => S.unlocked[k]); const r = { c: Math.round(rr(40, 120) / 5) * 5 };
-    if (pool.length && Math.random() < .5) r.b = { [rpick(pool)]: 1 };
-    await rewardModal('Free gift!', 'Come back in 3 hours for another', applyReward(r)); renderShop(); updateCoins(); checkDots();
-  };
-  shopTimers();
 }
 function shopTimers() {
   const el = $('#giftT'), b = $('#giftBtn'); if (!el) return;
@@ -3259,6 +3310,53 @@ function shopTimers() {
 }
 
 
+
+
+/* ---------- Babcia's Porch (home) ---------- */
+function homeGiftLine() {
+  const el = $('#poDailySub'); if (!el) return;
+  const ready = Date.now() >= S.gift; ensureDaily();
+  const dayOpen = S.daily.last !== today();
+  $('#poDailyBadge').hidden = !(ready || dayOpen);
+  if (ready || dayOpen) { el.textContent = 'A gift is waiting for you'; return; }
+  const s = Math.ceil((S.gift - Date.now()) / 1000);
+  el.textContent = 'Next gift in ' + (s >= 3600 ? Math.floor(s / 3600) + ' h ' + Math.floor(s % 3600 / 60) + ' min' : Math.max(1, Math.floor(s / 60)) + ' min');
+}
+function renderHome() {
+  const n = S.level, fv = famVisitSpec(n), place = fv.region ? fv.region.name : E.regionOf(n).name;
+  $('#poPlaySub').textContent = `Level ${n} · ${place}`;
+  const f = nextFam();
+  $('#poFaces').innerHTML = FAM.slice(0, 2).map(x => `<i class="ty-${x.star}"></i>`).join('');
+  $('#poFamSub').textContent = !f ? 'The whole family has joined!' : canBuy(f) ? `${f.name.split('’')[0]} is ready to join!` : S.level < f.from ? `${f.name.split('’')[0]} joins after level ${f.from - 1}` : `${f.name.split('’')[0]}: ${fmt(S.coins)} of ${fmt(f.cost)} coins`;
+  const J = Snd.jb, L = J.list();
+  $('#poJukeSub').textContent = J.playing() && L[J.cur()] ? 'Playing: ' + L[J.cur()].n : 'Tap to listen';
+  const h = new Date().getHours();
+  $('#poHello').textContent = h < 12 ? 'Dzień dobry, kochanie!' : h < 18 ? 'Witaj, kochanie!' : 'Dobry wieczór, kochanie!';
+  homeGiftLine(); checkDots();
+  setTimeout(porchCoach, 700);
+}
+$('#poPlay').onclick = () => { Snd.init(); Snd.click(); go('map'); };
+$('#poJuke').onclick = async () => { await jukebox(); renderHome(); };
+$('#poSet').onclick = () => { Snd.init(); Snd.click(); settingsModal(); };
+
+/* ---------- Family & Tiles ---------- */
+function renderFamily() {
+  const cards = FAM.map((f, i) => {
+    const have = owns(f), ready = canBuy(f), early = S.level < f.from, who = f.name.split('’')[0];
+    const status = have ? 'Joined! Their tiles are on your boards.' : early ? `Joins after level ${f.from - 1} · ${fmt(f.cost)} coins` : ready ? `Ready to join for ${fmt(f.cost)} coins` : `${fmt(S.coins)} of ${fmt(f.cost)} coins saved`;
+    return `<div class="fm-card ${have ? 'have' : ready ? 'ready' : ''}"><i class="fm-face ty-${f.star}"></i>
+      <div class="fm-tx"><b>${who}</b><small>${f.name}</small><span>${status}</span>${!have && !early && !ready ? `<div class="progress gold"><i style="width:${Math.min(100, S.coins / f.cost * 100)}%"></i></div>` : ''}</div>
+      ${ready ? `<button class="btn green sm" data-fam="${i}">Unlock</button>` : have ? `<button class="btn ghost sm" data-tiles="${f.k}">Tiles</button>` : ''}</div>`;
+  }).join('');
+  const sets = SETS.filter(s => !FAM.some(f => f.k === s.k)).map(s => {
+    const p = setProgress(s.k), claim = MILE.some((m, i) => !S.claimed[s.k + ':' + i] && p.got >= Math.ceil(p.total * m.at));
+    return `<button class="fm-set" data-tiles="${s.k}"><span class="fm-sn">${s.n}${claim ? '<em>Reward ready</em>' : ''}</span><span class="fm-sc">${p.got} of ${p.total}</span><div class="progress"><i style="width:${p.got / p.total * 100}%"></i></div></button>`;
+  }).join('');
+  $('#famBody').innerHTML = `<p class="fm-intro">Save coins to invite the family. Their tiles join your boards.</p>${cards}
+    <h3 class="fm-h">Tiles you’ve found</h3>${sets}`;
+  $$('#famBody [data-fam]').forEach(b => b.onclick = async () => { await buyFam(FAM[+b.dataset.fam]); renderFamily(); });
+  $$('#famBody [data-tiles]').forEach(b => b.onclick = () => { Snd.click(); colTab = b.dataset.tiles; go('collection'); });
+}
 
 /* ---------- app install (PWA) ---------- */
 let installEvt = null;
@@ -3383,10 +3481,8 @@ function checkDots() {
   const D = S.daily, t = today();
   let col = Object.keys(S.fresh).length > 0;
   SETS.forEach(s => { const p = setProgress(s.k); MILE.forEach((m, i) => { if (!S.claimed[s.k + ':' + i] && p.got >= Math.ceil(p.total * m.at)) col = true; }); });
-  $('#dotCol').hidden = !col;
+  $('#poFamDot').hidden = !(col || FAM.some(f => canBuy(f)));
   const dl = D.last !== t || D.quests.some(q => q.p >= q.g && !q.c) || D.chDay !== t;
-  $('#dotDaily').hidden = !dl;
-  $('#dotShop').hidden = !(Date.now() >= S.gift || FAM.some(f => !owns(f) && S.level >= f.from && S.coins >= f.cost));
 }
 
 /* ===== boot ===== */
@@ -3437,7 +3533,7 @@ function checkDots() {
     $('#spJuke').onclick = () => jukebox();
   })();
   $('#app').classList.toggle('calm', !!S.set.calm);
-  go('map');
+  go('home');
   cloudInit(() => { tickHearts(); ensureDaily(); if (curScreen !== 'game') { go(curScreen); } updateCoins(); });
   window.__tb = { Snd, S: () => S, go, playLevel, E, G: () => G, save, openModal, closeModal, winLevel: typeof winLevel === 'function' ? winLevel : null, startLevel, chestModal, wheelModal, failModal, genChest, rewardModal, applyReward, useBooster, doShuffle, noMoves, pauseGame, saveRun, resumeRun, kidScene, meetKids, welcomeBack, tileModal, cheer, kidCameo, settingsModal };
 })();
