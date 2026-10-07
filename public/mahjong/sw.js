@@ -1,5 +1,5 @@
 /* Babcia's Mahjong service worker: plays offline, picks up new versions on the next launch. */
-const VERSION = 'babcia-2026-10-07a';
+const VERSION = 'babcia-dev';
 const CORE = `${VERSION}-core`, MUSIC = 'babcia-music', FONTS = 'babcia-fonts';
 const SHELL = [
   '/mahjong/', '/mahjong/manifest.webmanifest', '/mahjong/splash.webp', '/mahjong/babcia.webp',
@@ -8,7 +8,7 @@ const SHELL = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CORE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CORE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
