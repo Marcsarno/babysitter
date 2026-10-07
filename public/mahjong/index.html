@@ -354,6 +354,37 @@ svg.i{width:1em;height:1em;display:block;flex:none}
 .in-pro b{color:#b8860b}
 .in-bub.done .in-pro{opacity:1}
 .sp-jb{right:auto;left:12px}
+/* ---------- finishing pass ---------- */
+/* board: the scene softens behind the tiles, a warm glow sits under the board */
+#app.ingame #bgart{filter:blur(5px) saturate(.8) brightness(.82);transform:scaleX(var(--flip,1)) scale(1.06)}
+#boardWrap::before{content:"";position:absolute;inset:-4% -2%;pointer-events:none;border-radius:40px;
+  background:radial-gradient(ellipse at 50% 50%,rgba(40,22,6,.42),rgba(40,22,6,.22) 55%,transparent 75%)}
+/* tile art sits inside a cream margin, and white-backed art blends to cream */
+.tile .face{background-size:84% 84%!important;background-repeat:no-repeat;background-blend-mode:multiply}
+/* calmer tile edge: warm wood under the ivory slab, with a thin cobalt line */
+.tile .base{background:linear-gradient(135deg,#a07c48,#6e5128 70%)!important;box-shadow:inset 0 0 0 1px rgba(31,74,160,.55),calc(var(--s)*.05) calc(var(--s)*.07) calc(var(--s)*.1) rgba(25,12,0,.5)!important}
+/* mystery tiles: a face-down pottery tile */
+.tile .mys{color:#fff6e0!important;text-shadow:0 2px 0 rgba(0,0,0,.35)!important;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.22) 0 2.5px,transparent 3px) 0 0/calc(var(--s)*.22) calc(var(--s)*.22),linear-gradient(160deg,#3a68c2,#1c3f8a)!important;
+  box-shadow:inset 0 0 0 2px #fff6e0,inset 0 0 0 calc(var(--s)*.07) #1c3f8a,inset 0 0 0 calc(var(--s)*.08) rgba(255,246,224,.55)!important}
+/* playing screen: plain words, bigger targets */
+.pausebtn{display:flex;align-items:center;gap:6px;height:44px;padding:0 14px 0 10px;border-radius:14px;background:var(--panel);color:var(--cream);font-size:17px;font-weight:600;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14),0 2px 0 rgba(0,0,0,.28)}
+.pausebtn .i{font-size:20px}
+.bst small{font-size:12px!important;bottom:4px;color:var(--cream)!important}
+.remain{font-size:16px!important;color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.8);left:16px!important}
+.g-hud .starbar i{opacity:.95}
+/* settings: a full screen with big rows */
+.sheet.fullsheet{position:absolute;inset:0;max-width:none;max-height:none;border-radius:0;padding:calc(12px + env(safe-area-inset-top,0px)) 18px 30px;text-align:left;animation:fade .2s}
+.fullsheet .set-top{display:flex;justify-content:flex-end;margin-bottom:6px}
+.fullsheet h2{text-align:left;margin-bottom:10px}
+.fullsheet .set{min-height:68px}.fullsheet .set b{font-size:19px}.fullsheet .set small{font-size:15px;display:block;margin-top:2px}
+.fullsheet .sw{width:64px;height:38px}.fullsheet .sw::after{width:32px;height:32px}.fullsheet .sw.on::after{transform:translateX(26px)}
+/* large text: words and buttons grow everywhere */
+#app.big .sheet,#app.big .po-list,#app.big .po-hi,#app.big .page .scroll,#app.big .screen-title,#app.big .topbar,#app.big .dock,#app.big .g-top{zoom:1.14}
+#app.big .sheet.fullsheet{zoom:1.1}
+#app.big .bst small{font-size:13px!important}
+#app.big .remain{font-size:19px!important}
+
 /* ---------- Babcia's Porch ---------- */
 #nav{display:none!important}
 #home{background:#fdf3dc;color:#35260f;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
@@ -835,7 +866,7 @@ svg.i{width:1em;height:1em;display:block;flex:none}
   <!-- GAME -->
   <section id="game" class="screen">
     <div class="g-top">
-      <button class="icon-btn" id="gPause" aria-label="Pause"><svg class="i"><use href="#i-pause"/></svg></button>
+      <button class="pausebtn" id="gPause"><svg class="i"><use href="#i-pause"/></svg>Pause</button>
       <div class="g-title"><div class="g-level" id="gLevel">Level 1</div><span class="g-tag" id="gTag">Normal</span></div>
       <button class="pill" id="gCoinsBtn" aria-label="Shop"><svg class="i"><use href="#i-coin"/></svg><span id="gCoins">0</span></button>
     </div>
@@ -1675,7 +1706,7 @@ const DEF = () => ({
   boost: { hint: 0, shuffle: 0, undo: 0, wand: 0, giggle: 0, flutter: 0 }, unlocked: {},
   streak: 0, best: 0, chest: 0, totalStars: 0, disc: {}, fresh: {}, claimed: {}, regionChest: {},
   daily: { last: '', day: 0, quests: [], qday: '', chDay: '' }, gift: 0,
-  set: { sfx: 1, music: 1, vib: 1, dim: 0, dimV: 0, calm: 0, nudge: 1, pro: 0, buddy: 'lilah' },
+  set: { big: 0, sfx: 1, music: 1, vib: 1, dim: 0, dimV: 0, calm: 0, nudge: 1, pro: 0, buddy: 'lilah' },
   run: null, met: {}, last: 0,
   stat: { matches: 0, wins: 0, combo: 0, gold: 0, ice: 0, hardWins: 0 }, tips: {},
 });
@@ -2492,7 +2523,7 @@ function renderDock() {
     if (locked && k !== next) return;
     const b = document.createElement('button'); b.className = 'bst' + (locked ? ' lock' : '') + (B.kid ? ' kid' : ''); b.dataset.k = k;
     if (locked) b.setAttribute('aria-label', `${B.n} unlocks at level ${B.unlock}`);
-    b.innerHTML = (locked ? ico('lock') : ico(B.ic)) + (locked ? `<small>Lv ${B.unlock}</small>` : `<span class="ct ${cnt ? '' : 'zero'}">${cnt ? cnt : '+'}</span><small>${B.n}</small>`);
+    b.innerHTML = (locked ? ico('lock') : ico(B.ic)) + (locked ? `<small>Lv ${B.unlock}</small>` : `<span class="ct ${cnt ? '' : 'zero'}">${cnt ? cnt : '+'}</span><small>${k === 'flutter' ? 'Flutter' : B.n}</small>`);
     b.onclick = () => useBooster(k);
     d.appendChild(b);
   });
@@ -3447,7 +3478,8 @@ async function settingsModal() {
   const draw = () => {
     const sw = (k, t, d) => `<div class="set"><div style="text-align:left"><b>${t}</b><small>${d}</small></div><button class="sw ${S.set[k] ? 'on' : ''}" data-sw="${k}" aria-label="${t}"></button></div>`;
     const st = S.stat;
-    return `<h2>Settings</h2>
+    return `<div class="set-top"><button class="homebtn" data-close="ok">${ico('check')}Done</button></div><h2>Settings</h2>
+      ${sw('big', 'Large text', 'Bigger words, buttons and tiles everywhere')}
       <div class="set mode"><div style="text-align:left"><b>Difficulty</b><small>${S.set.pro ? 'Clocks on hard levels, no free re-deals after level 20, no match glow. Wins pay 50% more coins.' : 'No clocks, free re-deals when you’re stuck, matching tiles light up.'}</small></div>
         <div class="seg" role="radiogroup" aria-label="Difficulty"><button role="radio" aria-checked="${!S.set.pro}" class="${S.set.pro ? '' : 'on'}" data-mode="0">Relaxed</button><button role="radio" aria-checked="${!!S.set.pro}" class="pro ${S.set.pro ? 'on' : ''}" data-mode="1">Pro Babcia</button></div></div>
       <div class="set"><div style="text-align:left"><b>Jukebox</b><small>Pick a song, shuffle or repeat</small></div><button class="btn sm" id="setJuke">${ico('music')} Open</button></div>
@@ -3459,9 +3491,9 @@ async function settingsModal() {
       ${(window.__MUSIC__ || []).length ? `<p class="legend" style="margin:8px 0 0;text-align:left">Music: ${window.__MUSIC__.map(m => '“' + m.n + '”').join(', ')}</p>` : ''}
       <div class="row"><button class="btn green" data-close="ok">Done</button><button class="btn ghost sm" id="erase">${eraseArm ? 'Tap again to erase everything' : 'Reset progress'}</button></div>`;
   };
-  const p = openModal(draw(), {});
+  const p = openModal(draw(), { cls: 'fullsheet' });
   const bind = () => {
-    $$('#modal [data-sw]').forEach(b => b.onclick = () => { const k = b.dataset.sw; S.set[k] = S.set[k] ? 0 : 1; save(); Snd.init(); if (k === 'music') Snd.applyMusic(); Snd.click(); if (k === 'dim' && G.on) $('#board').classList.toggle('dim', !!S.set.dim); if (k === 'calm') $('#app').classList.toggle('calm', !!S.set.calm); if (k === 'nudge' && G.on) armIdle(); refreshSheet(); });
+    $$('#modal [data-sw]').forEach(b => b.onclick = () => { const k = b.dataset.sw; S.set[k] = S.set[k] ? 0 : 1; save(); Snd.init(); if (k === 'music') Snd.applyMusic(); Snd.click(); if (k === 'dim' && G.on) $('#board').classList.toggle('dim', !!S.set.dim); if (k === 'calm') $('#app').classList.toggle('calm', !!S.set.calm); if (k === 'big') { $('#app').classList.toggle('big', !!S.set.big); if (G.on) layoutBoard(); } if (k === 'nudge' && G.on) armIdle(); refreshSheet(); });
     const sj = $('#setJuke'); if (sj) sj.onclick = async () => { closeModal('ok'); await sleep(250); await jukebox(); settingsModal(); };
     const si = $('#setInstall'); if (si) si.onclick = () => installApp();
     $$('#modal [data-mode]').forEach(b => b.onclick = () => { S.set.pro = +b.dataset.mode; save(); Snd.init(); Snd.click(); if (G.on) toast('Takes effect from your next level'); refreshSheet(); });
@@ -3533,6 +3565,7 @@ function checkDots() {
     $('#spJuke').onclick = () => jukebox();
   })();
   $('#app').classList.toggle('calm', !!S.set.calm);
+  $('#app').classList.toggle('big', !!S.set.big);
   go('home');
   cloudInit(() => { tickHearts(); ensureDaily(); if (curScreen !== 'game') { go(curScreen); } updateCoins(); });
   window.__tb = { Snd, S: () => S, go, playLevel, E, G: () => G, save, openModal, closeModal, winLevel: typeof winLevel === 'function' ? winLevel : null, startLevel, chestModal, wheelModal, failModal, genChest, rewardModal, applyReward, useBooster, doShuffle, noMoves, pauseGame, saveRun, resumeRun, kidScene, meetKids, welcomeBack, tileModal, cheer, kidCameo, settingsModal };
