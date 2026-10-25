@@ -51,6 +51,10 @@ Tests verify room-to-room and station routing, obstacle and outdoor boundaries, 
 
 High scores save on the device. Social posts are fictional game events; there are no accounts, external posting, ads, payments, or analytics. Google Fonts is optional with system fallbacks.
 
+## Arianna's Cupcakes (`/cupcake`)
+
+A separate 2D game in `public/cupcake/`: a remake of the i-Ready Cupcake learning game, starring Arianna and Baxter. Plain JavaScript and Canvas, no build step; it is copied into `dist/cupcake/` as is. The game rules (`js/logic.js`) and the town and driving (`js/town.js`) are tested in `tests/cupcake.test.js`. The plan and art prompts are in `docs/`, and the art pipeline is `art/cupcake/process.py`. Saves use the `ariannaCupcakes.*` keys, and the service worker's caches start with `cupcake-`, so it stays independent of Mahjong. In local development, open `/cupcake/index.html`, because the dev server answers `/cupcake/` with the root page.
+
 ## Deployment
 
 Production: https://babysitter-two.vercel.app
