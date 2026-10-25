@@ -2,6 +2,7 @@
 // The look matches the character sheets: dark-brown outlines, soft pastel fills, one shadow tone.
 import {T} from './town.js';
 import {PAINTS} from './logic.js';
+import {image, hasArt} from './art.js';
 
 export const C = {
   ink: '#5b3a29', cream: '#fff8ee', pink: '#f27aa9', pinkL: '#ffc6dc', mint: '#9fe3c0', mintD: '#6fcf9f',
@@ -46,6 +47,43 @@ export function text(ctx, str, x, y, size, {color = C.ink, align = 'center', wei
   if (stroke) { ctx.lineWidth = sw; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.strokeText(str, x, y); }
   ctx.fillStyle = color; ctx.fillText(str, x, y);
 }
+// The largest font size up to `size` at which str fits in maxW.
+export function fitSize(ctx, str, size, maxW, weight = 600) {
+  ctx.font = `${weight} ${size}px ${FONT}`;
+  const w = ctx.measureText(str).width;
+  return w > maxW ? size * maxW / w : size;
+}
+
+// ---------- painted backgrounds ----------
+// Fit a painted scene so `focus` (x0, y0, x1, y1 as fractions of the picture) sits in the screen band top..bottom,
+// as large as fits while the picture still covers the full width (and the full height with cover).
+// Returns where the picture goes and `at(fx, fy)` to turn picture fractions into screen points,
+// or null if the picture has not been made yet.
+export function fitArt(name, W, H, focus, top = 0, bottom = H, cover = false) {
+  const img = image(name);
+  if (!img) return null;
+  const [fx0, fy0, fx1, fy1] = focus, iw = img.width, ih = img.height;
+  let k = Math.max(W / iw, Math.min(W / ((fx1 - fx0) * iw), (bottom - top) / ((fy1 - fy0) * ih)));
+  if (cover) k = Math.max(k, H / ih);
+  const w = iw * k, h = ih * k;
+  const x = Math.min(0, Math.max(W - w, W / 2 - (fx0 + fx1) / 2 * w));
+  const y = Math.min(0, Math.max(H - h, (top + bottom) / 2 - (fy0 + fy1) / 2 * h));
+  return {img, x, y, w, h, at: (fx, fy) => [x + fx * w, y + fy * h], sx: fx => x + fx * w, sy: fy => y + fy * h};
+}
+export function paintArt(ctx, f, H) {
+  ctx.drawImage(f.img, f.x, f.y, f.w, f.h);
+  // below a picture shorter than the screen, keep going with mirrored copies of its bottom band
+  const band = f.img.height * 0.1, bh = f.h * 0.1;
+  for (let y = f.y + f.h, flip = true; y < H; y += bh, flip = !flip) {
+    ctx.save(); ctx.translate(0, flip ? y + bh : y); ctx.scale(1, flip ? -1 : 1);
+    ctx.drawImage(f.img, 0, f.img.height - band, f.img.width, band, f.x, 0, f.w, bh);
+    ctx.restore();
+  }
+}
+const bunting = (ctx, x0, x1, y, h, n) => {
+  const step = (x1 - x0) / n;
+  for (let i = 0; i < n; i++) { const bx = x0 + i * step; ctx.beginPath(); ctx.moveTo(bx + 2, y); ctx.lineTo(bx + step - 2, y); ctx.lineTo(bx + step / 2, y + h); ctx.closePath(); paint(ctx, ['#ffd23d', '#9fe3c0', '#c3a6ec', '#ff9fc4'][i % 4], 1.2); }
+};
 
 // ---------- cupcakes ----------
 const LINER = {vanilla: '#ff9fc4', chocolate: '#9fe3c0', strawberry: '#fff1a8', lemon: '#b9d7ff', redvelvet: '#ffffff'};
@@ -518,7 +556,11 @@ function rain(ctx, W, H, t) {
 }
 
 // The shop seen from the street. Returns where things go so the caller can place people.
+// The painted shop front (BG1), fitted so the sign, window, door and sidewalk show above the order panel.
+export const streetArt = (W, H) => fitArt('bg1-shopfront', W, H, [0, 0.1, 1, 0.78], H * 0.07, H * 0.62);
 export function street(ctx, W, H, o) {
+  const f = streetArt(W, H);
+  if (f) return paintedStreet(ctx, W, H, f, o);
   const {t = 0, save, shelf = [], groundY = H * 0.58, shopName = "Arianna's Cupcakes", event} = o;
   sky(ctx, W, H, t, event === 'rain' ? '#a9b8cc' : '#9fd8ff', event === 'rain' ? '#dfe7ef' : '#e6f6ff');
   hills(ctx, W, groundY - H * 0.25, '#cdeccf', H * 0.025, 1);
@@ -577,6 +619,36 @@ export function street(ctx, W, H, o) {
   return shop;
 }
 
+function paintedStreet(ctx, W, H, f, o) {
+  const {t = 0, save, shopName = "Arianna's Cupcakes", event} = o;
+  paintArt(ctx, f, H);
+  // measured from the picture: the serving window, its counter ledge, the door and the sidewalk
+  const [wx0, wy0] = f.at(0.105, 0.385), [wx1, wy1] = f.at(0.675, 0.536);
+  const [dx0, dy0] = f.at(0.73, 0.38), [dx1, dy1] = f.at(0.93, 0.68);
+  const shop = {painted: true, win: {x: wx0, y: wy0, w: wx1 - wx0, h: wy1 - wy0}, counterY: wy1, door: {x: dx0, y: dy0, w: dx1 - dx0, h: dy1 - dy0}, groundY: f.sy(0.7)};
+  // the shop name on the blank sign
+  const [sx, sy] = f.at(0.5, 0.162);
+  text(ctx, shopName, sx, sy, fitSize(ctx, shopName, f.h * 0.04, f.w * 0.42, 700), {color: C.pink, weight: 700, stroke: '#fff', sw: 4});
+  const signLevel = save?.upg.sign || 0;
+  for (let i = 0; i < signLevel * 2; i++) circle(ctx, f.sx(0.27 + i * 0.46 / Math.max(1, signLevel * 2 - 1)), f.sy(0.212), f.w * 0.011, ['#ffd23d', '#ff9fc4', '#9fe3c0'][i % 3], 1.2);
+  if (save?.deco.includes('bunting') || event === 'birthday') bunting(ctx, f.sx(0.02), f.sx(0.98), f.sy(0.222), f.h * 0.024, 12);
+  if (save?.deco.includes('lights')) for (let i = 0; i < 16; i++) circle(ctx, f.sx(0.03 + i * 0.94 / 15), f.sy(0.365) + Math.sin(i) * 2, f.w * 0.009, `hsl(${(i * 47 + t * 60) % 360} 90% 72%)`, 1);
+  if (save?.deco.includes('flowers')) for (const fx of [0.13, 0.55]) {
+    const [bx, by] = f.at(fx, 0.715), bw = f.w * 0.09;
+    rr(ctx, bx, by - f.h * 0.022, bw, f.h * 0.022, 4); paint(ctx, C.wood, 1.5);
+    for (let k = 0; k < 5; k++) circle(ctx, bx + bw * (0.12 + k * 0.19), by - f.h * 0.026, bw * 0.12, ['#ff7a8a', '#ffd23d', '#c3a6ec'][k % 3], 1);
+  }
+  if (save?.deco.includes('balloons')) {
+    const [kx, ky] = f.at(0.955, 0.5);
+    for (const [ox, oy, c] of [[-0.03, 0.30, '#ff7a8a'], [0.005, 0.27, '#ffd23d'], [0.03, 0.31, '#7fc8f5']]) {
+      const bx = f.sx(0.955 + ox), by = f.sy(oy) + Math.sin(t * 2 + ox * 90) * 4;
+      ctx.beginPath(); ctx.moveTo(bx, by + 14); ctx.lineTo(kx, ky); paint(ctx, null, 1); ellipse(ctx, bx, by, f.w * 0.028, f.w * 0.035, c, 1.5);
+    }
+  }
+  if (event === 'rain') rain(ctx, W, H, t);
+  return shop;
+}
+
 // Cupcakes on the counter, with how many are left.
 export function shelfDisplay(ctx, shop, menu, shelf, t, H) {
   const w = shop.win, items = menu.map((d, i) => ({d, n: shelf[i] || 0, i})).filter(x => x.d);
@@ -587,7 +659,7 @@ export function shelfDisplay(ctx, shop, menu, shelf, t, H) {
     for (let j = show - 1; j >= 0; j--) cupcake(ctx, d, cx + (j - (show - 1) / 2) * s * 0.55, base - j % 2 * 2, s, t + i);
     if (!n) text(ctx, 'sold out', cx, base - s * 0.4, s * 0.28, {color: C.pink, weight: 700, stroke: '#fff', sw: 3});
   });
-  rr(ctx, w.x - 10, shop.counterY - 2, w.w + 20, H * 0.03, 6); paint(ctx, C.woodD, 2);
+  if (!shop.painted) { rr(ctx, w.x - 10, shop.counterY - 2, w.w + 20, H * 0.03, 6); paint(ctx, C.woodD, 2); }
   items.forEach(({d, n}, k) => {
     const cx = w.x + slotW * (k + 0.5);
     rr(ctx, cx - 30, shop.counterY + H * 0.035, 60, H * 0.032, 8); paint(ctx, '#fff', 1.5);
@@ -595,8 +667,11 @@ export function shelfDisplay(ctx, shop, menu, shelf, t, H) {
   });
 }
 
+// The painted kitchen (BG2): shelves, window and the oven show above the kitchen panel.
 export function kitchen(ctx, W, H, o = {}) {
-  const {t = 0, baking = 0, menu = [], counts = []} = o;
+  const {t = 0, baking = 0, menu = [], counts = [], open = [0, H * 0.46]} = o;
+  const f = fitArt('bg2-kitchen', W, H, [0, 0.03, 1, 0.6], open[0], open[1]);
+  if (f) { paintArt(ctx, f, H); return f; }
   ctx.fillStyle = '#fff4ea'; ctx.fillRect(0, 0, W, H);
   const tile = W / 9;
   for (let y = 0; y < H * 0.5; y += tile) for (let x = 0; x < W; x += tile) { ctx.fillStyle = ((x + y) / tile) % 2 ? '#ffe9f1' : '#fff7fb'; ctx.fillRect(x, y, tile, tile); }
@@ -633,8 +708,24 @@ export function kitchen(ctx, W, H, o = {}) {
   ctx.fillStyle = '#f6d7c0'; ctx.fillRect(0, H * 0.51, W, H);
 }
 
+// The painted market (BG3): the stall names go on its two blank signs.
 export function market(ctx, W, H, o = {}) {
-  const {t = 0, barnOpen = false} = o;
+  const {t = 0, barnOpen = false, open = [0, H * 0.3]} = o;
+  const f = fitArt('bg3-market', W, H, [0, 0.13, 1, 0.47], open[0], open[1]);
+  if (f) {
+    paintArt(ctx, f, H);
+    const name = (str, fx, fy, maxW) => { const [x, y] = f.at(fx, fy); text(ctx, str, x, y, fitSize(ctx, str, f.h * 0.032, f.w * maxW, 700), {color: C.ink, weight: 700, stroke: '#fff', sw: 4}); };
+    name('Corner Market', 0.255, 0.197, 0.3);
+    name('Bulk Barn', 0.81, 0.242, 0.26);
+    if (!barnOpen) {
+      // boards across the barn until it opens
+      const [cx, cy] = f.at(0.8, 0.33);
+      for (let i = 0; i < 2; i++) { ctx.save(); ctx.translate(cx, cy); ctx.rotate(i ? 0.32 : -0.32); rr(ctx, -f.w * 0.17, -f.h * 0.012, f.w * 0.34, f.h * 0.024, 3); paint(ctx, C.wood, 1.5); ctx.restore(); }
+      rr(ctx, cx - f.w * 0.11, cy - f.h * 0.02, f.w * 0.22, f.h * 0.04, 6); paint(ctx, '#fff8ee', 2);
+      text(ctx, 'Opens day 4', cx, cy, fitSize(ctx, 'Opens day 4', f.h * 0.02, f.w * 0.19, 700), {weight: 700, color: C.pink});
+    }
+    return f;
+  }
   sky(ctx, W, H, t);
   hills(ctx, W, H * 0.3, '#cdeccf', H * 0.02, 2);
   ctx.fillStyle = '#efe6dc'; ctx.fillRect(0, H * 0.3, W, H);
@@ -655,8 +746,16 @@ export function market(ctx, W, H, o = {}) {
   stall(W * 0.54, W * 0.4, '#b5523b', '#fff1dc', 'Bulk Barn', barnOpen);
 }
 
+// The painted houses (BG4-BG6) all share one layout: the door is at x 0.67 and its step at y 0.605.
+const HOUSES = ['bg4-house-pink', 'bg5-house-blue', 'bg6-house-yellow'];
 export function doorstep(ctx, W, H, o = {}) {
   const {t = 0, variant = 0} = o;
+  const houses = HOUSES.filter(hasArt);
+  const f = houses.length && fitArt(houses[variant % houses.length], W, H, [0, 0.12, 1, 0.95], 0, H, true);
+  if (f) {
+    paintArt(ctx, f, H);
+    return {painted: true, gy: f.sy(0.605), door: {x: f.sx(0.668), y: f.sy(0.605)}, doorH: f.h * 0.21, path: f.at(0.47, 0.75), start: f.at(-0.15, 0.93)};
+  }
   sky(ctx, W, H, t);
   const gy = H * 0.66;
   const hx = W * 0.32, hw = W * 0.64, top = H * 0.12;
