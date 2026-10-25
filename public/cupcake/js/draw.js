@@ -83,7 +83,18 @@ function topping(ctx, id, x, y, s, lw, tilt = 0) {
 }
 
 // A cupcake from the side, standing with its bottom centre at (x, y), s pixels tall.
-export function cupcake(ctx, d, x, y, s, t = 0, bare = false) {
+// Mix two #rrggbb colours; k = 0 gives a, 1 gives b.
+export const batterColor = cakeId => mix((CAKE[cakeId] || CAKE.vanilla)[0], '#fff8e8', 0.45);
+export function mix(a, b, k) {
+  k = Math.max(0, Math.min(1, k));
+  const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * k).toString(16).padStart(2, '0')).join('');
+}
+
+// stage (for the baking mini-game) draws a cupcake part-way through being made:
+// {fill: batter 0..1.3} before baking, then {bake: 0..1.2, frost: 0..1.3, tops: [topping ids so far]}.
+export function cupcake(ctx, d, x, y, s, t = 0, bare = false, stage = null) {
   const lw = Math.max(1, s * 0.022);
   const liner = LINER[d.cake] || C.pinkL, [cake, cakeD] = CAKE[d.cake] || CAKE.vanilla, [fr, frD] = FROST[d.frosting] || FROST.white;
   ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -98,12 +109,34 @@ export function cupcake(ctx, d, x, y, s, t = 0, bare = false) {
     paint(ctx, null, s * 0.035, 'rgba(255,255,255,.35)');
   }
   ctx.fillStyle = 'rgba(91,58,41,.12)'; ctx.fillRect(topW * 0.15, wy, topW, s);
+  const batter = mix(cake, '#fff8e8', 0.45);
+  if (stage && stage.bake == null && stage.fill > 0) {
+    const top = wy * Math.min(1, stage.fill);
+    ctx.fillStyle = batter; ctx.fillRect(-topW, top, topW * 2, -top + s * 0.05);
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-topW, top, topW * 2, s * 0.02);
+  }
   ctx.restore();
   wrapper(); paint(ctx, null, lw);
-  ctx.beginPath(); ctx.ellipse(0, wy, topW * 0.53, s * (bare ? 0.2 : 0.09), 0, Math.PI, 0); paint(ctx, cake, lw);
+  if (stage && stage.bake == null) {
+    if (stage.fill > 1) {
+      // too much batter: it bulges over the top and drips
+      const over = Math.min(0.3, stage.fill - 1);
+      ctx.beginPath(); ctx.ellipse(0, wy, topW * 0.55, s * over * 0.6, 0, Math.PI, 0); paint(ctx, batter, lw);
+      for (const dx of [-0.36, 0.33]) { rr(ctx, topW * dx - s * 0.03, wy - s * 0.01, s * 0.06, s * over * 0.7, s * 0.03); paint(ctx, batter, lw * 0.7); }
+    }
+    ctx.restore(); return;
+  }
+  const domeColor = !stage ? cake : stage.bake < 0.62 ? mix(batter, cake, stage.bake / 0.62) : mix(cake, '#6e4022', (stage.bake - 0.8) / 0.4);
+  const rise = !stage ? 1 : Math.min(1, 0.3 + stage.bake * 1.1);
+  ctx.beginPath(); ctx.ellipse(0, wy, topW * 0.53, s * (bare ? 0.2 : stage && !(stage.frost > 0) ? 0.16 : 0.09) * rise, 0, Math.PI, 0); paint(ctx, domeColor, lw);
+  if (stage && !(stage.frost > 0)) { ctx.restore(); return; }
   if (bare) { ctx.beginPath(); ctx.ellipse(-topW * 0.15, wy - s * 0.1, topW * 0.12, s * 0.04, -0.3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fill(); ctx.restore(); return; }
   // frosting swirl, three tiers and a peak, swaying a little
   const sway = Math.sin(t * 2.4) * s * 0.012;
+  if (stage) {
+    // only the part piped so far, from the bottom up
+    ctx.save(); ctx.beginPath(); ctx.rect(-s, -s * 0.385 - Math.min(1, stage.frost) * s * 0.53, s * 2, s * 2); ctx.clip();
+  }
   const tiers = [[-0.47, 0.92, 0.17], [-0.6, 0.72, 0.16], [-0.72, 0.5, 0.14]];
   tiers.forEach(([ty, tw, th], i) => {
     const cx = sway * (i + 1), cy = s * ty, w = s * tw, h = s * th;
@@ -117,8 +150,17 @@ export function cupcake(ctx, d, x, y, s, t = 0, bare = false) {
   const px = sway * 4;
   ctx.beginPath(); ctx.moveTo(px - s * 0.11, -s * 0.775); ctx.quadraticCurveTo(px - s * 0.04, -s * 0.8, px + s * 0.03, -s * 0.9);
   ctx.quadraticCurveTo(px + s * 0.07, -s * 0.81, px + s * 0.11, -s * 0.775); ctx.closePath(); paint(ctx, fr, lw);
+  if (stage) {
+    ctx.restore();
+    if (stage.frost > 1.04) {
+      // piped too tall: the peak keeps going up in a wobbly point
+      const extra = Math.min(0.3, stage.frost - 1);
+      ctx.beginPath(); ctx.moveTo(px - s * 0.07, -s * 0.8); ctx.quadraticCurveTo(px - s * 0.04, -s * 0.86, px + s * 0.03 + Math.sin(t * 6) * s * 0.02, -s * 0.9 - extra * s * 0.9);
+      ctx.quadraticCurveTo(px + s * 0.07, -s * 0.85, px + s * 0.08, -s * 0.8); ctx.closePath(); paint(ctx, fr, lw);
+    }
+  }
   // toppings
-  const tops = d.toppings || [];
+  const tops = stage ? stage.tops || [] : d.toppings || [];
   let topsPlaced = 0;
   tops.forEach((id, k) => {
     if (id === 'sprinkles' || id === 'chips') {

@@ -26,7 +26,7 @@ const CROPS = {
   'baxter-side@ride': [0.42, 0, 1, 0.64],
 };
 // Customer pictures, if they have been made.
-export const CUSTOMER_ART = {grandma: 'c1-grandma', builder: 'c2-builder', boy: 'c3-boy', bunny: 'c4-bunny', cat: 'c5-cat', bear: 'c6-bear', mail: 'c7-mail', duck: 'c8-duck'};
+export const CUSTOMER_ART = {grandma: 'c1-grandma', builder: 'c2-builder', boy: 'c3-boy', bunny: 'c4-bunny', cat: 'c5-cat', bear: 'c6-bear', mail: 'c7-mail', duck: 'c8-duck', pug: 'c11-pug', poodle: 'c12-poodle', spot: 'c13-spot'};
 
 const images = {};
 export async function loadArt(base) {

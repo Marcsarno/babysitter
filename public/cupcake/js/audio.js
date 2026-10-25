@@ -72,6 +72,34 @@ export function engineOff() {
 }
 
 // ---------- read-aloud ----------
+// Lines are pre-recorded with the Kokoro "Heart" voice (see say.js). speak() takes one sentence or a
+// list and plays them in order; a sentence without a recording falls back to the device's voice.
+let base = '/cupcake/', clips = null, voiceGain = null, playing = null, token = 0;
+const buffers = new Map();
+export async function loadVoice(b) {
+  base = b;
+  try { const r = await fetch(`${b}voice/index.json`); if (r.ok) clips = (await r.json()).lines; } catch {}
+}
+export const hasClip = text => !!clips?.[text];
+function buffer(text) {
+  const file = clips?.[text], a = file && ctx();
+  if (!a) return Promise.resolve(null);
+  if (!buffers.has(file)) {
+    if (buffers.size > 160) buffers.delete(buffers.keys().next().value);
+    buffers.set(file, fetch(`${base}voice/${file}`).then(r => r.arrayBuffer()).then(data => new Promise((ok, bad) => a.decodeAudioData(data, ok, bad))).catch(() => null));
+  }
+  return buffers.get(file);
+}
+export function preload(parts) { if (settings.voice) [].concat(parts).forEach(buffer); }
+function playBuffer(buf) {
+  return new Promise(done => {
+    if (!voiceGain) { voiceGain = ac.createGain(); voiceGain.gain.value = 1.5; voiceGain.connect(ac.destination); }
+    const src = ac.createBufferSource();
+    src.buffer = buf; src.connect(voiceGain); src.onended = done; src.start();
+    playing = src;
+  });
+}
+
 let voice = null;
 function pickVoice() {
   const vs = window.speechSynthesis?.getVoices() || [];
@@ -79,15 +107,37 @@ function pickVoice() {
   voice = en.find(v => /samantha|ava|allison|google us english|jenny|aria|zira/i.test(v.name)) || en.find(v => v.localService) || en[0] || null;
 }
 if (window.speechSynthesis) { pickVoice(); window.speechSynthesis.onvoiceschanged = pickVoice; }
-
-export function speak(str, {interrupt = true} = {}) {
-  if (!settings.voice || !window.speechSynthesis || !str) return;
-  try {
-    if (interrupt) window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(str.replace(/\$(\d+)/g, '$1 dollars').replace(/×/g, 'times'));
-    if (voice) u.voice = voice;
-    u.rate = 0.95; u.pitch = 1.1;
-    window.speechSynthesis.speak(u);
-  } catch {}
+function deviceSay(text) {
+  return new Promise(done => {
+    if (!window.speechSynthesis) return done();
+    try {
+      const u = new SpeechSynthesisUtterance(text.replace(/\$(\d+)/g, '$1 dollars').replace(/×/g, 'times'));
+      if (voice) u.voice = voice;
+      u.rate = 0.95; u.pitch = 1.1; u.onend = done; u.onerror = done;
+      window.speechSynthesis.speak(u);
+      setTimeout(done, 9000);
+    } catch { done(); }
+  });
 }
-export function hush() { try { window.speechSynthesis?.cancel(); } catch {} }
+
+export function speak(parts, {interrupt = true} = {}) {
+  const list = [].concat(parts || []).filter(Boolean);
+  if (!settings.voice || !list.length) return;
+  if (interrupt) hush();
+  const mine = ++token;
+  list.forEach(buffer);
+  (async () => {
+    for (const text of list) {
+      const buf = await buffer(text);
+      if (mine !== token) return;
+      if (buf) await playBuffer(buf); else await deviceSay(text);
+      if (mine !== token) return;
+    }
+  })();
+}
+export function hush() {
+  token++;
+  try { playing?.stop(); } catch {}
+  playing = null;
+  try { window.speechSynthesis?.cancel(); } catch {}
+}

@@ -3,7 +3,8 @@ import * as L from './logic.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN} from './town.js';
 import * as D from './draw.js';
 import {loadArt, drawPose, image, CUSTOMER_ART} from './art.js';
-import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff} from './audio.js';
+import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice} from './audio.js';
+import {S, GREET} from './say.js';
 
 const BASE = new URL('../', import.meta.url).pathname;
 const SETTINGS_KEY = 'ariannaCupcakes.settings.v1';
@@ -59,9 +60,10 @@ function portrait(who, pose = 'stand', size = 108) {
   return c;
 }
 // A one-time tip from Arianna the first time each screen shows up.
-function coach(key, msg) {
-  if (save.seen[key]) return;
-  save.seen[key] = true;
+function coach(key, seenKey = key) {
+  if (save.seen[seenKey]) return;
+  save.seen[seenKey] = true;
+  const msg = S.coach[key];
   const el = h('div', {class: 'coach'}, portrait('arianna'), h('div', {class: 'grow'}, msg), btn('OK', () => el.remove(), 'small mint'));
   app.append(el);
   speak(msg);
@@ -120,7 +122,7 @@ function updateParts(dt) {
 // ---------- characters ----------
 function arianna(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts}); }
 function baxter(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts}); }
-const ART_SCALE = {boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1};   // kids and little animals stand a bit shorter, the bear taller
+const ART_SCALE = {boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1, pug: 0.82, poodle: 0.9, spot: 0.9};   // kids and little animals stand a bit shorter, the bear taller
 function drawCustomer(g, type, x, y, hgt, opts) {
   const img = image(CUSTOMER_ART[type]);
   if (img) {
@@ -168,7 +170,7 @@ const Title = {
   enter() {
     hud(false);
     const has = save && (save.day > 1 || save.history.length);
-    const start = () => { unlock(); if (!save) save = L.newGame(); go(DayStart); };
+    const start = () => { unlock(); speak(S.welcome); if (!save) save = L.newGame(); go(DayStart); };
     mount(
       h('div', {class: 'title'}, h('h1', null, 'Arianna’s', h('span', null, 'Cupcakes')), h('p', null, 'with Baxter the delivery pup')),
       h('div', {class: 'menu'},
@@ -211,11 +213,7 @@ const DayStart = {
     newDay();
     persist();
     hud(true);
-    const lines = {
-      rain: 'It’s a rainy day. Fewer people are out walking.',
-      birthday: 'It’s Baxter’s birthday! Only dog customers today, and tips are doubled!',
-      party: 'Party day! Someone will order a big batch.',
-    };
+    const lines = S.event;
     const first = save.day === 1;
     mount(h('div', {class: 'back', style: 'align-items:start;padding-top:calc(env(safe-area-inset-top,0px) + 70px)'}, h('div', {class: 'card daycard'},
       h('div', {class: 'muted'}, save.day > L.SEASON_DAYS ? 'Free play' : `Day ${save.day} of ${L.SEASON_DAYS}`),
@@ -223,7 +221,7 @@ const DayStart = {
       day.event ? h('div', {class: 'event'}, lines[day.event]) : null,
       first ? h('p', null, 'Buy cake, frosting and toppings at the market. Then bake, sell, and deliver around town with Baxter!') : null,
       h('div', {class: 'actions'}, btn('Go to the market →', () => go(Market), 'pink big')))));
-    speak(`Day ${save.day}! ` + (day.event ? lines[day.event] : first ? 'Let’s go shopping for ingredients!' : 'Let’s open the shop!'));
+    speak([S.day(save.day), day.event ? lines[day.event] : first ? S.firstDay : S.openShop]);
   },
   draw() {
     D.cozy(ctx, W, H, {t: now});
@@ -239,8 +237,7 @@ const Market = {
     this.panel = h('div', {class: 'panel', style: 'max-height:70%'});
     mount(this.panel);
     this.render();
-    coach('market', save.day >= 4 && !save.seen.market4 ? 'Bulk Barn is open! Check which shop has the better deal.' : 'Tap a deal to buy it. Get cake, frosting and toppings for your cupcakes!');
-    if (save.day >= 4 && !save.seen.market4) { save.seen.market4 = true; }
+    coach(save.day >= 4 && !save.seen.market4 ? 'market4' : 'market');
   },
   render() {
     const used = new Set(save.menu.filter(Boolean).flatMap(L.parts));
@@ -272,7 +269,7 @@ const Market = {
     const res = L.buy(save, id, deal);
     if (res !== 'ok') {
       sfx.gentle(); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
-      const msg = res === 'broke' ? 'Not enough money for that one.' : 'Your fridge is full of that! A bigger fridge holds more.';
+      const msg = res === 'broke' ? S.broke : S.full;
       toast(msg); speak(msg);
       return;
     }
@@ -286,7 +283,7 @@ const Market = {
     if (miss) {
       const el2 = h('div', {class: 'savings'}, h('div', {class: 'grow'}, `You could have saved $${miss.saved}!`), btn('Really?', () => { el2.remove(); explainSavings(miss, deal, other, id); }, 'small mint'), h('button', {class: 'speaker', onclick: () => el2.remove()}, '✕'));
       app.append(el2);
-      speak(`You could have saved ${miss.saved} dollars!`);
+      speak(S.couldSave(miss.saved));
       setTimeout(() => el2.remove(), 7000);
     }
   },
@@ -299,7 +296,7 @@ function explainSavings(m, chose, other, id) {
   const side = (deal, packs, cost, extraSaved) => h('div', {class: 'side'},
     h('b', null, vendorName(deal.vendor)), h('div', null, `${deal.qty} for $${deal.price}`),
     packs > 1 ? h('div', null, `${packs} packs = ${m.qty} for $${cost}`) : h('div', null, `${m.qty} for $${cost}`), coins(cost, extraSaved));
-  const say = `Let's compare ${m.qty} ${what}. ${vendorName(chose.vendor)} costs ${m.costA} dollars. ${vendorName(other.vendor)} costs ${m.costB} dollars. ${m.costA} minus ${m.costB} is ${m.saved}. You could save ${m.saved} dollars!`;
+  const say = [S.compare(m.qty), S.costs(chose.vendor, m.costA), S.costs(other.vendor, m.costB), S.minus(m.costA, m.costB, m.saved), S.canSave(m.saved)];
   const close = modal(h('h2', null, 'Let’s compare!'), h('p', {class: 'center'}, `Buying ${m.qty} ${what}:`),
     h('div', {class: 'compare'}, side(chose, m.packsA, m.costA, m.saved), side(other, m.packsB, m.costB, 0)),
     h('div', {class: 'answer'}, `$${m.costA} − $${m.costB} = $${m.saved} saved`),
@@ -325,7 +322,7 @@ const Kitchen = {
     this.panel = h('div', {class: 'panel', style: 'max-height:56%'});
     mount(this.panel);
     this.render();
-    coach('kitchen', 'Choose how many to bake with + and −. Tap Change to design your own cupcake!');
+    coach('kitchen');
   },
   render() {
     const slots = h('div', {class: 'slots scroll'});
@@ -354,20 +351,198 @@ const Kitchen = {
     if (!total) { toast('Add some cupcakes to the oven first!'); sfx.gentle(); return; }
     const shelf = L.bake(save, day.counts);
     if (!shelf) { toast('Not enough ingredients.'); return; }
-    day.shelf = shelf; day.baked = total; day.goal = L.goalFor(total);
-    this.panel.replaceChildren(h('h2', {class: 'center'}, 'Baking…'), h('div', {class: 'bar'}, h('i', {style: 'width:0'}), h('span', null, `${total} cupcakes`)));
-    requestAnimationFrame(() => { const bar = this.panel.querySelector('.bar i'); if (bar) bar.style.cssText = 'width:100%;transition:width 2.3s linear'; });
-    this.baking = 0.001;
-    sfx.oven();
-  },
-  update(dt) {
-    if (!this.baking) return;
-    this.baking += dt / 2.4;
-    if (this.baking >= 1) { this.baking = 0; sfx.ding(); speak(`Ding! ${day.baked} cupcakes! Let's sell ${day.goal} today!`); go(Street); }
+    day.shelf = shelf; day.baked = total; day.goal = L.goalFor(total); day.quality = [];
+    go(Bake);
   },
   draw() {
     D.kitchen(ctx, W, H, {t: now, baking: this.baking, menu: save.menu, counts: day.counts});
     arianna(this.baking ? 'cheer' : 'think', W * 0.33, H * 0.62, H * 0.3, {face: 'right'});
+  },
+};
+
+// ---------- the baking mini-game: pour, bake, frost, top ----------
+// One round for each kind of cupcake in the oven. Each step scores 0-2; the stars change what customers pay.
+const dropImages = {};
+const dropImage = id => dropImages[id] || Object.assign(dropImages[id] = new Image(), {src: D.ingredientIcon(id, 'topping')});
+const STEPS = [['pour', 'Pour'], ['bake', 'Bake'], ['frost', 'Frost'], ['toppings', 'Top']];
+const Bake = {
+  enter() {
+    hud(true);
+    this.queue = save.menu.map((_, i) => i).filter(i => save.menu[i] && day.shelf[i] > 0);
+    this.head = h('div', {class: 'bakehead'});
+    this.panel = h('div', {class: 'panel bakepanel'});
+    mount(this.head, this.panel);
+    this.next();
+    coach('bake');
+  },
+  next() {
+    if (!this.queue.length) return this.finish();
+    this.slot = this.queue.shift();
+    this.d = save.menu[this.slot];
+    this.points = 0; this.st = {fill: 0}; this.stars = 0;
+    this.step('pour');
+  },
+  step(name) {
+    Object.assign(this, {name, holding: false, scored: false, t: 0, drops: []});
+    const n = day.shelf[this.slot], idx = STEPS.findIndex(([k]) => k === name);
+    this.head.replaceChildren(
+      h('div', {class: 'bakewhat'}, `Baking ${n} × ${this.d.name}`),
+      h('div', {class: 'steps'}, ...STEPS.map(([, label], i) => h('span', {class: i < idx ? 'done' : i === idx ? 'now' : ''}, label))),
+      btn('Quick bake ⏩', () => this.quick(), 'ghost small'));
+    const holdBtn = (label) => {
+      const b = h('button', {class: 'btn pink big wide hold'}, label);
+      b.addEventListener('pointerdown', e => { e.preventDefault(); this.press(); });
+      for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => this.release());
+      return b;
+    };
+    if (name === 'pour') { this.st = {fill: 0}; this.say(S.pour); this.panel.replaceChildren(this.tipEl(S.pour), holdBtn('Hold to pour 🥣')); }
+    if (name === 'bake') { this.st = {bake: 0, frost: 0}; this.say(S.oven); sfx.oven(); this.panel.replaceChildren(this.tipEl(S.oven), btn('Take them out! 🧤', () => this.takeOut(), 'pink big wide')); }
+    if (name === 'frost') { this.st.frost = 0.001; this.say(S.frost); this.panel.replaceChildren(this.tipEl(S.frost), holdBtn('Hold to frost 🍦')); }
+    if (name === 'toppings') {
+      this.st.tops = [];
+      if (!this.d.toppings.length) return this.finishOne();
+      this.say(S.toppings);
+      this.panel.replaceChildren(this.tipEl(S.toppings), h('div', {class: 'jars'}, ...this.d.toppings.map(id => {
+        const b = h('button', {class: 'pick jar'}, h('img', {src: D.ingredientIcon(id, 'topping'), alt: ''}), L.INGREDIENTS[id].name);
+        b.addEventListener('click', () => { if (b.disabled) return; b.disabled = true; b.classList.add('on'); this.dropTopping(id); });
+        return b;
+      })));
+    }
+  },
+  tipEl(text) { return h('div', {class: 'status'}, h('div', {class: 'grow'}, text), speakerButton(() => text)); },
+  say(text) { if (!save.seen['bake-' + this.name] || this.name === 'toppings') speak(text); save.seen['bake-' + this.name] = true; },
+  press() { if (this.name === 'pour' || this.name === 'frost') { if (!this.scored) { this.holding = true; unlock(); } } },
+  release() {
+    if (!this.holding) return;
+    this.holding = false;
+    const v = this.name === 'pour' ? this.st.fill : this.st.frost;
+    if (v < 0.45) return; // barely started: keep going
+    this.score(Math.abs(v - (this.name === 'pour' ? 0.82 : 1)), this.name === 'pour' ? 'bake' : 'toppings');
+  },
+  takeOut() { if (this.name === 'bake' && !this.scored) this.score(Math.abs(this.st.bake - 0.68) * 0.8, 'frost'); },
+  score(off, nextStep) {
+    this.scored = true;
+    const pts = off < 0.07 ? 2 : off < 0.16 ? 1 : 0;
+    this.points += pts;
+    this.flash = {text: ['Oops!', 'Great!', 'Perfect!'][pts], t: now};
+    (pts === 2 ? sfx.yes : pts === 1 ? sfx.pop : sfx.gentle)();
+    speak(pts === 2 ? S.perfect : pts === 1 ? S.great : S.messy);
+    if (pts === 2) confettiBurst(W / 2, H * 0.35, 18);
+    setTimeout(() => { if (scene === this) this.step(nextStep); }, 1300);
+  },
+  dropTopping(id) {
+    sfx.squish();
+    this.drops.push({id, t: 0});
+    setTimeout(() => {
+      if (scene !== this) return;
+      this.st.tops.push(id);
+      sfx.pop();
+      if (this.d.toppings.every(x => this.st.tops.includes(x))) setTimeout(() => scene === this && this.finishOne(), 600);
+    }, 550);
+  },
+  finishOne() {
+    this.name = 'done';
+    this.stars = L.bakeStars(this.points);
+    day.quality[this.slot] = this.stars;
+    sfx.unlock(); confettiBurst(W / 2, H * 0.3, 30 + this.stars * 10);
+    speak([S.stars(this.stars), this.stars === 3 ? S.fancy : null]);
+    this.head.querySelector('.steps')?.replaceChildren(...STEPS.map(([, label]) => h('span', {class: 'done'}, label)));
+    this.panel.replaceChildren(h('div', {class: 'status'}, h('div', {class: 'grow', style: 'font-size:24px'}, '⭐'.repeat(this.stars) + '☆'.repeat(3 - this.stars)), h('div', null, S.stars(this.stars))),
+      btn(this.queue.length ? 'Next cupcake →' : 'Open the shop! →', () => this.next(), 'pink big wide'));
+  },
+  quick() {
+    for (const i of [this.slot, ...this.queue]) if (day.quality[i] == null) day.quality[i] = 2;
+    this.queue = [];
+    this.finish();
+  },
+  finish() { sfx.ding(); speak([S.ding, S.goal(day.goal)]); go(Street); },
+  update(dt) {
+    this.t += dt;
+    if (this.holding && this.name === 'pour') { this.st.fill += dt * 0.42; if (this.st.fill >= 1.3) this.release(); }
+    if (this.holding && this.name === 'frost') { this.st.frost += dt * 0.4; if (this.st.frost >= 1.35) this.release(); }
+    if (this.name === 'bake' && !this.scored) { this.st.bake += dt * 0.17; if (this.st.bake >= 1.2) this.takeOut(); }
+    if (this.name === 'bake' && this.scored) this.st.bake = Math.max(this.st.bake, 0.01);
+    for (const d of this.drops) d.t += dt;
+  },
+  geom() { const s = Math.min(W * 0.6, H * 0.34); return {cx: W / 2, base: H * 0.64, s}; },
+  draw() {
+    const {cx, base, s} = this.geom(), d = this.d;
+    // the kitchen counter
+    ctx.fillStyle = '#fff4ea'; ctx.fillRect(0, 0, W, H);
+    const tile = W / 8;
+    for (let y = 0; y < base; y += tile) for (let x = 0; x < W; x += tile) { ctx.fillStyle = ((x + y) / tile) % 2 ? '#ffe9f1' : '#fff7fb'; ctx.fillRect(x, y, tile, tile); }
+    D.rr(ctx, -10, base - 4, W + 20, H * 0.04, 6); ctx.fillStyle = D.C.wood; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = D.C.ink; ctx.stroke();
+    ctx.fillStyle = '#f6d7c0'; ctx.fillRect(0, base + H * 0.036, W, H);
+    if (!d) return;
+    const wy = -s * 0.4;
+    if (this.name === 'bake' || (this.name === 'frost' && this.t < 0.4)) {
+      // inside the oven, glowing as it bakes
+      const ow = s * 1.25, oh = s * 1.2, ox = cx - ow / 2, oy = base - oh + s * 0.08;
+      D.rr(ctx, ox - 14, oy - 14, ow + 28, oh + 28, 22); ctx.fillStyle = '#f6f1fb'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+      const glow = ctx.createRadialGradient(cx, base - s * 0.3, 10, cx, base - s * 0.3, ow * 0.8);
+      const heat = Math.min(1, (this.st.bake || 0) * 1.4);
+      glow.addColorStop(0, `rgba(255,${220 - heat * 60},${150 - heat * 90},1)`); glow.addColorStop(1, '#5a3d33');
+      D.rr(ctx, ox, oy, ow, oh, 14); ctx.fillStyle = glow; ctx.fill(); ctx.stroke();
+      for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(ox + 12, base + 2 - i * 6); ctx.lineTo(ox + ow - 12, base + 2 - i * 6); ctx.strokeStyle = `rgba(255,${120 + i * 40},60,${0.4 + heat * 0.5})`; ctx.lineWidth = 3; ctx.stroke(); }
+      this.meter(cx + ow / 2 + 26, oy, oh);
+    }
+    const stage = this.name === 'done' ? null : this.st;
+    const bounce = this.name === 'done' ? -Math.abs(Math.sin(now * 4)) * s * 0.04 : 0;
+    D.cupcake(ctx, d, cx, base + bounce, s, now, false, stage);
+    if (this.name === 'pour') {
+      // fill line
+      const ly = base + wy * 0.82;
+      ctx.fillStyle = 'rgba(159,227,192,.45)'; ctx.fillRect(cx - s * 0.5, base + wy * 0.9, s, wy * -0.16);
+      ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(cx - s * 0.52, ly); ctx.lineTo(cx + s * 0.52, ly); ctx.lineWidth = 3; ctx.strokeStyle = '#3f9e6e'; ctx.stroke(); ctx.setLineDash([]);
+      D.text(ctx, 'fill line', cx + s * 0.58, ly, 14, {align: 'left', color: '#3f9e6e', weight: 700, stroke: '#fff', sw: 4});
+      // the mixing bowl, tipping while she pours
+      const tip = this.holding ? -0.75 : -0.2;
+      ctx.save(); ctx.translate(cx + s * 0.3, base - s * 1.05); ctx.rotate(tip);
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.36, s * 0.08, 0, 0, Math.PI * 2); ctx.fillStyle = D.batterColor(d.cake); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-s * 0.36, 0); ctx.quadraticCurveTo(0, s * 0.5, s * 0.36, 0); ctx.closePath(); ctx.fillStyle = '#8fc8f2'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.36, s * 0.08, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+      if (this.holding) {
+        const top = base + wy * Math.min(1.1, this.st.fill);
+        ctx.beginPath(); ctx.moveTo(cx + s * 0.02, base - s * 1.0); ctx.quadraticCurveTo(cx - s * 0.02 + Math.sin(now * 20) * 3, (top + base - s) / 2, cx, top);
+        ctx.lineWidth = s * 0.07; ctx.lineCap = 'round'; ctx.strokeStyle = D.batterColor(d.cake); ctx.stroke(); ctx.lineCap = 'butt';
+      }
+    }
+    if (this.name === 'frost') {
+      const topY = base - s * 0.385 - s * 0.53;
+      ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(cx - s * 0.4, topY); ctx.lineTo(cx + s * 0.4, topY); ctx.lineWidth = 3; ctx.strokeStyle = '#3f9e6e'; ctx.stroke(); ctx.setLineDash([]);
+      D.text(ctx, 'top line', cx + s * 0.46, topY, 14, {align: 'left', color: '#3f9e6e', weight: 700, stroke: '#fff', sw: 4});
+      // the piping bag, circling as the swirl builds
+      const ny = base - s * 0.385 - Math.min(1.3, this.st.frost) * s * 0.53 - s * 0.03, nx = cx + (this.holding ? Math.sin(now * 9) * s * 0.18 : 0);
+      ctx.save(); ctx.translate(nx, ny); ctx.rotate(0.15);
+      ctx.beginPath(); ctx.moveTo(-s * 0.03, 0); ctx.lineTo(s * 0.03, 0); ctx.lineTo(s * 0.2, -s * 0.5); ctx.quadraticCurveTo(0, -s * 0.6, -s * 0.2, -s * 0.5); ctx.closePath();
+      ctx.fillStyle = '#f9d7e6'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+      D.rr(ctx, -s * 0.035, -s * 0.03, s * 0.07, s * 0.06, 4); ctx.fillStyle = '#d9d9e3'; ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+    for (const drop of this.drops) if (drop.t < 0.6) {
+      const k = Math.min(1, drop.t / 0.55), y = base - s * 1.6 + k * k * s * 0.75;
+      if (drop.id === 'sprinkles' || drop.id === 'chips') for (let i = 0; i < 10; i++) D.text(ctx, drop.id === 'chips' ? '•' : '▮', cx + Math.sin(i * 2.3) * s * 0.25, y + (i % 4) * 8, 12, {color: drop.id === 'chips' ? '#5a3420' : ['#ff6b9d', '#4fb8f0', '#ffd23d', '#6fd16f'][i % 4]});
+      else { const img = dropImage(drop.id); if (img.complete) ctx.drawImage(img, cx - s * 0.15, y - s * 0.15, s * 0.3, s * 0.3); }
+    }
+    if (this.name === 'done') D.text(ctx, '⭐'.repeat(this.stars), cx, base - s * 1.08, s * 0.18);
+    if (this.flash && now - this.flash.t < 1.2) {
+      const k = (now - this.flash.t) / 1.2;
+      D.text(ctx, this.flash.text, cx, base - s * 1.15 - k * 20, s * 0.17 * (1 + Math.sin(Math.min(1, k * 4) * Math.PI) * 0.15), {color: this.flash.text === 'Oops!' ? '#e8506a' : D.C.pink, weight: 700, stroke: '#fff', sw: 6});
+    }
+    arianna(this.name === 'done' ? (this.stars === 3 ? 'cheer' : 'wave') : this.holding ? 'think' : 'stand', W * 0.12, base + H * 0.03, H * 0.28, {face: 'right'});
+    baxter(this.name === 'done' ? 'excited' : 'tilt', W * 0.89, base + H * 0.035, H * 0.1);
+  },
+  meter(x, y, hgt) {
+    // pale -> golden -> brown, with the golden zone marked
+    const w = 22, g = ctx.createLinearGradient(0, y + hgt, 0, y);
+    g.addColorStop(0, '#fff3cf'); g.addColorStop(0.5, '#f2b544'); g.addColorStop(0.75, '#d68a2c'); g.addColorStop(1, '#6e4022');
+    D.rr(ctx, x - w / 2, y, w, hgt, 10); ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+    const zone = v => y + hgt - (v / 1.2) * hgt;
+    ctx.lineWidth = 3; ctx.strokeStyle = '#3f9e6e'; ctx.strokeRect(x - w / 2 - 4, zone(0.78), w + 8, zone(0.58) - zone(0.78));
+    const my = zone(Math.min(1.2, this.st.bake || 0));
+    ctx.beginPath(); ctx.moveTo(x - w / 2 - 12, my - 8); ctx.lineTo(x - w / 2 - 2, my); ctx.lineTo(x - w / 2 - 12, my + 8); ctx.closePath(); ctx.fillStyle = D.C.ink; ctx.fill();
+    D.text(ctx, 'golden', x, zone(0.68), 11, {weight: 700, color: '#fff', stroke: D.C.ink, sw: 3});
   },
 };
 
@@ -427,7 +602,7 @@ function openDesigner(slot) {
     body,
     h('div', {class: 'foot'}, btn('Cancel', close, 'ghost'), btn('Done!', () => {
       d.name = d.name.trim() || randomName();
-      save.menu[slot] = d; close(); sfx.yes(); speak(`${d.name}! ${d.price} dollars.`);
+      save.menu[slot] = d; close(); sfx.yes(); speak([S.designDone, S.priceEach(d.price)]);
       if (scene === Kitchen) { day.counts = fillCounts(day.counts.map((n, i) => (i === slot ? 0 : n))); Kitchen.render(); }
     }, 'pink')));
   app.append(el);
@@ -437,7 +612,6 @@ function openDesigner(slot) {
 const randomName = () => L.NAME_WORDS.map(l => l[Math.floor(Math.random() * l.length)]).join(' ');
 
 // ---------- selling on the street ----------
-const GREET = ['Hi Arianna!', 'Hello there!', 'Ooh, cupcakes!', 'Yum, it smells so good!', 'Hi! Hi Baxter!'];
 const Street = {
   enter(back) {
     hud(true);
@@ -445,7 +619,7 @@ const Street = {
     this.panel = h('div', {class: 'panel'});
     mount(this.panel);
     this.idle();
-    if (!back) coach('street', 'Customers are coming! Listen to each order and type how many they want.');
+    if (!back) coach('street');
   },
   idle() {
     const left = day.shelf.reduce((a, b) => a + b, 0);
@@ -473,12 +647,12 @@ const Street = {
       if (w.hungry && w.x <= g.spot) { w.x = g.spot; w.state = 'decide'; w.t = 0; }
       if (!w.hungry && w.x < -80) { this.walker = null; this.wait = 0.3; }
     } else if (w.state === 'decide' && w.t > 0.45) {
-      const res = L.decide(w.type, save.menu, day.shelf, save.day, w.mood);
+      const res = L.decide(w.type, save.menu, day.shelf, save.day, w.mood, day.quality);
       if (res.action === 'buy') { w.state = 'order'; this.order(w, res.slot); }
       else if (res.action === 'pricey') {
         day.pricey[res.slot] = (day.pricey[res.slot] || 0) + 1;
         w.state = 'say'; w.face = 'hmm'; w.t = 0;
-        this.say(w, `Hmm… $${save.menu[res.slot].price} is too expensive for me. Maybe next time!`);
+        this.say(w, S.pricey(save.menu[res.slot].price));
       } else { this.close(); }
     } else if (w.state === 'say' && w.t > 2.6) { w.state = 'out'; this.bubble?.remove(); this.idle(); }
     else if (w.state === 'out') { w.x -= speed * dt; if (w.x < -80) { this.walker = null; this.wait = 0.4 + Math.random() * 0.8; } }
@@ -495,7 +669,7 @@ const Street = {
     this.bubble?.remove();
     const soldOut = day.shelf.every(n => n <= 0);
     ui.append(h('div', {class: 'banner'}, soldOut ? 'Sold out! 🎉' : 'Closing time!'));
-    speak(soldOut ? 'Sold out! Great job!' : 'Closing time!');
+    speak(soldOut ? S.soldOut : S.closing);
     if (soldOut) confettiBurst(W / 2, H * 0.4);
   },
   order(w, slot) {
@@ -504,8 +678,9 @@ const Street = {
     if (party) day.partyDone = true;
     day.order = order;
     const address = L.makeAddress(day.r, save.day, settings.bigKid);
-    const line1 = `${L.CUSTOMERS[w.type].kind === 'dog' ? 'Woof woof! ' : ''}${GREET[Math.floor(day.r() * GREET.length)]} I’d like the ${d.name}.`;
-    const spoken = `${line1} ${order.text}`;
+    const greet = [L.CUSTOMERS[w.type].kind === 'dog' ? S.woof : null, GREET[Math.floor(day.r() * GREET.length)]].filter(Boolean);
+    const line1 = `${greet.join(' ')} I’d like the ${d.name}.`;
+    const spoken = [...greet, ...order.say];
     let typed = '', misses = 0;
     const hintBox = h('div');
     this.bubble?.remove();
@@ -528,8 +703,8 @@ const Street = {
       misses++;
       sfx.gentle(); w.face = 'hmm'; this.oopsAt = now;
       hintBox.replaceChildren(hintDots(order, misses >= 2));
-      if (misses >= 2) { typed = String(order.answer); show(); speak(`Let's count together. It's ${order.answer}! Press OK.`); }
-      else { typed = ''; show(); speak('Hmm, not quite. Let’s count together!'); }
+      if (misses >= 2) { typed = String(order.answer); show(); speak(S.countIt(order.answer)); }
+      else { typed = ''; show(); speak(S.notQuite); }
     };
     this.keyHandler = e => {
       if (/^\d$/.test(e.key)) key(e.key)();
@@ -552,7 +727,7 @@ const Street = {
     day.sold[slot] = (day.sold[slot] || 0) + order.answer;
     day.soldCount += order.answer;
     day.sales += total; save.cash += total;
-    if (L.willingToPay(w.type, d, save.day, w.mood) - d.price >= 3) day.cheap[slot] = (day.cheap[slot] || 0) + 1;
+    if (L.willingToPay(w.type, d, save.day, w.mood, day.quality?.[slot]) - d.price >= 3) day.cheap[slot] = (day.cheap[slot] || 0) + 1;
     const newSticker = !save.stickers[w.type];
     save.stickers[w.type] = (save.stickers[w.type] || 0) + 1;
     w.face = 'wow';
@@ -561,12 +736,12 @@ const Street = {
     coinsTo(g.spot, g.feet - g.ch * 0.6, Math.min(12, order.answer * 2));
     const ticket = h('div', {class: 'ticket'}, 'Order ticket', h('br'), h('b', null, `${order.answer} × ${d.name}`), h('br'), `${order.answer} × $${d.price} = $${total}`, newSticker ? h('div', {style: 'margin-top:6px;color:#f27aa9'}, '⭐ New sticker!') : null);
     ui.append(ticket);
-    const msg = `Thank you! ${L.addressText(address)}`;
+    const msg = `${S.thanks} ${L.addressText(address)}`;
     setTimeout(() => {
       ticket.remove();
       if (scene !== this) return;
-      this.bubble.replaceChildren(h('div', {class: 'who'}, L.CUSTOMERS[w.type].name), h('div', {class: 'say'}, h('div', null, h('b', null, msg)), speakerButton(() => L.addressSpoken(address))));
-      speak(L.addressSpoken(address));
+      this.bubble.replaceChildren(h('div', {class: 'who'}, L.CUSTOMERS[w.type].name), h('div', {class: 'say'}, h('div', null, h('b', null, msg)), speakerButton(() => [S.thanks, ...L.addressSpoken(address)])));
+      speak([S.thanks, ...L.addressSpoken(address)]);
       this.panel.className = 'panel';
       this.panel.replaceChildren(btn(address.mode === 'line' ? 'Find the house →' : 'Find it on the map →', () => go(Find, {w, slot, order, address}), 'pink big wide'));
     }, 1700);
@@ -608,10 +783,10 @@ const Find = {
     hud(true);
     const a = job.address;
     this.help = h('div', {class: 'findhelp'});
-    this.helpSay(a.mode === 'line' ? 'Tap that house on Main Street. Our shop is 0.' : 'Tap that corner. Go over first, then up.');
+    this.helpSay(a.mode === 'line' ? S.tapHouse : S.tapCorner);
     mount(h('div', {class: 'target'}, a.mode === 'line' ? `🏠 House ${a.n}` : `📍 (${a.x}, ${a.y})`), this.help);
     speak(L.addressSpoken(a));
-    coach(a.mode === 'line' ? 'findline' : 'findgrid', a.mode === 'line' ? 'Count the houses from our shop! The shop is 0.' : 'The first number says how far over. The second says how far up!');
+    coach(a.mode === 'line' ? 'findline' : 'findgrid');
   },
   helpSay(msg, spoken = null) {
     const a = this.job.address;
@@ -647,14 +822,14 @@ const Find = {
     this.tapped = {choice, ok, t: now};
     if (ok) {
       this.picked = choice; sfx.yes(); confettiBurst(x, y, 20);
-      speak(a.mode === 'line' ? `Yes! House ${a.n}!` : `Yes! Over ${a.x}, up ${a.y}!`);
+      speak(a.mode === 'line' ? S.yesHouse(a.n) : S.yesPoint(a.x, a.y));
       this.help.replaceChildren(btn('Drive there! 🚐', () => go(Drive, this.job), 'pink big wide'));
     } else {
       this.misses++; sfx.gentle();
-      const msg = a.mode === 'line' ? (this.misses >= 2 ? `Here it is! House ${a.n} is the bouncing one.` : `That's house ${choice}. Count again from the shop!`)
-        : (this.misses >= 2 ? `Here it is! The bouncing star is over ${a.x}, up ${a.y}.` : `That's ${choice[0]}, ${choice[1]}. Go over ${a.x} first, then up ${a.y}!`);
+      const say = a.mode === 'line' ? [this.misses >= 2 ? S.hereHouse(a.n) : S.wrongHouse(choice)]
+        : this.misses >= 2 ? [S.herePoint(a.x, a.y)] : [S.wrongPoint(choice[0], choice[1]), S.goOver(a.x, a.y)];
       this.hint = this.misses;
-      this.helpSay(msg, msg); speak(msg);
+      this.helpSay(say.join(' '), say); speak(say);
     }
   },
   draw() {
@@ -746,7 +921,7 @@ const Drive = {
     this.kd = e => { if (KEYS[e.key]) { this.held[KEYS[e.key]] = true; e.preventDefault(); } if (e.key === ' ') this.sniff(); };
     this.ku = e => { if (KEYS[e.key]) this.held[KEYS[e.key]] = false; };
     addEventListener('keydown', this.kd); addEventListener('keyup', this.ku);
-    coach('drive', settings.easyDrive ? 'Hold an arrow to drive. The van turns at the next corner. Find the bouncing house!' : 'Hold the arrows to steer to the bouncing house!');
+    coach(settings.easyDrive ? 'drive' : 'driveFree', 'drive');
     sfx.honk();
   },
   exit() { removeEventListener('keydown', this.kd); removeEventListener('keyup', this.ku); engineOff(); },
@@ -851,7 +1026,7 @@ const Doorstep = {
       day.tips += tip; save.cash += tip; cashChanged();
       const g = {x: W * 0.62, y: H * 0.45};
       coinsTo(g.x, g.y, tip * 2); confettiBurst(g.x, g.y, 24); sfx.yes();
-      const msg = `Yummy! Thank you, Arianna and Baxter! Here’s a $${tip} tip!`;
+      const msg = S.tip(tip);
       mount(h('div', {class: 'bubble', style: `top:${H * 0.12}px`}, h('div', {class: 'who'}, L.CUSTOMERS[this.job.w.type].name), h('div', {class: 'say'}, h('div', null, msg), speakerButton(() => msg))),
         h('div', {class: 'findhelp'}, btn('Back to the shop →', () => go(Street, true), 'pink big wide')));
       speak(msg);
@@ -900,7 +1075,7 @@ const Results = {
     );
     mount(h('div', {class: 'back', style: 'background:transparent;align-items:start;padding-top:calc(env(safe-area-inset-top,0px) + 56px)'}, card));
     requestAnimationFrame(() => { drawBars(bars, sold); if (save.history.length >= 3) drawLine(line, save.history); });
-    speak(`Day ${entry.day} done! You made ${entry.profit} dollars profit.` + (entry.goalMet ? ' And you beat your goal!' : ''));
+    speak([S.dayDone(entry.day), entry.profit > 200 ? S.bigProfit : entry.profit > 0 ? S.profit(entry.profit) : S.noProfit, entry.goalMet ? S.goalMet : null]);
     if (entry.goalMet) confettiBurst(W / 2, H * 0.3, 50);
     if (unlocked.length) setTimeout(() => showUnlock(unlocked), 900);
   },
@@ -916,7 +1091,7 @@ function showUnlock(ids) {
   const id = ids[0], ing = L.INGREDIENTS[id];
   const close = modal(h('div', {class: 'unlock'}, h('h2', null, 'New ingredient!'), h('img', {src: D.ingredientIcon(id, ing.kind, 160), alt: ''}), h('p', null, h('b', null, ing.name), h('br'), 'Find it at the market and in the cupcake designer.')),
     h('div', {class: 'actions'}, btn('Yay!', () => { close(); if (ids.length > 1) showUnlock(ids.slice(1)); }, 'pink')));
-  speak(`New ingredient! ${ing.name}!`);
+  speak(S.newIngredient(id));
   confettiBurst(W / 2, H * 0.35, 40);
 }
 function canvasSize(c) {
@@ -949,7 +1124,7 @@ function drawLine(c, history) {
 
 // ---------- upgrades ----------
 const Upgrades = {
-  enter() { hud(true); this.panel = h('div', {class: 'panel', style: 'max-height:80%'}); mount(this.panel); this.render(); coach('upgrades', 'Spend your savings to grow the shop. Or save up for something big!'); },
+  enter() { hud(true); this.panel = h('div', {class: 'panel', style: 'max-height:80%'}); mount(this.panel); this.render(); coach('upgrades'); },
   render() {
     const list = h('div', {class: 'list scroll'});
     for (const [key, u] of Object.entries(L.UPGRADES)) {
@@ -969,8 +1144,8 @@ const Upgrades = {
   },
   buy(fn, name) {
     const res = fn();
-    if (res === 'broke') { sfx.gentle(); toast('Not enough money yet. Keep saving!'); speak('Not enough money yet. Keep saving!'); return; }
-    if (res === 'ok') { sfx.unlock(); cashChanged(); confettiBurst(W / 2, H * 0.25, 24); speak(`${name}!`); persist(); }
+    if (res === 'broke') { sfx.gentle(); toast(S.keepSaving); speak(S.keepSaving); return; }
+    if (res === 'ok') { sfx.unlock(); cashChanged(); confettiBurst(W / 2, H * 0.25, 24); speak(S.bought(name)); persist(); }
     this.render();
   },
   draw() {
@@ -987,14 +1162,14 @@ const SeasonEnd = {
     const totals = {};
     for (const hd of save.history) for (const s of hd.sold) totals[s.name] = (totals[s.name] || 0) + s.count;
     const fav = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
-    const label = {gold: '🏆 Gold Cupcake Trophy!', silver: '🥈 Silver Cupcake Trophy!', bronze: '🥉 Bronze Cupcake Trophy!', ribbon: '🎀 Super Baker Ribbon!'}[trophy];
+    const label = {gold: '🏆', silver: '🥈', bronze: '🥉', ribbon: '🎀'}[trophy] + ' ' + S.trophy[trophy];
     mount(h('div', {class: 'back'}, h('div', {class: 'card center'},
       h('h2', null, 'Season complete!'), h('div', {style: 'font-size:30px;font-weight:700;margin:8px 0'}, label),
       h('p', null, `Season profit: $${profit}`), h('p', null, `Best day: day ${best.day} ($${best.profit})`), fav ? h('p', null, `Best seller: ${fav[0]} (${fav[1]} sold)`) : null,
       h('p', null, `Stickers collected: ${Object.keys(save.stickers).length} of ${Object.keys(L.CUSTOMERS).length}`),
       h('div', {class: 'actions'}, btn('Keep baking (free play)', () => go(DayStart), 'pink')))));
     confettiBurst(W / 2, H * 0.3, 80); sfx.unlock();
-    speak(`Season complete! ${label.replace(/^\S+ /, '')} You made ${profit} dollars!`);
+    speak([S.seasonDone, S.trophy[trophy], S.amazingSeason]);
   },
   draw() { D.cozy(ctx, W, H, {t: now}); arianna('cheer', W * 0.3, H * 0.95, H * 0.3); baxter('excited', W * 0.75, H * 0.95, H * 0.14); },
 };
@@ -1040,7 +1215,11 @@ cv.addEventListener('pointerdown', e => {
   const r = cv.getBoundingClientRect();
   unlock();
   scene?.tap?.(e.clientX - r.left, e.clientY - r.top);
+  scene?.press?.();
 });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) cv.addEventListener(ev, () => scene?.release?.());
+addEventListener('keydown', e => { if (e.key === ' ' && !e.repeat) scene?.press?.(); });
+addEventListener('keyup', e => { if (e.key === ' ') scene?.release?.(); });
 let last = performance.now(), paused = false;
 document.addEventListener('visibilitychange', () => { paused = document.hidden; if (paused) { hush(); engineOff(); } last = performance.now(); });
 function frame(ts) {
@@ -1058,11 +1237,11 @@ function frame(ts) {
 }
 
 // For automated checks: read-only peek at the game.
-const SCENES = {Title, DayStart, Market, Kitchen, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd};
+const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd};
 window.__cupcake = {get save() { return save; }, get day() { return day; }, scenes: SCENES, town, get scene() { return Object.keys(SCENES).find(k => SCENES[k] === scene); }};
 
 resize();
-await Promise.all([loadArt(BASE), document.fonts?.ready]);
+await Promise.all([loadArt(BASE), loadVoice(BASE), document.fonts?.ready]);
 go(Title);
 requestAnimationFrame(frame);
 if ('serviceWorker' in navigator && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') navigator.serviceWorker.register(`${BASE}sw.js`, {scope: BASE}).catch(() => {});
