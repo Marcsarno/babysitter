@@ -1,4 +1,4 @@
-art/
-tests/
+/art/
+/tests/
 /*.png
 README.md
