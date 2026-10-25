@@ -1,0 +1,83 @@
+More art for the same kids' game, in the same style as the attached character sheets. Please generate each image below as a SEPARATE image, one at a time, in order, without asking me to confirm between images. After each one, tell me its file name.
+
+STYLE FOR EVERY IMAGE: children's picture-book cartoon illustration, clean bold dark-brown outlines, soft simple shading, rounded friendly shapes, bright pastel palette of strawberry pink, mint green, buttercream yellow, sky blue and chocolate brown, matching the attached character sheets.
+RULES FOR EVERY IMAGE: no text, letters, numbers, words, logos or writing anywhere (signs stay blank). Nothing cropped.
+SCENES (BG): tall 9:16 (1080x1920), full background, and NO people and NO animals in them (the game adds the characters).
+OBJECTS (everything else): square 1024x1024, one object centered, plain pure white background, no shadow on the ground.
+
+SCENES
+BG1-shopfront: The front of a cute pastel cupcake shop on a sunny small-town street, seen straight on. A pink and white striped scalloped awning across the upper part. Under it, a big open serving window across the left two-thirds with an empty wooden counter ledge at about half the image height; the window opening shows only a soft pink back wall, empty, no cupcakes. A mint-green door on the right. A blank wooden sign board above the awning. Flower boxes under the window. The bottom third is a light stone sidewalk and the edge of the street.
+BG2-kitchen: Inside a cozy pastel bakery kitchen, straight-on view. A long wooden counter runs across the whole image at about two-thirds of the way down, with a completely empty countertop. Pink and white checkered tile wall, a sunny window on the left, open shelves with jars of sprinkles and flour, a white oven on the right. Cabinet doors below the counter.
+BG3-market: An outdoor morning market with two side-by-side stalls: on the left a tidy stall with a red and white striped awning and crates of baking supplies (flour sacks, eggs, jars of sprinkles); on the right a rustic red barn-style stall with white trim and big sacks and boxes. Blank wooden signs above each stall. The stalls fill the top half; the bottom half is a soft cobblestone plaza.
+BG4-house-pink: The front of a cute pink cottage, seen straight on, with a round-top door in the center-right, a front step, a porch light, flower pots and a window on the left. The bottom third is a front path, lawn and sidewalk.
+BG5-house-blue: The same kind of cottage front, sky blue with a white door and window boxes.
+BG6-house-yellow: The same kind of cottage front, buttercream yellow with a mint door and a little porch.
+BG7-cozy-room: A cozy living room in the evening: a big round lavender rug in the lower middle (empty, with room for a sleeping dog), a pink sofa behind it, string lights along the top, a window with a sunset sky, warm lamp light.
+BG8-morning: Sunrise over a little pastel town with the cupcake shop on its main street, soft pink and gold sky filling the top 40 percent.
+
+CUPCAKE PARTS (all the same straight side view and the same size, like a matching product-photo series, so they stack on top of each other)
+I1-cake-vanilla: A single cupcake with NO frosting: a pleated pink paper liner with a domed golden vanilla cake top just above the liner. Centered, filling about 70 percent of the width.
+I2-cake-chocolate: The same, with a mint-green liner and a domed chocolate cake top.
+I3-cake-strawberry: The same, with a buttercream-yellow liner and a domed pink strawberry cake top.
+I4-cake-lemon: The same, with a light blue liner and a domed lemon-yellow cake top.
+I5-cake-redvelvet: The same, with a white liner and a domed red velvet cake top.
+I6-frosting-vanilla: Only a swirl of creamy white vanilla frosting with three tiers and a curled peak, as if piped onto a cupcake, but with nothing underneath (no cupcake, no liner). Flat, wide bottom. Centered, filling about 80 percent of the width.
+I7-frosting-strawberry: The same swirl in pink strawberry frosting.
+I8-frosting-chocolate: The same swirl in chocolate frosting.
+I9-frosting-mint: The same swirl in mint-green frosting.
+I10-frosting-blueberry: The same swirl in light blueberry-blue frosting.
+I11-frosting-lavender: The same swirl in lavender frosting.
+I12-cherry: One shiny red cherry with a stem.
+I13-gummy: One red gummy bear, standing.
+I14-heart: One pink candy heart.
+I15-star: One shiny gold star candy.
+I16-bone: One small dog-bone-shaped cookie.
+I17-jar-sprinkles: A small glass jar full of rainbow sprinkles.
+I18-jar-chips: A small glass jar full of chocolate chips.
+
+BAKING TOOLS
+K1-bowl: A big mixing bowl full of cake batter with a whisk, seen from the side, tilted a little as if about to pour.
+K2-piping-bag: A pink frosting piping bag with a silver tip, pointing straight down.
+K3-oven: The front of a cute retro pastel-mint oven with a big empty glass window in the door, door closed, seen straight on.
+
+THE VAN
+V1-van-side: A cute rounded pink delivery van with a mint-green stripe, seen exactly from the side, facing right. Nobody inside, windows with a pale blue tint, a cupcake shape on the roof. No writing.
+V2-van-top: The same pink van seen from straight above (top-down, like on a map), facing right, with a white heart on the roof. Nobody visible.
+
+TOWN MAP PIECES (seen from straight above, top-down like a map, square footprint)
+T1-house-pink: A cute cottage seen from directly overhead, with a pink roof, a little chimney and a small garden edge.
+T2-house-blue: The same, with a sky-blue roof.
+T3-house-yellow: The same, with a buttercream-yellow roof.
+T4-house-lavender: The same, with a lavender roof.
+T5-house-mint: The same, with a mint-green roof.
+T6-house-peach: The same, with a peach roof.
+T7-tree: A round leafy green tree seen from above.
+T8-tree-blossom: A round tree with pink blossoms seen from above.
+T9-pond: A small blue pond with a lily pad, seen from above, on grass.
+T10-flowers: A patch of colorful flowers seen from above.
+T11-shop-roof: A wide shop roof seen from above, with pink and white stripes and a cupcake on top. Twice as wide as it is tall.
+T12-lot: An empty fenced dirt lot seen from above, with a little orange cone.
+
+DECORATIONS FOR THE SHOP
+D1-balloons: A bunch of three balloons (pink, yellow, blue) on strings.
+D2-flowerbox: A wooden window flower box full of pink and yellow flowers.
+D3-bunting: A long string of pastel triangle party flags, shown straight across.
+D4-lights: A long string of colorful round twinkle lights, shown straight across.
+
+ICONS
+U1-coin: A shiny gold coin with a little cupcake stamped on it.
+U2-register: A cute pastel-pink cash register.
+U3-trophy-gold: A gold trophy cup with a cupcake on top.
+U4-trophy-silver: The same trophy in silver.
+U5-trophy-bronze: The same trophy in bronze.
+U6-ribbon: A pink prize ribbon rosette.
+U7-star: A big shiny cartoon gold star.
+
+MORE CHARACTERS (keep them exactly like the character sheets; Arianna on white, Baxter on solid bright blue)
+A6-drive: Arianna seen exactly from the side, facing left, sitting in a driver's seat (draw only the seat), both hands on a round steering wheel, cheerful, shown from the waist up.
+A8-walk: Arianna walking, seen exactly from the side, facing right, mid-step, smiling.
+B7-walk: Baxter trotting happily, seen exactly from the side, facing right, tail up. Solid bright blue background.
+C9-girl: A cheerful girl about 6 with black hair in two puffy pigtails, a sunny yellow dress and white sneakers. White background.
+C10-dad: A friendly dad with short black hair and round glasses, a mint-green polo shirt and khaki pants. White background.
+
+That's 59 images. If you get tired, stop after the cupcake parts and keep going in a new message later.
