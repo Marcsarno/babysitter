@@ -34,7 +34,7 @@ export const CUSTOMERS = {
   grandma: {name: 'Grandma Rose', kind: 'person', likes: ['vanilla', 'white', 'cherry']},
   builder: {name: 'Builder Bo', kind: 'person', likes: ['chocolate', 'choc', 'chips']},
   boy:     {name: 'Little Leo', kind: 'person', likes: ['strawberry', 'sprinkles', 'gummy']},
-  mail:    {name: 'Mia the Mail Carrier', kind: 'person', likes: ['lemon', 'white', 'star']},
+  mail:    {name: 'Max the Mail Carrier', kind: 'person', likes: ['lemon', 'white', 'star']},
   girl:    {name: 'Sophie', kind: 'person', likes: ['pink', 'sprinkles', 'heart']},
   dad:     {name: 'Mr. Patel', kind: 'person', likes: ['chocolate', 'mint', 'chips']},
   bunny:   {name: 'Bunny Belle', kind: 'animal', likes: ['strawberry', 'pink', 'heart']},

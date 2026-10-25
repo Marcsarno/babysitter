@@ -120,7 +120,7 @@ function updateParts(dt) {
 // ---------- characters ----------
 function arianna(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts}); }
 function baxter(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts}); }
-const ART_SCALE = {boy: 0.8, builder: 0.88, bunny: 0.86};   // kids and little animals stand a bit shorter
+const ART_SCALE = {boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1};   // kids and little animals stand a bit shorter, the bear taller
 function drawCustomer(g, type, x, y, hgt, opts) {
   const img = image(CUSTOMER_ART[type]);
   if (img) {
