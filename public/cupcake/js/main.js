@@ -120,6 +120,11 @@ function updateParts(dt) {
 }
 
 // ---------- characters ----------
+// The part of the screen between the top bar and the bottom panel, where a scene can be seen.
+function openArea() {
+  const a = app.getBoundingClientRect(), p = ui.querySelector('.panel')?.getBoundingClientRect();
+  return [hudEl.getBoundingClientRect().bottom - a.top, p ? p.top - a.top : H];
+}
 function arianna(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts}); }
 function baxter(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts}); }
 const ART_SCALE = {boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1, pug: 0.82, poodle: 0.9, spot: 0.9};   // kids and little animals stand a bit shorter, the bear taller
@@ -287,7 +292,11 @@ const Market = {
       setTimeout(() => el2.remove(), 7000);
     }
   },
-  draw() { D.market(ctx, W, H, {t: now, barnOpen: save.day >= 4}); baxter('tilt', W * 0.5, H * 0.33, H * 0.1); },
+  draw() {
+    const open = openArea(), f = D.market(ctx, W, H, {t: now, barnOpen: save.day >= 4, open});
+    if (f) baxter('tilt', f.sx(0.5), Math.min(f.sy(0.52), open[1] + H * 0.02), Math.min(H * 0.1, (open[1] - open[0]) * 0.45));
+    else baxter('tilt', W * 0.5, H * 0.33, H * 0.1);
+  },
 };
 const vendorName = v => (v === 'corner' ? 'Corner Market' : 'Bulk Barn');
 function explainSavings(m, chose, other, id) {
@@ -355,7 +364,7 @@ const Kitchen = {
     go(Bake);
   },
   draw() {
-    D.kitchen(ctx, W, H, {t: now, baking: this.baking, menu: save.menu, counts: day.counts});
+    D.kitchen(ctx, W, H, {t: now, baking: this.baking, menu: save.menu, counts: day.counts, open: openArea()});
     arianna(this.baking ? 'cheer' : 'think', W * 0.33, H * 0.62, H * 0.3, {face: 'right'});
   },
 };
@@ -464,16 +473,24 @@ const Bake = {
     if (this.name === 'bake' && this.scored) this.st.bake = Math.max(this.st.bake, 0.01);
     for (const d of this.drops) d.t += dt;
   },
-  geom() { const s = Math.min(W * 0.6, H * 0.34); return {cx: W / 2, base: H * 0.64, s}; },
+  // the cupcake stands on the front counter of the painted kitchen, or on a drawn one
+  art() { return D.fitArt('bg2-kitchen', W, H, [0, 0.4, 1, 0.85], 0, H, true); },
+  geom() { const s = Math.min(W * 0.6, H * 0.34), f = this.art(); return {cx: W / 2, base: f ? Math.min(f.sy(0.735), H * 0.72) : H * 0.64, s, f}; },
   draw() {
-    const {cx, base, s} = this.geom(), d = this.d;
-    // the kitchen counter
+    const {cx, base, s, f} = this.geom(), d = this.d;
+    if (f) D.paintArt(ctx, f, H);
+    else this.drawnCounter(base);
+    if (!d) return;
+    this.drawCupcake(cx, base, s, d);
+  },
+  drawnCounter(base) {
     ctx.fillStyle = '#fff4ea'; ctx.fillRect(0, 0, W, H);
     const tile = W / 8;
     for (let y = 0; y < base; y += tile) for (let x = 0; x < W; x += tile) { ctx.fillStyle = ((x + y) / tile) % 2 ? '#ffe9f1' : '#fff7fb'; ctx.fillRect(x, y, tile, tile); }
     D.rr(ctx, -10, base - 4, W + 20, H * 0.04, 6); ctx.fillStyle = D.C.wood; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = D.C.ink; ctx.stroke();
     ctx.fillStyle = '#f6d7c0'; ctx.fillRect(0, base + H * 0.036, W, H);
-    if (!d) return;
+  },
+  drawCupcake(cx, base, s, d) {
     const wy = -s * 0.4;
     if (this.name === 'bake' || (this.name === 'frost' && this.t < 0.4)) {
       // inside the oven, glowing as it bakes
@@ -626,8 +643,14 @@ const Street = {
     this.panel.replaceChildren(h('div', {class: 'status'}, h('div', {class: 'grow'}, left ? 'Waiting for customers…' : 'All sold out!'), h('div', null, `Sold ${day.soldCount} · goal ${day.goal} ${day.soldCount >= day.goal ? '⭐' : ''}`)));
   },
   geom() {
+    const f = D.streetArt(W, H);
+    if (f) {
+      // the painted sidewalk; customers stand a little shorter than the shop door
+      const feet = f.sy(0.75);
+      return {groundY: feet - H * 0.045, spot: W * 0.36, feet, ch: Math.min(f.h * 0.27, W * 0.42), road: f.sy(0.94)};
+    }
     const g = H * 0.55;
-    return {groundY: g, spot: W * 0.36, feet: g + H * 0.045, ch: Math.min(H * 0.2, W * 0.42)};
+    return {groundY: g, spot: W * 0.36, feet: g + H * 0.045, ch: Math.min(H * 0.2, W * 0.42), road: g + H * 0.16};
   },
   update(dt) {
     if (this.closing) { this.closing -= dt; if (this.closing <= 0) { this.closing = 0; go(Results); } return; }
@@ -755,8 +778,8 @@ const Street = {
     arianna(now - (this.oopsAt ?? -9) < 2.5 ? 'oops' : this.walker?.state === 'order' ? 'think' : this.closing ? 'cheer' : 'stand', shop.win.x + shop.win.w * 0.72, shop.win.y + shop.win.h * 1.35, shop.win.h * 1.45);
     ctx.restore();
     D.shelfDisplay(ctx, shop, save.menu, day.shelf, now, H);
-    if (day.event === 'birthday') for (let i = 0; i < 7; i++) { ctx.fillStyle = ['#ffd23d', '#9fe3c0', '#c3a6ec', '#ff9fc4'][i % 4]; ctx.beginPath(); const bx = W * 0.08 + i * W * 0.12; ctx.moveTo(bx, H * 0.27); ctx.lineTo(bx + W * 0.1, H * 0.27); ctx.lineTo(bx + W * 0.05, H * 0.3); ctx.fill(); }
-    D.vanSide(ctx, W * 0.02, g.groundY + H * 0.16, Math.min(W * 0.5, H * 0.3), save.paint, {t: now, name: SHOP_NAME});
+    if (day.event === 'birthday' && !shop.painted) for (let i = 0; i < 7; i++) { ctx.fillStyle = ['#ffd23d', '#9fe3c0', '#c3a6ec', '#ff9fc4'][i % 4]; ctx.beginPath(); const bx = W * 0.08 + i * W * 0.12; ctx.moveTo(bx, H * 0.27); ctx.lineTo(bx + W * 0.1, H * 0.27); ctx.lineTo(bx + W * 0.05, H * 0.3); ctx.fill(); }
+    D.vanSide(ctx, W * 0.02, g.road, Math.min(W * 0.5, H * 0.3), save.paint, {t: now, name: SHOP_NAME});
     baxter(this.walker?.state === 'order' ? 'excited' : 'sit', W * 0.88, g.feet - H * 0.005, Math.min(H * 0.11, W * 0.24));
     const w = this.walker;
     if (w) drawCustomer(ctx, w.type, w.x, g.feet, g.ch, {t: now + w.t, walking: w.state === 'in' || w.state === 'out', face: w.face, dir: -1});
@@ -1034,14 +1057,17 @@ const Doorstep = {
   },
   draw() {
     const s = D.doorstep(ctx, W, H, {t: now, variant: this.variant});
-    const ch = Math.min(H * 0.24, W * 0.5);
+    const ch = s.painted ? s.doorH * 0.95 : Math.min(H * 0.24, W * 0.5);
     drawCustomer(ctx, this.job.w.type, s.door.x, s.gy + 4, ch, {t: now, face: this.paid ? 'happy' : 'wow'});
-    const k = Math.min(1, this.t / 1.3), ax = W * 0.04 + (s.door.x - W * 0.26 - W * 0.04) * k;
-    const ah = Math.min(H * 0.3, W * 0.62);
-    if (k < 1) { arianna('walk', ax, s.gy + 6, ah, {face: 'right'}); boxInHands(ax + ah * 0.12, s.gy - ah * 0.42, ah * 0.2); }
-    else arianna('box', ax, s.gy + 6, ah, {face: 'right'});
-    if (k >= 1 && !image('a3-box')) boxInHands(ax, s.gy - ah * 0.36, ah * 0.22);
-    baxter(this.paid ? 'excited' : 'walk', ax - ah * 0.28, s.gy + 8, ah * 0.36, {face: 'right'});
+    const k = Math.min(1, this.t / 1.3);
+    // on a painted house she walks up the lawn from the sidewalk; on the drawn one, along the ground
+    const [x0, y0] = s.painted ? s.start : [W * 0.04, s.gy + 6], [x1, y1] = s.painted ? s.path : [s.door.x - W * 0.26, s.gy + 6];
+    const ax = x0 + (x1 - x0) * k, ay = y0 + (y1 - y0) * k;
+    const ah = s.painted ? s.doorH * 1.25 : Math.min(H * 0.3, W * 0.62);
+    if (k < 1) { arianna('walk', ax, ay, ah, {face: 'right'}); boxInHands(ax + ah * 0.12, ay - ah * 0.42, ah * 0.2); }
+    else arianna('box', ax, ay, ah, {face: 'right'});
+    if (k >= 1 && !image('a3-box')) boxInHands(ax, ay - ah * 0.36, ah * 0.22);
+    baxter(this.paid ? 'excited' : 'walk', ax - ah * 0.28, ay + 2, ah * 0.36, {face: 'right'});
   },
 };
 
