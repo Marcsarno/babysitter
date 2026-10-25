@@ -1,136 +1,175 @@
-# Arianna's Cupcakes — game plan
+# Arianna's Cupcakes — game plan (v2)
 
-A faithful remake of the gameplay loop of i-Ready's **Cupcake** learning game (originally Motion Math: Cupcake!, 2015), starring Arianna (7) and her Jack Russell Terrier, Baxter. The mechanics follow the original. Art, names, writing and code are all new, with no i-Ready branding or assets.
+A faithful remake of the gameplay of i-Ready's **Cupcake** learning game (originally Motion Math: Cupcake!, 2015), starring Arianna (7) and her Jack Russell Terrier, Baxter. The rules, screens and day loop follow the original. Art, characters, names, writing, music and code are all new, with no i-Ready branding or assets.
 
-Working title: **Arianna's Cupcakes** (Arianna can rename it).
-Lives at `/cupcake` on the existing Vercel site, next to `/mahjong`.
+Working title: **Arianna's Cupcakes** (Arianna can rename it). It lives at `/cupcake` on the existing site, next to `/mahjong`.
+
+Art prompts are in [`arianna-cupcakes-art-prompts.md`](arianna-cupcakes-art-prompts.md).
 
 ---
 
-## 1. What the original game is
+## 1. What we know about the original
 
-Research sources: the official i-Ready Learning Games page, the i-Ready fan wiki, and 2015 reviews of Motion Math: Cupcake! (Common Sense Media, EdSurge, Horn Book, Science Kid AU, Children's Technology Review). The official page summarizes it this way: students *"run a cupcake delivery business… budget for ingredients, take increasingly complex orders, and make deliveries on the coordinate plane of a city map."*
+Neither version is publicly playable, so this comes from the official description, a fan wiki and 2015 reviews. Each fact is marked by how sure we are:
+**✔✔** = said by several sources · **✔** = one source · **?** = not documented, so we design it.
 
-### The core loop (one in-game day)
-
-| Step | What happens in the original | Math it teaches |
+| Mechanic | Confidence | Detail |
 |---|---|---|
-| **1. Market** | Buy ingredients from vendors. After a few days a second vendor appears and you choose the better deal ("70 for $30 or 10 for $5?"). If you pick the worse deal, a bubble shows how much you could have saved, and tapping **"Really?"** explains the working. | Unit price, comparing rates, budgeting |
-| **2. Design** | Start with a basic cake. Add frosting, toppings and flavors. Each one adds to the cost of the cupcake. Name the cupcake and **set its price**. | Cost plus profit |
-| **3. Shop / orders** | Customers (people *and* animals, with different tastes) come in and say what they want, both in a text bubble and aloud. Orders start simple and become word problems ("2 for me and 3 for my sister"), later with extra information or numbers that are deliberately misleading. You type the count into a **cash register**, which prints an order ticket. If the price is too high, customers complain or refuse. If it is too low, profit suffers. | Word problems, addition, subtraction, multiplication |
-| **4. Delivery** | Each customer gives an address. At first it is a point on a **number line**. Around day 10 it becomes a point on a **coordinate grid** city map. You find the spot, then drive there against a clock. Faster deliveries earn bigger tips. You start on a scooter and later upgrade to a vehicle. | Number line, coordinate plane |
-| **5. End of day** | A results screen shows money earned, money spent and profit. A **bar graph** shows cupcakes sold of each type. After 3 or more days, a **line graph** shows profit over time. | Reading graphs |
-| **6. Upgrades** | Spend savings on a better oven, fridge, delivery vehicle, shop sign and so on. A "money bar" fills as you earn, and each time it reaches a "?" box it unlocks a new flavor or topping. | Saving toward a goal |
+| Run a cupcake *delivery* business; budget, take orders, deliver on a city map's coordinate plane | ✔✔ | Official description |
+| Start: $50, a basic cupcake, a 40-day selling season | ✔✔ | |
+| Buy ingredients; a second, cheaper vendor appears after a few days; compare deals (e.g. "70 for $30 or 10 for $5") | ✔✔ | |
+| Picked the worse deal → bubble "you could have saved $X", tap **"Really?"** for the working | ✔ | |
+| Design a cupcake by adding frosting, toppings and flavors to a basic cake; each addition raises its cost; **name it** and **set its price** | ✔✔ | Cupcakes shown from the side |
+| Customers are people **and animals** with different tastes, walking along the street outside the shop | ✔✔ | |
+| Too high a price → customers complain or refuse; too low → profit suffers. Early on customers accept high prices; **animal customers tolerate higher prices** than people | ✔ | Fan-wiki strategy tips |
+| Orders are given as text and spoken aloud; they get harder: word problems, then extra or misleading information | ✔✔ | |
+| Type the count into a **cash register**, which prints an **order ticket** | ✔ | |
+| Delivery address: a **number line** early, then a **coordinate grid** (from about day 10) | ✔✔ | |
+| Drive to the customer against a **clock**; faster = bigger **tips** | ✔✔ | |
+| End of day: earned / spent / profit, **bar graph** of sales per cupcake, **line graph** of profit after 3+ days | ✔ | |
+| A money bar fills toward a "?" box and unlocks a new flavor or topping | ✔ | |
+| Upgrades: oven, fridge, delivery vehicle, **signs**, and other store/factory improvements | ✔✔ | |
+| Start on a scooter, later a vehicle | ✔ | Older version |
+| Hard math later: mixed numbers, fractions, negatives | ✔✔ | Off by default for us (§3) |
+| Exact effect of each upgrade, oven capacity, storage, how customer demand is calculated, day length | **?** | We design these (§2) |
 
-The season lasts **40 days**. You start with **$50**, one oven, a basic cupcake and a scooter.
+**Reviewers' complaints** we must *not* copy: the driving was hard to control, and the middle of the game felt like "a dull grind."
 
-**Known weak spots in the original:** reviewers disliked the hard-to-control driving and the slow pace between orders. We fix both (see §4).
+**What would make it closer to 1:1:** if Arianna can open i-Ready Cupcake at school or at home, take 5–10 screenshots or a short phone video (market, cupcake designer, an order, the delivery map, end of day). That's the only remaining gap.
 
-**Gaps in my research:** exact numbers (oven capacity, spoilage, the price/demand formula) aren't published, so I'll design sensible values. If Arianna can use i-Ready at school, a few screenshots or a short phone video of the real game would let me match it more closely. That's the only thing I'd ask for to get closer to "1:1."
-
----
-
-## 2. Arianna's version — what stays the same and what changes
-
-**Stays the same:** the whole 6-step loop, the 40-day season, $50 start, two competing vendors with the "You could have saved $X. Really?" explainer, cupcake designer with name and price, spoken and written orders, cash-register entry, price reactions, number line → coordinate grid deliveries, speed tips, end-of-day bar and line graphs, upgrades, and unlocks from the money bar.
-
-**Changes for a 7-year-old and for Arianna:**
-
-- **The van from day one.** There's no scooter. Arianna drives a little delivery van with **Baxter in the passenger seat**. A small cab window in the corner of the delivery screen always shows the two of them: Baxter's ears flap when the van moves, and he barks when they arrive. Van upgrades make it faster, bigger (carries more boxes) and fancier (paint, bow on the roof).
-- **Baxter is useful.** A **"Baxter, sniff it out!"** hint button makes him bark and point toward the delivery house. This replaces the original's on-screen cues. He also sits on the shop counter, reacts to customers, and naps on the end-of-day screen.
-- **2nd-grade difficulty curve** (the original covers grades 2–6):
-  - Orders: addition and subtraction within 20, then "equal groups" (2 boxes of 3). An optional **Big Kid** setting adds the original's harder problems with extra information.
-  - Deliveries: houses 0–10 on a number line, then a first-quadrant grid up to 6×6 ("go over 3, up 4"). Negative numbers and fractions are off unless Big Kid mode is on.
-  - Money: whole dollars only. Vendor deals start with the same quantity at different prices ("6 for $4 or 6 for $3?") and later compare different quantities.
-- **Read-aloud everywhere.** Every bubble can be tapped to hear it, using the device's built-in voice. Short sentences and big buttons.
-- **No-lose design.** A wrong answer gets a gentle "Let's count together" walkthrough instead of a penalty. A bad day can still end in a small profit.
-- **Easier driving.** The van stays on the roads: hold an arrow (or the on-screen pad) and it drives, turning at the next corner. Arianna can't crash or get stuck.
+### What changed from v1 of this plan
+- **Added the street.** v1 skipped the side-view street where people and animals walk past and decide whether to stop. That's how the original decides how many customers you get, and it's what the sign upgrade and the price-tolerance rules affect.
+- **Added the oven and fridge as limits.** The oven caps how many cupcakes you can bake a day, and storage caps how much you can buy. Without these, the upgrades would mean nothing.
+- **Added the hidden numbers.** v1 left the price-tolerance rules out, and they're what makes the original a business game: early-season and animal customers accept higher prices.
+- **Added a fun layer** (§4) aimed at the "dull grind" complaint.
+- **Changed the art approach.** The style is now flat cartoon (not painterly like Babcia's splash) so pictures and code-drawn cupcakes look like one game. There's a character-sheet-first workflow so Arianna and Baxter look the same in every picture. And Baxter riding in the van with his ears blowing back is now a must-have image, because that's Arianna's #1 wish.
 
 ---
 
-## 3. Can it look good with code alone?
+## 2. The day loop, screen by screen
 
-**Yes, for almost everything.** The original is flat 2D vector illustration, which code draws well. The most important visual, the cupcake, *has* to be drawn by code anyway, because Arianna can mix any cake + frosting + topping and a fixed image can't cover every combination.
+One day takes about 5–8 minutes. The season is 40 days, then it keeps going in free play.
 
-| Element | Drawn in code? | Notes |
-|---|---|---|
-| Cupcakes (wrapper, cake, frosting swirl, sprinkles, cherries, candles…) | ✅ Code (required) | Any combination, animated (bounce, sparkle, steam) |
-| Town map, roads, houses, trees, number line and grid | ✅ Code | Clean and crisp at any screen size. Lots are left empty for the future hair salon and toy shop |
-| Van (on the map and in side view) | ✅ Code | Spinning wheels, Baxter's flapping ears, delivery-box stacks |
-| Market, register, order tickets, graphs, buttons, coins | ✅ Code | |
-| Customers | ✅ Code (mix-and-match parts) | Lots of variety: kids, grown-ups, a bunny, a cat, a bear… |
-| **Arianna and Baxter portraits** | ⚠️ Code version works, art looks much better | Faces and likeness are where code drawings look like clip art |
-| **Title screen** | ⚠️ Art makes the first impression | |
-| Shop interior background | Optional art | A code version is fine |
+### ① Market (morning)
+- Three shelves: **Cake**, **Frosting**, **Toppings**. Ingredients come in bundles ("12 cherries for $3"). Everything is counted in **servings** (1 serving = enough for 1 cupcake), so it's easy to see how many cupcakes you can make.
+- Days 1–3: one vendor, **Corner Market**. From day 4, a second vendor, **Bulk Barn**, appears, and every item has two deals.
+- Picking the worse deal → *"You could have saved $2!"* → **Really?** shows the two deals as coin piles and groups of items, and works out the answer step by step.
+- Storage space limits how much you can carry home (the fridge upgrade adds space).
+- If you still have enough ingredients, you can skip the market with **"I'm stocked, let's bake!"**
 
-**Recommendation:** build the whole game with code-drawn art first, so it's fully playable without waiting on anything. Each character is a swappable slot, so when your images arrive I drop them in and the game uses them. The ~10 images in §5 are what would move it from "clean and cute" to "storybook quality." The most important are Arianna and Baxter.
+### ② Kitchen (design and bake)
+- **Menu board:** 2 cupcake slots to start (more come from upgrades).
+- **Designer:** cake flavor → frosting → up to 2 toppings. Each piece drops on with a squish and a sound. A live **"Costs you $X each"** tag updates as you go.
+- **Name it:** type a name, or build one from word tiles (*Sparkly · Baxter · Bites*) for a 7-year-old.
+- **Price it:** big − / + buttons in whole dollars, with a hint: *"It costs $2 to make. If you sell it for $4, you keep $2."*
+- **Bake:** choose how many of each to bake, up to the oven's limit (starts at 10 a day). Batter goes in, cupcakes rise, and they slide onto the display.
+
+### ③ Street (selling)
+- A side view of the shop window facing a sunny street. People and animals stroll by. Each one checks the menu: **taste match** (the bear loves chocolate) + **price vs. what they're willing to pay** + **the sign upgrade** (more people stop) → they stop, or they walk on.
+  - Willingness to pay starts high and settles lower after the first few days; animals pay more (from the wiki).
+  - Too pricey → *"Hmm, too expensive!"* and they leave. Too cheap → they happily buy, and the end-of-day graph shows the lost profit.
+- **Order:** the customer says the order out loud and in a bubble. Early orders are *"3 please!"*. Later ones are *"2 for me and 3 for my sister."* Big Kid mode adds extra or misleading information.
+- **Cash register:** Arianna taps the number on a big keypad and an **order ticket** prints. If it's wrong, the customer giggles: *"Hmm, let's count together,"* and dots show the problem.
+- The customer pays, then gives an **address** → delivery.
+
+### ④ Delivery
+- **Find it (the math):** days 1–10 use a **number line** street with houses 0–10 (*"House 7!"*). From day 11 there's a **grid town**, first quadrant up to 6×6 (*"Over 3, up 4"*). Tap the right spot and the house lights up. A wrong tap gets a guided hint.
+- **Drive it (the fun):** a top-down town with the van on rails. Hold an arrow and the van drives, turning at the next corner. It can't crash or get stuck.
+- A **clock ring** counts down. Tip = 3, 2 or 1 coins depending on time left. It never hits zero, so there's always a tip.
+- **Cab window** (bottom corner, always visible): Arianna at the wheel, and Baxter in the passenger seat with his ears blowing back.
+- **"Baxter, sniff it out!"** button: Baxter sniffs and barks, and a paw-print trail appears toward the house (3 per day).
+- **Doorstep:** the van pulls up, Arianna hands over the box, the customer cheers, the tip coins fly and Baxter wags. The van zips back to the shop automatically, with no return drive.
+- **Van capacity upgrade** (our design): carry 2–3 orders per trip for a combo bonus.
+
+### ⑤ End of day
+- **Earned · Spent · Profit**, counted up with coin sounds.
+- **Bar graph:** cupcakes sold of each design. **Line graph:** profit over the days (from day 3).
+- **Money bar** fills → "?" box pops → a new flavor or topping unlocks.
+- **Upgrade shop:**
+  - **Oven**: bake more per day
+  - **Fridge/pantry**: more storage
+  - **Van**: faster, more boxes, new paint
+  - **Sign**: more people stop
+  - **Menu board**: more cupcake slots
+  - **Decorations**: just for looks
+- Baxter naps on the rug. **Save** happens automatically.
+
+### ⑥ Season end (day 40)
+- Season total, best day, best-selling cupcake, and a trophy (bronze/silver/gold by profit). Then free play continues.
 
 ---
 
-## 4. Build plan
+## 3. Made for a 7-year-old (2nd grade)
 
-Tech: plain JavaScript + Canvas 2D, a standalone folder `public/cupcake/` like Mahjong. It's an installable offline app with saved progress on the device, sound off by default, and portrait-first for a phone or tablet. Game logic (economy, orders, deals, demand) is kept separate from drawing so `node --test` can test it.
+The original spans grades 2–6, and one parent review called it best for ages 8+. Arianna's version uses the same mechanics, with numbers sized for her. **Big Kid mode** (off) brings in the original's harder content.
+
+| Days | Orders | Deliveries | Market deals | Money |
+|---|---|---|---|---|
+| 1–5 | "3 please" (1–6) | Number line 0–10 | One vendor | Prices $1–$5 |
+| 6–10 | Add within 10: "2 and 3" | Number line 0–10 | Same amount, different price: "6 for $4 or 6 for $3?" | |
+| 11–20 | Add/subtract within 20 | Grid 4×4 | Doubling: "4 for $2 or 8 for $5?" | |
+| 21–40 | Equal groups: "2 boxes of 3"; one extra detail to ignore | Grid 6×6 | Small unit prices | Up to $10 |
+| Big Kid | Multi-step, misleading info | Grid with negatives, halves | Any rates | |
+
+- **Read-aloud everywhere**: tap any bubble to hear it.
+- **No losing**: wrong answers get a count-together walkthrough. A bad day still pays something.
+- **Big buttons**, portrait layout, works on phone or tablet.
+
+---
+
+## 4. The fun layer (on top of the loop, without changing it)
+
+- **Baxter is a character, not decoration.** He sniffs out houses, barks at squirrels during drives, sometimes catches a cupcake someone drops, begs at the counter, and naps on the results screen.
+- **Neighbor sticker book:** every customer you serve becomes a sticker (the bear, the grandma, the cat in a sweater…). **Regulars** come back and ask for their favorite by name.
+- **Juicy feedback:** squishy frosting, sprinkle showers, cha-ching coins, confetti on big tips, and the van bouncing over speed bumps.
+- **Special days:** a birthday-party order (a big equal-groups order), a rainy day (fewer people out), and **Baxter's Birthday** (dog customers only!).
+- **Daily goal star:** *"Sell 8 cupcakes today"*, which gives a quick reason to try.
+- **Short days**, so it never becomes a grind.
+
+---
+
+## 5. Art approach
+
+**Most of it is code, which is how it has to be:** cupcakes (every combination of cake, frosting and toppings, animated), the street, town map, number line, grid, van (top-down and side), market, register, tickets, graphs, coins and customers (built from mix-and-match parts, so there's lots of variety).
+
+**Generated images, for what code draws worst:** Arianna's and Baxter's faces and poses, Baxter riding in the van, the title screen and the app icon. The full prompts are in `arianna-cupcakes-art-prompts.md`.
+
+- **Style** is **flat cartoon with bold outlines**, the same look the code draws, so pictures and code-drawn cupcakes match.
+- **Character sheets first**, made from real photos. Every other pose uses the chosen sheet as a reference, so Arianna and Baxter look the same everywhere.
+- The game runs with code-drawn stand-ins until the images arrive, and each image drops in as it comes.
+
+---
+
+## 6. Build phases
+
+Tech: plain JavaScript + Canvas 2D in `public/cupcake/`. It's an installable offline app with progress saved on the device, and sound starts muted. Game logic (economy, demand, orders, deals, difficulty) is kept separate from drawing and covered by `node --test`.
 
 | Phase | Deliverable | Playable checkpoint |
 |---|---|---|
-| **0. Skeleton** | `/cupcake` page, scene manager (title → day → results), save/load, read-aloud, tap sounds, code-drawn Arianna and Baxter | Title screen; tap to start |
-| **1. Cupcake designer** | Procedural cupcake renderer; choose cake, frosting, topping; ingredient cost shown live; name it; set price | Design and price a cupcake |
-| **2. Market** | Inventory, vendors, deals that get harder, the "You could have saved $X — Really?" explainer, $50 starting budget | Shop for ingredients |
-| **3. Orders** | Customer generator (tastes, patience, price tolerance), spoken and written word problems, cash register, order tickets, price reactions (😊 / 😐 / "Too expensive!") | Serve a line of customers |
-| **4. Delivery** | Number line, then coordinate grid; tap the address first (the math check), then drive the van on roads to the house; timer and tips; Baxter's cab window and sniff hint; doorstep hand-off scene | Full day loop works |
-| **5. End of day and growth** | Earned / spent / profit, bar graph, profit line graph, money-bar unlocks (new flavors and toppings), upgrade shop (oven = more per day, fridge = ingredients keep, van = speed and capacity, sign = more customers) | Day after day |
-| **6. Season and polish** | 40-day season with difficulty ramp, Big Kid mode, music and sound effects, celebrations, season-end award, tests, deploy | Ready for Arianna |
+| 0. Skeleton | Scene flow (title → day → results), save, read-aloud, sounds, stand-in Arianna and Baxter | Title screen |
+| 1. Kitchen | Cupcake renderer and designer, name builder, pricing, oven | Design, price and bake |
+| 2. Market | Servings, storage, vendors, deal ladder, "Really?" explainer | Shop for ingredients |
+| 3. Street | Foot traffic, taste/price/sign demand, spoken word-problem orders, register and tickets, reactions | Sell to customers |
+| 4. Delivery | Number line → grid find step, rail driving, clock and tips, cab window, sniff hint, doorstep scene | **Full day loop** |
+| 5. Growth | Results and graphs, money-bar unlocks, upgrade shop, difficulty by day | Day after day |
+| 6. Season and fun | 40-day season, trophy, sticker book, regulars, special days, Big Kid mode, music, image swap-in, tests, deploy | Ready for Arianna |
 
-Each phase ships to the live site so Arianna can try it and give feedback as we go.
+Each phase goes live so Arianna can play it and steer.
 
-**Keeping it separate from Mahjong and Kayla's Little Chaos** (all three share one website):
-- Files: everything lives in `public/cupcake/`. Nothing under `public/mahjong/` or `src/` is touched.
-- Saved games: the save key is `ariannaCupcakes.save.v1`. Mahjong uses `tilebloom.save.v1` and Little Chaos uses `littleChaosBest`.
-- Offline copy: the service worker is scoped to `/cupcake/`. Its cache names start with `cupcake-` and never end in `-core`, because Mahjong's worker deletes any cache ending in `-core` that isn't its own.
-- Home-screen app: it gets its own manifest and icon under `/cupcake/`, so it installs as a separate app.
+**Later add-ons:** the **hair salon** and **toy shop** go on empty lots in the same town and use the same order → deliver → profit system.
 
-**Later add-ons (not now):** a **hair salon** and a **toy shop**. The town map already has empty lots, so these become new buildings Arianna can open with her cupcake savings, each with its own mini business that reuses the same order → deliver → profit system.
-
----
-
-## 5. Images I'd like from you (optional, but they make a big difference)
-
-**How to make them:**
-- Use the **same image tool and the same style sentence** for all of them so they match.
-- If your tool lets you attach a reference photo, attach a photo of Arianna and one of Baxter. That's how they'll actually look like *her* and *him*. (Jack Russells' patches are all different.)
-- Ask for a **transparent background (PNG)**. If your tool can't do that, ask for a **plain flat white background** and I'll cut them out.
-- **No words in the images.** I'll draw the title and labels in code so they're always spelled right and Arianna can rename the shop.
-
-**Style sentence (put at the start of every prompt):**
-> *Children's storybook cartoon illustration, clean bold outlines, soft cel shading, bright cheerful pastel palette (strawberry pink, mint green, buttercream yellow, sky blue), warm and friendly, consistent character design, full body unless stated, no text, no words, no letters.*
-
-### Must-have (biggest quality jump)
-
-1. **Arianna — main pose.** *[style sentence]* A cheerful 7-year-old girl with brown hair (match the reference photo), wearing a pink baker's apron with a little cupcake patch over a casual outfit, smiling and waving, standing, facing the viewer at a slight angle. Transparent background.
-2. **Arianna — holding a cupcake box.** Same girl and outfit, proudly holding a pink cupcake delivery box with both hands, big smile. Transparent background.
-3. **Arianna — thinking.** Same girl and outfit, finger on her chin, looking up thoughtfully. Transparent background.
-4. **Arianna — celebrating.** Same girl and outfit, jumping with both arms up, overjoyed. Transparent background.
-5. **Baxter — sitting.** *[style sentence]* A Jack Russell Terrier dog, mostly white with brown and tan patches (match the reference photo), wearing a little pink bandana, sitting up alert with a happy open mouth and tongue out, tail up. Transparent background.
-6. **Baxter — excited.** Same dog and bandana, jumping with front paws in the air, tail wagging, barking happily. Transparent background.
-7. **Baxter — sleeping.** Same dog and bandana, curled up asleep. Transparent background.
-
-### Nice-to-have
-
-8. **Title screen** (tall 9:16, like Babcia's splash). *[style sentence]* Arianna and Baxter standing in front of a cute pastel cupcake shop with a striped awning on a sunny small-town street, a little pink delivery van parked beside them, with Baxter in the van's passenger seat window optional. Leave the top third as open sky for a title. No text.
-9. **Van ride.** *[style sentence]* View through the windshield of a little pink delivery van: Arianna driving with both hands on the wheel, smiling, and Baxter in the passenger seat with his head tilted and ears flapping in the breeze, cupcake boxes stacked behind them. Wide 16:9. (Used as the "out for delivery!" moment.)
-10. **App icon** (square). *[style sentence]* Baxter's happy face peeking over a big pink-frosted cupcake with sprinkles, simple bold shapes, readable when very small, solid mint-green background.
-
-### Later, if you're in the mood
-- **Shop interior** (wide 16:9): cozy pastel bakery counter with an **empty** glass display case, an oven, and a window to the street. No people and no cupcakes, because the game draws the cupcakes in.
-- **Customers:** a small set of 6–8 friendly characters in the same style (a grandma, a construction worker, a little boy, a bunny, a cat in a sweater, a bear…). These have code-drawn versions too.
-
-Images 1–7 are the ones that matter most. Send any number and I'll add them as they arrive.
+### Staying separate from Mahjong and Kayla's Little Chaos (shared website)
+- **Files:** everything goes in `public/cupcake/`. Nothing in `public/mahjong/` or `src/` is touched.
+- **Save key:** `ariannaCupcakes.save.v1`. Mahjong uses `tilebloom.save.v1` and Little Chaos uses `littleChaosBest`.
+- **Offline copy:** the service worker is scoped to `/cupcake/`. Its cache names start with `cupcake-` and never end in `-core`, because Mahjong's worker deletes other caches ending in `-core`.
+- **App icon:** a separate manifest and icon, so it installs as its own app.
+- **Publishing:** the whole site is built and tested before every push, so a cupcake change can't hold up Mahjong updates.
 
 ---
 
-## 6. Quick questions for Arianna (any time, none block the start)
-
-1. What's the shop called? ("Arianna's Cupcakes", "Baxter's Bakery", something else?)
-2. What color is the van?
-3. Which flavors and toppings does she want first? (Starting idea: vanilla, chocolate, strawberry cake; pink, white and chocolate frosting; sprinkles, cherry, gummy bear. More unlock later.)
-4. What does Baxter wear: a bandana, a collar, or nothing?
+## 7. Questions for Arianna (none block the start)
+1. Shop name?
+2. Van color? (Default: pink with a mint stripe.)
+3. Her first flavors and toppings? (Default: vanilla, chocolate and strawberry cake; pink, white and chocolate frosting; sprinkles, cherry, gummy bear.)
+4. Baxter's bandana color? (Default: mint green, so he stands out against the pink van.)
+5. Her outfit in the game? (Default: pink baker's apron over a mint t-shirt.)
