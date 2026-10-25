@@ -523,7 +523,7 @@ const Street = {
       if (!typed) { sfx.gentle(); return; }
       if (+typed === order.answer) return this.sold(w, slot, order, address);
       misses++;
-      sfx.gentle(); w.face = 'hmm';
+      sfx.gentle(); w.face = 'hmm'; this.oopsAt = now;
       hintBox.replaceChildren(hintDots(order, misses >= 2));
       if (misses >= 2) { typed = String(order.answer); show(); speak(`Let's count together. It's ${order.answer}! Press OK.`); }
       else { typed = ''; show(); speak('Hmm, not quite. Let’s count together!'); }
@@ -574,7 +574,7 @@ const Street = {
     const shop = D.street(ctx, W, H, {t: now, save, groundY: g.groundY, shopName: SHOP_NAME, event: day.event});
     // Arianna behind the counter, seen through the window
     ctx.save(); D.rr(ctx, shop.win.x, shop.win.y, shop.win.w, shop.win.h, 6); ctx.clip();
-    arianna(this.walker?.state === 'order' ? 'think' : this.closing ? 'cheer' : 'stand', shop.win.x + shop.win.w * 0.72, shop.win.y + shop.win.h * 1.35, shop.win.h * 1.45);
+    arianna(now - (this.oopsAt ?? -9) < 2.5 ? 'oops' : this.walker?.state === 'order' ? 'think' : this.closing ? 'cheer' : 'stand', shop.win.x + shop.win.w * 0.72, shop.win.y + shop.win.h * 1.35, shop.win.h * 1.45);
     ctx.restore();
     D.shelfDisplay(ctx, shop, save.menu, day.shelf, now, H);
     if (day.event === 'birthday') for (let i = 0; i < 7; i++) { ctx.fillStyle = ['#ffd23d', '#9fe3c0', '#c3a6ec', '#ff9fc4'][i % 4]; ctx.beginPath(); const bx = W * 0.08 + i * W * 0.12; ctx.moveTo(bx, H * 0.27); ctx.lineTo(bx + W * 0.1, H * 0.27); ctx.lineTo(bx + W * 0.05, H * 0.3); ctx.fill(); }
