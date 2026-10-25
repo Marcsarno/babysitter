@@ -83,6 +83,12 @@ Tech: plain JavaScript + Canvas 2D, a standalone folder `public/cupcake/` like M
 
 Each phase ships to the live site so Arianna can try it and give feedback as we go.
 
+**Keeping it separate from Mahjong and Kayla's Little Chaos** (all three share one website):
+- Files: everything lives in `public/cupcake/`. Nothing under `public/mahjong/` or `src/` is touched.
+- Saved games: the save key is `ariannaCupcakes.save.v1`. Mahjong uses `tilebloom.save.v1` and Little Chaos uses `littleChaosBest`.
+- Offline copy: the service worker is scoped to `/cupcake/`. Its cache names start with `cupcake-` and never end in `-core`, because Mahjong's worker deletes any cache ending in `-core` that isn't its own.
+- Home-screen app: it gets its own manifest and icon under `/cupcake/`, so it installs as a separate app.
+
 **Later add-ons (not now):** a **hair salon** and a **toy shop**. The town map already has empty lots, so these become new buildings Arianna can open with her cupcake savings, each with its own mini business that reuses the same order → deliver → profit system.
 
 ---
