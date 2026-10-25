@@ -12,8 +12,13 @@
  "b3-sniff": "left",
  "b4-ride": "left",
  "b5-sleep": "front",
+ "b6-tilt": "front",
  "baxter-3q": "left",
  "baxter-back": "front",
  "baxter-front": "front",
- "baxter-side": "right"
+ "baxter-side": "right",
+ "c1-grandma": "front",
+ "c2-builder": "front",
+ "c3-boy": "front",
+ "s1-title": "front"
 }

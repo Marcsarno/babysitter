@@ -2,7 +2,7 @@
    Cache names start with "cupcake-" and never end in "-core", so Babcia's Mahjong worker leaves them alone. */
 const CACHE = 'cupcake-files-v1';
 const SHELL = [
-  '/cupcake/', '/cupcake/style.css', '/cupcake/manifest.webmanifest', '/cupcake/icon.svg',
+  '/cupcake/', '/cupcake/style.css', '/cupcake/manifest.webmanifest', '/cupcake/icon.svg', '/cupcake/icon-192.png', '/cupcake/icon-512.png', '/cupcake/apple-touch-icon.png',
   '/cupcake/art/manifest.json', '/cupcake/js/main.js', '/cupcake/js/logic.js', '/cupcake/js/town.js', '/cupcake/js/draw.js', '/cupcake/js/art.js', '/cupcake/js/audio.js',
 ];
 

@@ -54,6 +54,7 @@ function portrait(who, pose = 'stand', size = 108) {
   const g = c.getContext('2d');
   if (who === 'arianna') { if (!drawPose(g, 'arianna', pose, size / 2, size * 3.2, size * 3.25)) D.person(g, 'arianna', size / 2, size * 1.9, size * 2.1); }
   else if (who === 'baxter') { if (!drawPose(g, 'baxter', 'sit', size / 2, size * 2.05, size * 2.1)) D.person(g, 'baxter', size / 2, size * 1.9, size * 2.1); }
+  else if (image(CUSTOMER_ART[who])) drawCustomer(g, who, size / 2, size * 2.05, size * 2.05 / (ART_SCALE[who] || 1), {});
   else drawCustomer(g, who, size / 2, size * 2.1, size * 2.3, {});
   return c;
 }
@@ -119,9 +120,11 @@ function updateParts(dt) {
 // ---------- characters ----------
 function arianna(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts}); }
 function baxter(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts}); }
+const ART_SCALE = {boy: 0.8, builder: 0.88};   // the boy and the young builder are kids
 function drawCustomer(g, type, x, y, hgt, opts) {
   const img = image(CUSTOMER_ART[type]);
   if (img) {
+    hgt *= ART_SCALE[type] || 1;
     const bob = opts.walking ? -Math.abs(Math.sin((opts.t || 0) * 9)) * hgt * 0.03 : 0;
     const w = hgt * img.width / img.height;
     g.drawImage(img, x - w / 2, y - hgt + bob, w, hgt);
