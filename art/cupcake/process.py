@@ -32,7 +32,9 @@ FACING = {
     'arianna-3q': 'right', 'arianna-side': 'right', 'baxter-3q': 'left', 'baxter-side': 'right',
     'a6-drive': 'left', 'b3-sniff': 'left', 'b4-ride': 'left',
 }
-HEIGHT = {'a': 720, 'b': 520, 'c': 600}
+# Target height by code prefix: characters, cupcake parts (I), baking tools (K), van (V), town map pieces (T),
+# decorations (D) and icons (U). Background scenes (BG, S1) are kept whole, not cut out.
+HEIGHT = {'a': 720, 'b': 520, 'c': 600, 'i': 512, 'k': 600, 'v': 600, 't': 256, 'd': 400, 'u': 320}
 
 
 def dilate(mask, r):
@@ -127,12 +129,12 @@ def main():
             save(fit(trim(fig), HEIGHT[name[0]] if name[0] in HEIGHT else 720), name)
             made.append(name)
     for p in sorted(HERE.iterdir()):
-        m = re.match(r'^([ABCS]\d+)-([a-z0-9-]+)\.(png|jpe?g|webp)$', p.name, re.I)
+        m = re.match(r'^((?:BG|[ABCSIKVTDU])\d+)-([a-z0-9-]+)\.(png|jpe?g|webp)$', p.name, re.I)
         if not m or p.name in SHEETS:
             continue
         name = f'{m.group(1)}-{m.group(2)}'.lower()
         img = Image.open(p)
-        if name.startswith('s1'):              # title scene: keep the whole picture
+        if name.startswith('s1') or name.startswith('bg'):   # scenes: keep the whole picture
             save(fit(img.convert('RGB'), 1600), name, quality=84)
         elif name.startswith('s2'):            # app icon: square PNGs for home screens
             sq = img.convert('RGB')
@@ -142,6 +144,10 @@ def main():
             continue
         else:
             save(fit(trim(cut(img)), HEIGHT.get(name[0], 720)), name)
+        if name.startswith('t'):              # map pieces also get a square, untrimmed copy so tiles line up
+            sq = cut(img)
+            save(sq.resize((256, round(256 * sq.height / sq.width)), Image.LANCZOS), name + '-tile')
+            made.append(name + '-tile')
         made.append(name)
     manifest = {n: FACING.get(n, 'front') for n in sorted(made)}
     (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=1) + '\n')

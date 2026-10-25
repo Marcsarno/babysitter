@@ -235,17 +235,22 @@ export function bake(save, counts) {
 // ---------- customers ----------
 export const priceTolerance = day => (day <= 2 ? 1.5 : day <= 4 ? 1.25 : 1);
 
-export function willingToPay(type, design, day, mood = 1) {
+// How well a batch was baked in the mini-game: 1 to 3 stars, 2 is normal.
+export const qualityFactor = stars => 1 + 0.06 * ((stars ?? 2) - 2);
+// Each baking step scores 0 (messy), 1 (great) or 2 (perfect).
+export const bakeStars = points => (points >= 5 ? 3 : points >= 3 ? 2 : 1);
+
+export function willingToPay(type, design, day, mood = 1, stars = 2) {
   const c = CUSTOMERS[type];
   const liked = parts(design).filter(id => c.likes.includes(id)).length;
-  return designValue(design) * (1 + 0.25 * liked) * priceTolerance(day) * (c.kind === 'person' ? 1 : 1.3) * mood;
+  return designValue(design) * (1 + 0.25 * liked) * priceTolerance(day) * (c.kind === 'person' ? 1 : 1.3) * mood * qualityFactor(stars);
 }
 
-export function decide(type, menu, shelf, day, mood = 1) {
+export function decide(type, menu, shelf, day, mood = 1, quality = []) {
   let best = null;
   menu.forEach((d, i) => {
     if (!d || !(shelf[i] > 0)) return;
-    const pay = willingToPay(type, d, day, mood);
+    const pay = willingToPay(type, d, day, mood, quality[i]);
     const score = pay - d.price;
     if (!best || score > best.score) best = {slot: i, score, pay};
   });
@@ -267,55 +272,74 @@ export function passersby(r, save, event) {
 }
 
 // ---------- orders as word problems ----------
-const FAMILY = ['sister', 'brother', 'mom', 'dad', 'grandpa', 'best friend', 'teacher', 'neighbor'];
+// Each order is a short list of sentences. Every sentence these templates can make is recorded
+// ahead of time for the read-aloud voice, so orderSentences() lists them all.
+const FAMILY = ['sister', 'brother', 'mom', 'dad', 'best friend'];
 const PETS = ['cats', 'goldfish', 'hamsters', 'bikes', 'kites'];
+const T = {
+  count: [n => `${n}, please!`, n => `I'd like ${n}.`, n => `Can I have ${n}, please?`],
+  add: [(a, b, who) => `${a} for me and ${b} for my ${who}.`, (a, b) => `I need ${a} for my friends and ${b} for me.`, (a, b) => `${a} for my soccer team and ${b} more for the coaches.`],
+  sub: [(a, b) => `I need ${a} for my class, but I already have ${b}.`, (a, b) => `There are ${a} kids at my sleepover. ${b} of them already ate one.`],
+  groups: [(g, k) => `${g} boxes with ${k} in each, please.`, (g, k) => `${g} friends are coming over, and each one wants ${k}.`],
+  pets: (d, pet) => `I have ${d} ${pet} at home!`,
+  boxesOf: (g, k) => `I'd like ${g} boxes of ${k}.`,
+  bought: (who, b) => `But my ${who} already bought ${b} of them.`,
+  party: (g, k) => `It's my birthday party! ${g} tables, and each table needs ${k}.`,
+};
+const order = (answer, hint, say) => ({answer, hint, say, text: say.join(' ')});
 
 export function makeOrder(r, tier, maxQty, party = false) {
   const cap = Math.min(maxQty, [0, 4, 8, 12, 12, 15][tier]);
   if (party && cap >= 4) {
     for (let tries = 0; tries < 20; tries++) {
       const g = randInt(r, 2, 4), k = randInt(r, 2, 3);
-      if (g * k <= cap) return {answer: g * k, hint: {kind: 'groups', g, k},
-        text: `It's my birthday party! ${g} tables, and each table needs ${k}.`};
+      if (g * k <= cap) return order(g * k, {kind: 'groups', g, k}, [T.party(g, k)]);
     }
   }
+  if (tier === 1 || cap < 2) { const n = randInt(r, 1, Math.max(1, cap)); return order(n, {kind: 'count', n}, [pick(r, T.count)(n)]); }
   const options = [];
-  const one = n => options.push(() => ({answer: n, hint: {kind: 'count', n},
-    text: pick(r, [`${n}, please!`, `I'd like ${n}.`, `Can I have ${n}, please?`])}));
-  if (tier === 1 || cap < 2) { one(randInt(r, 1, Math.max(1, cap))); return options[0](); }
-  if (tier >= 2) {
+  {
     const n = randInt(r, 2, Math.min(cap, tier === 2 ? 6 : 10)), a = randInt(r, 1, n - 1), b = n - a, who = pick(r, FAMILY);
-    options.push(() => ({answer: n, hint: {kind: 'add', a, b},
-      text: pick(r, [`${a} for me and ${b} for my ${who}.`, `I need ${a} for my friends and ${b} for me.`, `${a} for my soccer team and ${b} more for the coaches.`])}));
-    if (tier === 2) options.push(options[0]);
+    const add = () => order(n, {kind: 'add', a, b}, [pick(r, T.add)(a, b, who)]);
+    options.push(add);
+    if (tier === 2) options.push(add);
   }
   if (tier >= 3) {
     const n = randInt(r, 1, Math.min(cap, 10)), b = randInt(r, 1, 5), a = n + b;
-    options.push(() => ({answer: n, hint: {kind: 'sub', a, b},
-      text: pick(r, [`I need ${a} for my class, but I already have ${b}.`, `There are ${a} kids at my sleepover. ${b} of them already ate one.`])}));
+    options.push(() => order(n, {kind: 'sub', a, b}, [pick(r, T.sub)(a, b)]));
   }
   if (tier >= 4) {
     const groups = [];
     for (let g = 2; g <= 4; g++) for (let k = 2; k <= 4; k++) if (g * k <= cap) groups.push([g, k]);
     if (groups.length) {
       const [g, k] = pick(r, groups);
-      options.push(() => ({answer: g * k, hint: {kind: 'groups', g, k},
-        text: pick(r, [`${g} boxes with ${k} in each, please.`, `${g} friends are coming over, and each one wants ${k}.`])}));
+      options.push(() => order(g * k, {kind: 'groups', g, k}, [pick(r, T.groups)(g, k)]));
     }
     const n = randInt(r, 2, Math.min(cap, 9)), a = randInt(r, 1, n - 1), b = n - a, d = randInt(r, 2, 9);
-    options.push(() => ({answer: n, hint: {kind: 'add', a, b, extra: d},
-      text: `I have ${d} ${pick(r, PETS)} at home! I'd like ${a} for me and ${b} for my ${pick(r, FAMILY)}.`}));
+    options.push(() => order(n, {kind: 'add', a, b, extra: d}, [T.pets(d, pick(r, PETS)), T.add[0](a, b, pick(r, FAMILY))]));
   }
   if (tier >= 5) {
     const groups = [];
     for (let g = 2; g <= 4; g++) for (let k = 2; k <= 5; k++) for (let b = 1; b < g * k && b <= 4; b++) if (g * k - b <= cap) groups.push([g, k, b]);
     if (groups.length) {
       const [g, k, b] = pick(r, groups);
-      options.push(() => ({answer: g * k - b, hint: {kind: 'groupsMinus', g, k, b},
-        text: `${g} boxes of ${k}, but my ${pick(r, FAMILY)} already bought ${b} of them.`}));
+      options.push(() => order(g * k - b, {kind: 'groupsMinus', g, k, b}, [T.boxesOf(g, k), T.bought(pick(r, FAMILY), b)]));
     }
   }
   return pick(r, options)();
+}
+
+export function orderSentences() {
+  const out = new Set();
+  for (let n = 1; n <= 4; n++) for (const f of T.count) out.add(f(n));
+  for (let a = 1; a <= 9; a++) for (let b = 1; a + b <= 10; b++) { for (const who of FAMILY) out.add(T.add[0](a, b, who)); out.add(T.add[1](a, b)); out.add(T.add[2](a, b)); }
+  for (let n = 1; n <= 10; n++) for (let b = 1; b <= 5; b++) for (const f of T.sub) out.add(f(n + b, b));
+  for (let g = 2; g <= 4; g++) for (let k = 2; k <= 4; k++) for (const f of T.groups) out.add(f(g, k));
+  for (let d = 2; d <= 9; d++) for (const pet of PETS) out.add(T.pets(d, pet));
+  for (let g = 2; g <= 4; g++) for (let k = 2; k <= 5; k++) out.add(T.boxesOf(g, k));
+  for (const who of FAMILY) for (let b = 1; b <= 4; b++) out.add(T.bought(who, b));
+  for (let g = 2; g <= 4; g++) for (let k = 2; k <= 3; k++) out.add(T.party(g, k));
+  return [...out];
 }
 
 // ---------- delivery addresses and tips ----------
@@ -331,8 +355,8 @@ export function addressText(a) {
   return `Please bring them to (${a.x}, ${a.y})!` + (a.coach ? ` That's over ${a.x}, up ${a.y}.` : '');
 }
 export function addressSpoken(a) {
-  if (a.mode === 'line') return `Please bring them to house ${a.n}!`;
-  return `Please bring them to ${a.x}, ${a.y}!` + (a.coach ? ` That's over ${a.x}, up ${a.y}.` : '');
+  if (a.mode === 'line') return [`Please bring them to house ${a.n}!`];
+  return [`Please bring them to ${a.x}, ${a.y}!`, ...(a.coach ? [`That's over ${a.x}, up ${a.y}.`] : [])];
 }
 export function tipFor(seconds, limit, event) {
   const t = seconds <= limit * 0.5 ? 3 : seconds <= limit ? 2 : 1;

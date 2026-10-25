@@ -53,7 +53,7 @@ High scores save on the device. Social posts are fictional game events; there ar
 
 ## Arianna's Cupcakes (`/cupcake`)
 
-A separate 2D game in `public/cupcake/`: a remake of the i-Ready Cupcake learning game, starring Arianna and Baxter. Plain JavaScript and Canvas, no build step; it is copied into `dist/cupcake/` as is. The game rules (`js/logic.js`) and the town and driving (`js/town.js`) are tested in `tests/cupcake.test.js`. The plan and art prompts are in `docs/`, and the art pipeline is `art/cupcake/process.py`. Saves use the `ariannaCupcakes.*` keys, and the service worker's caches start with `cupcake-`, so it stays independent of Mahjong. In local development, open `/cupcake/index.html`, because the dev server answers `/cupcake/` with the root page.
+A separate 2D game in `public/cupcake/`: a remake of the i-Ready Cupcake learning game, starring Arianna and Baxter. Plain JavaScript and Canvas, no build step; it is copied into `dist/cupcake/` as is. The game rules (`js/logic.js`) and the town and driving (`js/town.js`) are tested in `tests/cupcake.test.js`. The plan and art prompts are in `docs/`, and the art pipeline is `art/cupcake/process.py`. Spoken lines live in `js/say.js` and are recorded with the Kokoro "Heart" voice by `art/cupcake/voice.mjs` into `public/cupcake/voice/`; rerun it after adding or changing a line (a test fails if the game can say a line that has no recording). Saves use the `ariannaCupcakes.*` keys, and the service worker's caches start with `cupcake-`, so it stays independent of Mahjong. In local development, open `/cupcake/index.html`, because the dev server answers `/cupcake/` with the root page.
 
 ## Deployment
 

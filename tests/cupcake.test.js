@@ -169,3 +169,37 @@ test('easy driving holds a turn until the next corner', () => {
   assert.equal(Math.floor(van.x), town.start.tx + 4, 'turned up at the next street, not before');
   assert.ok(van.y < y0);
 });
+
+import {S, allLines, GREET} from '../public/cupcake/js/say.js';
+
+test('every sentence the game reads aloud has a recording in the voice catalog', () => {
+  const lines = new Set(allLines());
+  const missing = new Set();
+  const need = t => { if (!lines.has(t)) missing.add(t); };
+  for (let tier = 1; tier <= 5; tier++) for (let seed = 0; seed < 400; seed++) L.makeOrder(L.rng(seed * 7 + tier), tier, 1 + (seed % 15), seed % 6 === 0).say.forEach(need);
+  for (let seed = 0; seed < 300; seed++) for (const day of [3, 8, 15, 30]) for (const big of [false, true]) {
+    const a = L.makeAddress(L.rng(seed), day, big);
+    L.addressSpoken(a).forEach(need);
+    if (a.mode === 'grid') { need(S.yesPoint(a.x, a.y)); need(S.goOver(a.x, a.y)); need(S.herePoint(a.x, a.y)); }
+    else { need(S.yesHouse(a.n)); need(S.hereHouse(a.n)); }
+  }
+  for (let day = 1; day <= 40; day++) for (const id of Object.keys(L.INGREDIENTS)) for (let seed = 0; seed < 30; seed++) {
+    const [a, b] = L.dealsFor(L.rng(seed * 13 + day), day, seed % 2 === 0, id);
+    if (!b) continue;
+    for (const [x, y] of [[a, b], [b, a]]) {
+      const m = L.savingsMissed(x, y);
+      if (m) [S.couldSave(m.saved), S.compare(m.qty), S.costs(x.vendor, m.costA), S.costs(y.vendor, m.costB), S.minus(m.costA, m.costB, m.saved), S.canSave(m.saved)].forEach(need);
+    }
+  }
+  for (let d = 1; d <= 40; d++) { need(S.day(d)); need(S.dayDone(d)); need(S.goal(L.goalFor(d % 33))); }
+  GREET.forEach(need);
+  assert.deepEqual([...missing], []);
+});
+
+test('better-baked batches sell for a little more, and stars come from the three baking steps', () => {
+  const d = {cake: 'vanilla', frosting: 'white', toppings: ['sprinkles'], name: 'x', price: 6};
+  assert.ok(L.willingToPay('girl', d, 10, 1, 3) > L.willingToPay('girl', d, 10, 1, 2));
+  assert.ok(L.willingToPay('girl', d, 10, 1, 1) < L.willingToPay('girl', d, 10, 1, 2));
+  assert.equal(L.willingToPay('girl', d, 10), L.willingToPay('girl', d, 10, 1, 2));
+  assert.deepEqual([0, 2, 3, 4, 5, 6].map(L.bakeStars), [1, 1, 2, 2, 3, 3]);
+});
