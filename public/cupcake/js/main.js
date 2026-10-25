@@ -683,7 +683,7 @@ const Find = {
         if (this.tapped && !this.tapped.ok && this.tapped.choice === n && now - this.tapped.t < 1.2) { ctx.fillStyle = 'rgba(232,80,106,.25)'; ctx.fillRect(x - lay.step / 2, lay.y - hh * 1.3, lay.step, hh * 1.3); }
         if (this.picked === n) D.text(ctx, '⭐', x, lay.y - hh * 1.4, 26);
       }
-      baxter('sniff', lay.left + lay.step * 0.2, lay.y + H * 0.2, H * 0.09, {face: 'right'});
+      baxter('sniff', W * 0.2, lay.y + H * 0.2, H * 0.09, {face: 'right'});
     } else {
       const tc = townCanvas();
       ctx.save(); D.rr(ctx, lay.ox - lay.s * 0.4, lay.oy, lay.tiles * lay.s, lay.tiles * lay.s, 14); ctx.clip();
@@ -824,7 +824,8 @@ const Drive = {
     ctx.fillStyle = '#f7d9c4'; ctx.fillRect(x, y + hh * 0.78, w, hh * 0.22);
     arianna('drive', x + w * 0.3, y + hh * 1.02, hh * 0.98, {face: 'right'});
     ctx.beginPath(); ctx.arc(x + w * 0.46, y + hh * 0.72, hh * 0.2, -Math.PI * 0.9, Math.PI * 0.1); ctx.lineWidth = 5; ctx.strokeStyle = '#5b3a29'; ctx.stroke();
-    baxter(this.sniffT > 0 ? 'sniff' : 'ride', x + w * 0.76, y + hh * 1.0, hh * (this.sniffT > 0 ? 0.6 : 0.78), {face: 'right'});
+    if (this.sniffT > 0) baxter('sniff', x + w * 0.78, y + hh * 0.98, hh * 0.5, {face: 'right'});
+    else baxter('ride', x + w * 0.79, y + hh * 1.02, hh * (image('b4-ride') ? 0.66 : 0.78), {face: 'right'});
     ctx.restore();
     ctx.lineWidth = 4; ctx.strokeStyle = D.C.ink; D.rr(ctx, x, y, w, hh, 18); ctx.stroke();
     ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + w * 0.56, y); ctx.lineTo(x + w * 0.56, y + hh); ctx.stroke();
