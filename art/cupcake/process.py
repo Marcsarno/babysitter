@@ -72,6 +72,8 @@ def cut(img, tol=34, seal=2):
     bg = flood(near & ~barrier, seeds)
     for _ in range(seal):                      # take back the background the seal covered
         bg |= dilate(bg, 1) & near
+    if key.max() - key.min() > 60:             # a coloured key never appears on the character,
+        bg |= dist < tol * 0.8                 # so also clear pockets of it trapped inside fur
     # soft edge: pixels next to the background fade by how close they are to the key colour
     edge = dilate(bg, 1) & ~bg
     alpha = np.where(bg, 0.0, 1.0)
