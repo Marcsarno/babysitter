@@ -74,7 +74,11 @@ One day takes about 5–8 minutes. The season is 40 days, then it keeps going in
 
 ### ④ Delivery
 - **Find it (the math):** days 1–10 use a **number line** street with houses 0–10 (*"House 7!"*). From day 11 there's a **grid town**, first quadrant up to 6×6 (*"Over 3, up 4"*). Tap the right spot and the house lights up. A wrong tap gets a guided hint.
-- **Drive it (the fun):** a top-down town with the van on rails. Hold an arrow and the van drives, turning at the next corner. It can't crash or get stuck.
+- **Drive it (the fun):** a top-down **tile-map town**, like the original's delivery map. The town is a grid of tiles (road, intersection, sidewalk, grass, house, park, shop lots), and the camera follows the van around it. The coordinate numbers line up with the streets, so (3, 4) is a real corner of the town.
+  - **Steering:** the van turns and drives freely on road tiles. Curbs and buildings are solid: the van slides along them instead of crashing, so it can't get stuck.
+  - **"Easy driving" setting** (on to start): the van follows the road and turns at the next corner in the direction Arianna holds. This fixes the original's hard-to-control complaint. Turn it off for free steering.
+  - Controls: arrow keys or an on-screen pad, with big buttons for small hands.
+  - Tiles are drawn in code (crisp, they line up perfectly, and the town can grow lots for the hair salon and toy shop). The map is a plain grid of tile types, so new towns or a bigger map are just data.
 - A **clock ring** counts down. Tip = 3, 2 or 1 coins depending on time left. It never hits zero, so there's always a tip.
 - **Cab window** (bottom corner, always visible): Arianna at the wheel, and Baxter in the passenger seat with his ears blowing back.
 - **"Baxter, sniff it out!"** button: Baxter sniffs and barks, and a paw-print trail appears toward the house (3 per day).
