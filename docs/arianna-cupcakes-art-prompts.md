@@ -7,7 +7,7 @@ Each prompt below is complete, so you can paste it straight into your image tool
 1. **Use one image tool for everything**, preferably one that accepts reference images.
 2. **Make the two character sheets first** (A1 and B1), each with a real photo attached. Generate a few times and pick the one Arianna likes best.
 3. **For every other Arianna or Baxter image, attach the sheet you picked** as the reference. This keeps them looking the same in every picture.
-4. Ask for **a plain white background**. I'll cut them out. If your tool offers a real transparent PNG, that's even better.
+4. **Backgrounds:** Arianna on **plain white**. Baxter on **plain solid bright blue**, because his white fur blends into a white background and can't be cut out cleanly (that happened with his sheet). The Baxter prompts already ask for blue. If your tool offers a real transparent PNG, that's even better.
 5. **Square images at least 1024×1024**, unless a prompt says otherwise.
 6. **Send them to me here in chat** with the code in the name (e.g. `A3-box.png`). Send them as they're ready, not all at once.
 
@@ -30,6 +30,8 @@ Character reference sheet of the dog in the attached photo as a cartoon characte
 ---
 
 ## Must-have — round 2  *(attach the A1 or B1 sheet you picked)*
+
+Sheets picked: `art/cupcake/A1-arianna-sheet.png` and `art/cupcake/B1-baxter-sheet.png`. Attach these exact images.
 
 ### A2 · Arianna waving
 ```
@@ -58,22 +60,22 @@ The girl from the attached character sheet, same face, hair and outfit exactly. 
 
 ### B2 · Baxter excited
 ```
-The dog from the attached character sheet, same markings and bandana exactly. Full body, bouncing up on his back legs with front paws in the air, mouth open in a happy bark, tail wagging. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain pure white background, nothing cropped. No text, no letters, no logos.
+The dog from the attached character sheet, same markings and bandana exactly. Full body, bouncing up on his back legs with front paws in the air, mouth open in a happy bark, tail wagging. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain solid flat bright blue background, the same blue everywhere, with no shadow on the ground, nothing cropped. No text, no letters, no logos.
 ```
 
 ### B3 · Baxter sniffing
 ```
-The dog from the attached character sheet, same markings and bandana exactly. Full body, seen from the side facing left, nose down to the ground sniffing a trail, tail straight up, ears perked, looking determined like a little detective. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain pure white background, nothing cropped. No text, no letters, no logos.
+The dog from the attached character sheet, same markings and bandana exactly. Full body, seen from the side facing left, nose down to the ground sniffing a trail, tail straight up, ears perked, looking determined like a little detective. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain solid flat bright blue background, the same blue everywhere, with no shadow on the ground, nothing cropped. No text, no letters, no logos.
 ```
 
 ### B4 · Baxter riding, ears in the wind  *(Arianna's favorite — the most important Baxter image)*
 ```
-The dog from the attached character sheet, same markings and bandana exactly. Seen exactly from the side, facing left, head and front paws only, as if leaning out of a car window (draw no car), ears and bandana blowing back in the wind, eyes happily squinting, tongue flapping out of a big smile. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain pure white background, nothing cropped. No text, no letters, no logos.
+The dog from the attached character sheet, same markings and bandana exactly. Seen exactly from the side, facing left, head and front paws only, as if leaning out of a car window (draw no car), ears and bandana blowing back in the wind, eyes happily squinting, tongue flapping out of a big smile. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain solid flat bright blue background, the same blue everywhere, with no shadow on the ground, nothing cropped. No text, no letters, no logos.
 ```
 
 ### B5 · Baxter sleeping
 ```
-The dog from the attached character sheet, same markings and bandana exactly. Full body, curled up in a cozy ball fast asleep, eyes closed, peaceful smile, tail wrapped around him. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain pure white background, nothing cropped. No text, no letters, no logos.
+The dog from the attached character sheet, same markings and bandana exactly. Full body, curled up in a cozy ball fast asleep, eyes closed, peaceful smile, tail wrapped around him. Flat 2D cartoon illustration in a modern children's picture-book style: clean bold dark-brown outlines, flat colors with one soft shadow tone, simple rounded shapes, bright pastel palette. Plain solid flat bright blue background, the same blue everywhere, with no shadow on the ground, nothing cropped. No text, no letters, no logos.
 ```
 
 ---

@@ -163,6 +163,7 @@ Each phase goes live so Arianna can play it and steer.
 - **Save key:** `ariannaCupcakes.save.v1`. Mahjong uses `tilebloom.save.v1` and Little Chaos uses `littleChaosBest`.
 - **Offline copy:** the service worker is scoped to `/cupcake/`. Its cache names start with `cupcake-` and never end in `-core`, because Mahjong's worker deletes other caches ending in `-core`.
 - **App icon:** a separate manifest and icon, so it installs as its own app.
+- **Image format:** game art ships as `.webp`. `.vercelignore` has a `*.png` rule that keeps every PNG off the live site, including ones under `public/`. Mahjong's `favicon.png` returns 404 in production because of it.
 - **Publishing:** the whole site is built and tested before every push, so a cupcake change can't hold up Mahjong updates.
 
 ---
