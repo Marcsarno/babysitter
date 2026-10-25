@@ -8,6 +8,26 @@ Art prompts are in [`arianna-cupcakes-art-prompts.md`](arianna-cupcakes-art-prom
 
 ---
 
+## Build status
+
+**Playable now at `/cupcake/`**: the full day loop and season.
+- **Market:** Corner Market, plus Bulk Barn from day 4. Deals get harder over the season, and picking the worse one brings up the "You could have saved $X — Really?" explainer.
+- **Kitchen:** the cupcake designer (cake, frosting, up to two toppings, a name builder, a price with a profit hint), the oven limit, and baking.
+- **Street:** people and animals walk by and stop based on taste and price. Spoken word-problem orders, a cash register, order tickets, count-together hints, and "too expensive!" reactions.
+- **Delivery:** number line (days 1–10), then the coordinate grid. Easy driving or free steering on the tile-map town, a tip clock, Baxter's sniff trail, and the cab window with Arianna driving and Baxter riding.
+- **End of day:** earned, spent and profit; a bar graph and a profit line graph; pricing tips; a money bar that unlocks 12 ingredients.
+- **Upgrades:** oven, fridge, sign, menu board, van, decorations and van paint. The season ends at day 40 with a trophy, then free play continues.
+- **Extras:** rain days, party days and Baxter's Birthday (dog customers, double tips); the sticker book; read-aloud and sound toggles; Big Kid mode; offline install.
+
+**Art:** Arianna and Baxter come from the two character sheets. Every other pose uses a stand-in from the sheets until its picture arrives. Customers are drawn in code until C1–C8 arrive.
+
+**Not built yet:**
+- Regulars who come back and ask for their favorite.
+- Carrying several orders per trip (van capacity).
+- Background music.
+- Negative numbers and fractions in Big Kid mode. Big Kid mode currently means harder word problems, harder deals and the grid sooner.
+- The hair salon and toy shop (their empty lots are already in the town).
+
 ## 1. What we know about the original
 
 Neither version is publicly playable, so this comes from the official description, a fan wiki and 2015 reviews. Each fact is marked by how sure we are:

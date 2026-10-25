@@ -1,5 +1,7 @@
 # Arianna's Cupcakes — art prompts
 
+**Adding art to the game:** save each picture in `art/cupcake/` with its code as the file name (`A3-box.png`, `B4-ride.png`, `C5-cat.png`, `S1-title.png`, `S2-icon.png`), then run `python3 -I art/cupcake/process.py`. That cuts it out, saves it to `public/cupcake/art/`, and updates `manifest.json`, so the game uses it on the next load. If a side view faces the wrong way, fix its entry in `FACING` in that script.
+
 Each prompt below is complete, so you can paste it straight into your image tool.
 
 ## How to do it (this matters more than the prompts)
