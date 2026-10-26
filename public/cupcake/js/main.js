@@ -1,6 +1,7 @@
 // Arianna's Cupcakes: screens and the flow of a day.
 import * as L from './logic.js';
 import * as SH from './shops.js';
+import * as SA from './salon.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN, T} from './town.js';
 import * as D from './draw.js';
 import {loadArt, allArt, drawPose, poseWidth, image, CUSTOMER_ART} from './art.js';
@@ -82,9 +83,9 @@ function speakerButton(getText, customer = null) { return h('button', {class: 's
 function hud(show = true) {
   hudEl.classList.toggle('hidden', !show || !save);
   if (!show || !save) return;
-  const ev = day?.event;
+  const ev = scene === Salon ? null : day?.event;
   hudEl.replaceChildren(...[
-    h('div', {class: 'chip'}, `Day ${day ? day.number : save.day}`),
+    h('div', {class: 'chip'}, scene === Salon ? '✂️ Salon' : `Day ${day ? day.number : save.day}`),
     ev ? h('div', {class: 'chip event'}, {rain: '🌧️ Rainy', birthday: '🎉 Baxter’s birthday', party: '🎈 Party day'}[ev]) : null,
     h('div', {class: 'spacer'}),
     h('div', {class: 'chip cash', id: 'cash'}, `$${(cashShown = save.cash)}`),
@@ -352,7 +353,9 @@ const DayStart = {
       card('cupcake', '🧁', 'Cupcake shop', save.day > L.SEASON_DAYS ? 'Go to the market' : `Day ${save.day} of the season`, () => go(Market)),
       ...built.map(id => {
         const n = SH.booked(save, id);
-        return card(id, SH.SHOPS[id].icon, SH.SHOPS[id].short, n ? S.nudge[id](n) : 'A bonus day', () => go(ShopDay, id));
+        // a shop needs bookings: each cupcake day brings one more
+        if (!n) return card(id + ' off', SH.SHOPS[id].icon, SH.SHOPS[id].short, 'No bookings yet. Open the cupcake shop today!', () => { toast(S.noBookings); speak(S.noBookings); });
+        return card(id, SH.SHOPS[id].icon, SH.SHOPS[id].short, S.nudge[id](n), () => (id === 'salon' ? go(Salon) : go(ShopDay, id)));
       }),
       h('div', {class: 'muted small'}, 'A day at a new shop is a bonus day. Your cupcake season waits for you.'));
   },
@@ -1524,6 +1527,191 @@ function hammerIn(x, y, s, angle) {
   ctx.restore();
 }
 
+// ---------- a day at the hair salon ----------
+// Each client books on the clock (telling time), gets a trim at the ruler (measuring), then picks a
+// finishing touch and pays. No timers and no way to fail: a wrong answer gets a hint, then the answer.
+const HAIR = {grandma: '#d9d6e3', builder: '#8b5a3c', boy: '#c98a4a', mail: '#6b4430', girl: '#3d2a1e', dad: '#2a2320',
+  bunny: '#fffaf0', cat: '#f2a65a', bear: '#a0673c', duck: '#fff1a8', pug: '#e8c79a', poodle: '#f3e9f7', spot: '#ffffff'};
+const Salon = {
+  enter() {
+    hud(true);
+    this.played = save.shops.log.filter(e => e.shop === 'salon').length;
+    this.r = L.rng((save.seed ^ Math.imul(this.played + 101, 2654435761)) >>> 0);
+    this.queue = SA.clients(this.r, Math.max(1, SH.booked(save, 'salon')));
+    this.queue.forEach(preloadCustomer);
+    Object.assign(this, {i: -1, earned: 0, served: [], c: null, done: false});
+    this.panel = h('div', {class: 'panel'});
+    mount(this.panel);
+    this.nextClient();
+    coach('salon');
+  },
+  say(text, ...more) { return h('div', {class: 'status'}, h('div', {class: 'grow'}, text), ...more); },
+  nextClient() {
+    this.i++;
+    if (this.i >= this.queue.length) return this.finish();
+    const type = this.queue[this.i];
+    this.c = {type, phase: 'arrive', t0: now, tries: 0, hand: 'hour', set: {h: null, m: null},
+      time: SA.makeTime(this.r, SA.timeLevel(this.played, settings.bigKid)), cut: SA.makeCut(this.r, SA.cutLevel(this.played, settings.bigKid))};
+    const hi = SA.isPerson(type) ? S.client.hiPerson : S.client.hiAnimal;
+    this.panel.replaceChildren(this.say(h('span', null, h('b', null, L.CUSTOMERS[type].name), h('br'), hi), speakerButton(() => hi, type)),
+      btn('📅 Open the appointment book', () => this.startClock(), 'pink big wide'));
+    speak(hi, {customer: type});
+  },
+  // booking: set the clock's hands to the time she asks for
+  startClock() {
+    const c = this.c;
+    c.phase = 'clock';
+    this.renderClock();
+    speak([S.setClock(SA.timePhrase(c.time)), this.played || this.i ? null : S.shortHand].filter(Boolean));
+  },
+  renderClock() {
+    const c = this.c, task = S.setClock(SA.timePhrase(c.time));
+    const hand = (id, label) => h('button', {class: 'btn small ' + (c.hand === id ? 'pink' : 'ghost'), onclick: () => { sfx.tap(); c.hand = id; this.renderClock(); }}, label);
+    this.panel.replaceChildren(this.say(task, speakerButton(() => task)),
+      h('div', {class: 'row-end'}, hand('hour', 'Short hand'), hand('minute', 'Long hand'), h('div', {style: 'flex:1'}), btn('Book it!', () => this.book(), 'mint')));
+  },
+  book() {
+    const c = this.c, set = c.set;
+    if (set.h == null || set.m == null) { sfx.gentle(); c.hand = set.h == null ? 'hour' : 'minute'; this.renderClock(); speak(set.h == null ? S.shortHand : S.longHand); return; }
+    if (SA.sameTime(set, c.time)) {
+      sfx.yes();
+      if (this.clockAt) confettiBurst(this.clockAt.x, this.clockAt.y, 26);
+      c.phase = 'booked'; c.t0 = now;   // the hands spin round to the time, then she arrives for her trim
+      this.panel.replaceChildren(this.say(`Booked for ${SA.digital(c.time)}!`));
+      speak(S.salonSays.booked);
+      return;
+    }
+    c.tries++;
+    sfx.gentle();
+    if (c.tries >= 2) { c.ghost = true; speak(S.clockShow); return; }
+    speak(set.m !== c.time.m ? S.minuteHint : c.time.m === 45 ? S.quarterTo : S.clockHint);
+  },
+  // the trim: snip at the right mark on the ruler
+  startCut() {
+    const c = this.c;
+    Object.assign(c, {phase: 'cut', tries: 0, t0: now, counting: null, mark: null});
+    const task = c.cut.mode === 'off' ? S.cutOff(c.cut.from, c.cut.off) : S.makeIt(c.cut.from, c.cut.to);
+    this.panel.replaceChildren(this.say(task, speakerButton(() => task)), h('div', {class: 'muted'}, 'Tap the ruler where you want to snip.'));
+    speak([task, this.played || this.i ? null : S.tapRuler].filter(Boolean));
+  },
+  snip(n) {
+    const c = this.c, cut = c.cut;
+    if (n === cut.to) {
+      Object.assign(c, {phase: 'snipped', t0: now, snipAt: n, mark: null, counting: null});
+      sfx.snip(); setTimeout(() => sfx.snip(), 160);
+      speak(S.salonSays.snip);
+      return;
+    }
+    c.tries++;
+    sfx.gentle();
+    if (c.tries >= 2) { c.mark = cut.to; speak(S.findOn(cut.to)); return; }
+    if (cut.mode === 'off') { c.counting = {from: cut.from, to: cut.to}; speak(S.takeAway(cut.from, cut.off, cut.to)); }
+    else speak(S.findOn(cut.to));
+  },
+  // the finishing touch, then she pays
+  startStyle() {
+    const c = this.c;
+    c.phase = 'style';
+    this.panel.replaceChildren(this.say(S.pickStyle),
+      h('div', {class: 'styles'}, ...Object.entries(SA.STYLES).map(([id, st]) => btn(h('span', null, h('span', {class: 'icon'}, st.icon), st.name), () => this.pickStyle(id), 'ghost'))));
+    speak(S.pickStyle);
+  },
+  pickStyle(id) {
+    const c = this.c, price = SA.clientPrice(true);
+    Object.assign(c, {style: id, phase: 'pay', t0: now});
+    sfx.pop();
+    this.earned += price; save.cash += price;
+    save.stickers[c.type] = (save.stickers[c.type] || 0) + 1;
+    this.served.push(c.type);
+    if (this.head) { starBurst(this.head.x, this.head.y, 12); coinsTo(this.head.x, this.head.y + 40, price * 2); }
+    cashChanged();
+    const line = this.r() < 0.5 ? S.client.love : S.client.wow;
+    this.panel.replaceChildren(this.say(h('span', null, h('b', null, L.CUSTOMERS[c.type].name), h('br'), line), h('b', {class: 'earned'}, `+$${price}`)),
+      btn(this.i + 1 < this.queue.length ? 'Next client →' : 'Close the salon →', () => this.nextClient(), 'pink big wide'));
+    speak([S.styleName[id], line], {customer: c.type});
+  },
+  finish() {
+    this.done = true; this.c = null;
+    save.shops.log.push({shop: 'salon', day: save.day, earned: this.earned, clients: this.served.length});
+    save.shops.booked.salon = 0;
+    persist();
+    mount(h('div', {class: 'back', style: 'background:transparent'}, h('div', {class: 'card results center'},
+      h('h2', null, 'Salon day done!'),
+      h('div', {class: 'big3'}, h('div', null, h('small', null, 'Clients'), h('b', null, String(this.served.length))), h('div', {class: 'profit gain'}, h('small', null, 'Earned'), countUp(this.earned))),
+      h('p', null, `Your cupcake season is still on day ${save.day}. More people book a visit after each cupcake day.`),
+      h('div', {class: 'actions'}, btn('Back to the morning →', () => go(DayStart), 'pink')))));
+    sfx.unlock(); confettiBurst(W / 2, H * 0.3, 60);
+    speak([S.salonDone, S.salonEarned(this.earned)]);
+  },
+  update() {
+    const c = this.c;
+    if (c?.phase === 'booked' && now - c.t0 > 1.8) this.startCut();
+    else if (c?.phase === 'snipped' && now - c.t0 > 1.3) this.startStyle();
+  },
+  tap(x, y) {
+    const c = this.c;
+    if (c?.phase === 'clock' && this.clockAt) {
+      const n = D.clockNumberAt(this.clockAt.x, this.clockAt.y, this.clockAt.r, x, y);
+      if (n == null) return;
+      sfx.tap();
+      // taps take turns: the short hand, then the long hand
+      if (c.hand === 'hour') {
+        if (c.set.m == null && !this.played && !this.i) speak(S.longHand);
+        c.set.h = n; c.hand = 'minute';
+      } else { c.set.m = (n % 12) * 5; c.hand = 'hour'; }
+      this.renderClock();
+    } else if (c?.phase === 'cut' && this.board) {
+      const b = this.board;
+      if (y < b.top - 20 || y > b.bottom + 20) return;
+      const n = b.marks.reduce((best, mx, i) => (Math.abs(mx - x) < Math.abs(b.marks[best] - x) ? i : best), 0);
+      if (Math.abs(b.marks[n] - x) < b.step * 0.6) this.snip(n);
+    }
+  },
+  draw() {
+    const [top, bottom] = openArea(), room = bottom - top, c = this.c;
+    const gy = top + room * 0.8;
+    D.salonRoom(ctx, W, H, gy, now);
+    const ch = Math.min(room * 0.42, W * 0.55);
+    if (!c) { arianna('cheer', W * 0.5, gy + room * 0.15, ch * 1.05); baxter('excited', W * 0.78, gy + room * 0.15, ch * 0.4); return; }
+    const k = Math.min(1, (now - c.t0) / 0.8);
+    if (c.phase === 'arrive' || c.phase === 'clock' || c.phase === 'booked') {
+      // at the front desk, booking a time
+      const cx = c.phase === 'arrive' ? W * (1.15 - 0.4 * (1 - (1 - k) ** 2)) : W * 0.75;
+      drawCustomer(ctx, c.type, cx, gy + room * 0.15, ch * 0.9, {t: now, walking: c.phase === 'arrive' && k < 1});
+      arianna('wave', W * 0.24, gy + room * 0.15, ch);
+      if (c.phase !== 'arrive') {
+        const r = Math.min(W * 0.33, room * 0.26), x = W / 2, y = top + r * 1.25 + 34;
+        this.clockAt = {x, y, r};
+        D.rr(ctx, x - r * 1.3, y - r * 1.3 - 34, r * 2.6, r * 2.6 + 44, 26); ctx.fillStyle = 'rgba(255,248,238,.95)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+        const spin = c.phase === 'booked' ? 1 - Math.min(1, (now - c.t0) / 1.2) : 0;
+        const shown = c.phase === 'booked' ? {h: c.time.h, m: c.time.m - 60 * spin * spin} : c.set;
+        D.clockFace(ctx, x, y, r, shown, {active: c.phase === 'clock' ? c.hand : null, ghost: c.ghost && c.phase === 'clock' ? c.time : null});
+        // the time in numbers, while she's learning, and once it's booked
+        if (SA.showDigital(this.played, settings.bigKid) || c.phase === 'booked') {
+          const t = c.phase === 'booked' ? SA.digital(c.time) : `${c.set.h ?? '–'}:${c.set.m == null ? '––' : String(c.set.m).padStart(2, '0')}`;
+          D.text(ctx, t, x, y - r * 1.3 - 8, 26, {weight: 700, color: c.phase === 'booked' ? D.C.mintD : D.C.ink});
+        }
+      }
+      return;
+    }
+    // in the chair: the client by the mirror, Arianna with her scissors, and the measuring board on top
+    const cx = W * 0.34;
+    D.salonChair(ctx, cx, gy + room * 0.1, ch * 0.62);
+    const face = c.phase === 'pay' ? 'wow' : null, scale = ART_SCALE[c.type] || 1;
+    drawCustomer(ctx, c.type, cx, gy + room * 0.15, ch * 0.9, {t: now, face});
+    const headY = gy + room * 0.15 - ch * 0.9 * scale * 0.93;
+    this.head = {x: cx, y: headY};
+    if (c.style) D.styleTouch(ctx, c.style, cx - ch * 0.12, headY + ch * 0.06, ch * 0.13, now);
+    if (c.phase === 'pay') feeling(this, 'heart', cx + ch * 0.2, headY - 4, ch * 0.2);
+    const ax = W * 0.76, ay = gy + room * 0.15;
+    arianna(c.phase === 'pay' ? 'cheer' : 'stand', ax, ay, ch);
+    if (c.phase === 'cut' || c.phase === 'snipped') {
+      D.scissors(ctx, ax - ch * 0.2, ay - ch * 0.48, ch * 0.22, c.phase === 'snipped' ? Math.abs(Math.sin(now * 14)) * 0.6 : 0.5);
+      const fall = c.phase === 'snipped' ? Math.min(1, (now - c.t0) / 0.9) : 0;
+      this.board = D.measureBoard(ctx, 12, top + 8, W - 24, SA.RULER, c.cut.from, {color: HAIR[c.type], cut: c.snipAt ?? null, fall, mark: c.mark, counting: c.counting, t: now});
+    }
+  },
+};
 // ---------- a bonus day at a new shop ----------
 // Stand-in until each shop's own day is built.
 const ShopDay = {
@@ -1626,11 +1814,11 @@ const SCENE_MUSIC = new Map([
   [Find, () => ['m5-drive', 'm2-shop']], [Drive, () => ['m5-drive', 'm2-shop']], [Doorstep, () => ['m5-drive', 'm2-shop']],
   [Results, () => ['m6-evening', 'm2-shop']], [Upgrades, () => ['m6-evening', 'm2-shop']],
   [SeasonEnd, () => ['m7-season-end', 'm1-title']],
-  [Build, () => ['m1-title']], [ShopDay, () => ['m2-shop']],
+  [Build, () => ['m1-title']], [ShopDay, () => ['m2-shop']], [Salon, () => ['m10-salon', 'm2-shop']],
 ]);
 
 // For automated checks: read-only peek at the game.
-const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd, Build, ShopDay};
+const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd, Build, ShopDay, Salon};
 window.__cupcake = {get save() { return save; }, get day() { return day; }, scenes: SCENES, town, get scene() { return Object.keys(SCENES).find(k => SCENES[k] === scene); }, go: (name, arg) => go(SCENES[name], arg)};
 
 resize();

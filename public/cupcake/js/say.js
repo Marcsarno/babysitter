@@ -2,6 +2,7 @@
 // (art/cupcake/voice.mjs); linesBy() lists them by who says them, for that recording.
 // Lines with numbers are split into short sentences so every combination can be recorded.
 import {INGREDIENTS, UPGRADES, DECOR, PAINTS, dealsFor, compareDeals, orderSentences} from './logic.js';
+import {timePhrase, allTimes, allCuts, STYLES} from './salon.js';
 
 // Who speaks in which Kokoro voice, as "voice" or "voice@pitch" (pitch shifted without changing speed).
 // Chosen in the voice casting page. Arianna says her own lines, each customer says theirs, and the
@@ -12,8 +13,8 @@ export const CAST = {
   bunny: 'af_nova@1.1', cat: 'bf_emma@1.1', bear: 'am_santa@0.88', duck: 'af_jessica@1.32',
   pug: 'am_echo@1.2', poodle: 'bf_isabella@1.1', spot: 'am_adam@1.1',
 };
-const ARIANNA = ['firstDay', 'openShop', 'designDone', 'ding', 'closing', 'comingUp', 'hereYouGo'];
-const CUSTOMER = ['woof', 'thanks', 'bo'];
+const ARIANNA = ['firstDay', 'openShop', 'designDone', 'ding', 'closing', 'comingUp', 'hereYouGo', 'salonSays'];
+const CUSTOMER = ['woof', 'thanks', 'bo', 'client'];
 
 export const VENDOR = {corner: 'Corner Market', barn: 'Bulk Barn'};
 export const GREET = ['Hi Arianna!', 'Hello there!', 'Ooh, cupcakes!', 'Yum, it smells so good!', 'Hi! Hi Baxter!'];
@@ -32,6 +33,7 @@ export const S = {
     upgrades: 'Spend your savings to grow the shop. Or save up for something big!',
     bake: "Let's bake! Follow each step to make the yummiest cupcakes.",
     fund: 'This is the building fund jar! Save money in it, and Builder Bo will build a new shop.',
+    salon: 'Welcome to your hair salon! Book each client on the clock, then snip their hair at the ruler.',
   },
   day: n => `Day ${n}!`,
   event: {
@@ -100,6 +102,26 @@ export const S = {
   cutRibbon: 'All done! Cut the ribbon!',
   grandOpening: {salon: 'Grand opening! The hair salon is open!', toy: 'Grand opening! The toy shop is open!'},
   bo: {hi: "Let's build it!", done: 'Ta-da! All done!'},
+  // the hair salon (salon.js): customers say the number-free lines, the narrator says every number
+  client: {hiPerson: 'Hi Arianna! Can I book a haircut?', hiAnimal: 'Hi Arianna! Can I book a trim?', love: 'I love it! Thank you!', wow: 'Wow, look at me!'},
+  salonSays: {booked: 'Booked! See you soon!', snip: 'Snip snip!', look: 'All done! Take a look!', welcome: 'Welcome to the salon!'},
+  setClock: p => `Set the clock to ${p}.`,
+  shortHand: 'Tap a number to move the short hand. It shows the hour.',
+  longHand: 'Now tap a number for the long hand. It shows the minutes.',
+  clockHint: 'The short hand shows the hour. The long hand shows the minutes.',
+  minuteHint: 'The long hand counts by fives. At 12 it is o\'clock. At 3 it is quarter past. At 6 it is half past. At 9 it is quarter to.',
+  quarterTo: 'Quarter to means 15 minutes before the hour. The short hand is almost at the next number.',
+  clockShow: 'Here it is! Look where the hands point.',
+  makeIt: (a, b) => `It's ${a} inches long. Make it ${b} inches!`,
+  cutOff: (a, c) => `It's ${a} inches long. Cut off ${c === 1 ? '1 inch' : `${c} inches`}!`,
+  findOn: n => `Find ${n} on the ruler.`,
+  takeAway: (a, c, b) => `${a} take away ${c} is ${b}.`,
+  tapRuler: 'Tap the ruler where you want to snip!',
+  pickStyle: 'Pick something special to finish the look!',
+  styleName: Object.fromEntries(Object.entries(STYLES).map(([id, s]) => [id, `${s.name}!`])),
+  salonDone: 'Salon day done!',
+  noBookings: 'No bookings yet! Open the cupcake shop today, and more people will book.',
+  salonEarned: n => `You earned ${n} dollars at the salon!`,
   nudge: {
     salon: n => (n === 1 ? 'One appointment is booked at the salon!' : `${n} appointments are booked at the salon!`),
     toy: n => (n === 1 ? 'One customer is waiting at the toy shop!' : `${n} customers are waiting at the toy shop!`),
@@ -130,6 +152,9 @@ export function linesBy() {
   for (let t = 1; t <= 6; t++) says(S.tip(t));
   for (let n = 1; n <= 3; n++) add(S.stars(n));
   for (let n = 1; n <= 5; n++) { add(S.nudge.salon(n)); add(S.nudge.toy(n)); }
+  for (const t of allTimes()) add(S.setClock(timePhrase(t)));
+  for (const c of allCuts()) { add(S.makeIt(c.from, c.to)); add(S.cutOff(c.from, c.off)); add(S.takeAway(c.from, c.off, c.to)); add(S.findOn(c.to)); }
+  for (let n = 1; n <= 60; n++) add(S.salonEarned(n));
   for (const id in INGREDIENTS) add(S.newIngredient(id));
   for (const u of Object.values(UPGRADES)) add(S.bought(u.name));
   for (const d of Object.values(DECOR)) add(S.bought(d.name));

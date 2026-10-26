@@ -838,6 +838,153 @@ export function siteScene(ctx, W, H, gy, t = 0) {
   ctx.fillStyle = C.road; ctx.fillRect(0, gy + H * 0.08, W, H);
 }
 
+// ---------- the hair salon (stand-ins until its pictures are made) ----------
+// The salon inside: striped wallpaper, a big mirror, a salon chair and a checkered floor. gy is the floor line.
+export function salonRoom(ctx, W, H, gy, t = 0) {
+  ctx.fillStyle = '#f1e8fb'; ctx.fillRect(0, 0, W, gy);
+  for (let x = 0; x < W; x += 36) { ctx.fillStyle = 'rgba(195,166,236,.28)'; ctx.fillRect(x, 0, 18, gy); }
+  // a strip of little lights along the top
+  for (let i = 0; i < 9; i++) circle(ctx, W * (i + 0.5) / 9, H * 0.12 + Math.sin(i * 1.7) * 4, 5, `hsl(${(i * 47 + t * 25) % 360} 80% 78%)`, 1.5);
+  // the mirror and the shelf of bottles
+  const mx = W * 0.08, my = gy - H * 0.42, mw = W * 0.46, mh = H * 0.3;
+  rr(ctx, mx - 8, my - 8, mw + 16, mh + 16, 40); paint(ctx, '#f7a8c8', 3);
+  rr(ctx, mx, my, mw, mh, 34); paint(ctx, '#dff3ff', 3);
+  ctx.save(); rr(ctx, mx, my, mw, mh, 34); ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.moveTo(mx + mw * 0.15, my); ctx.lineTo(mx + mw * 0.35, my); ctx.lineTo(mx + mw * 0.05, my + mh); ctx.lineTo(mx - mw * 0.15, my + mh); ctx.fill();
+  ctx.restore();
+  rr(ctx, W * 0.62, gy - H * 0.36, W * 0.32, H * 0.02, 4); paint(ctx, C.wood, 2.5);
+  [['#9fe3c0', 0.66], ['#f27aa9', 0.74], ['#ffe08a', 0.82], ['#8ccaf5', 0.89]].forEach(([c, k], i) => {
+    const bx = W * k, bh = H * (0.05 + (i % 2) * 0.015);
+    rr(ctx, bx - 8, gy - H * 0.36 - bh, 16, bh, 5); paint(ctx, c, 2.5);
+    rr(ctx, bx - 4, gy - H * 0.36 - bh - 8, 8, 9, 2); paint(ctx, '#fff', 2);
+  });
+  // floor
+  const tile = Math.max(24, W / 12);
+  for (let y = gy; y < H; y += tile) for (let x = 0; x < W; x += tile) { ctx.fillStyle = ((x + y) / tile) % 2 < 1 ? '#fff8ee' : '#e8dcf5'; ctx.fillRect(x, y, tile, tile); }
+  ctx.fillStyle = 'rgba(91,58,41,.12)'; ctx.fillRect(0, gy, W, 4);
+  return {mirror: {x: mx, y: my, w: mw, h: mh}};
+}
+// The salon chair: x its middle, y the floor, s its height.
+export function salonChair(ctx, x, y, s) {
+  rr(ctx, x - s * 0.04, y - s * 0.32, s * 0.08, s * 0.3, 3); paint(ctx, '#c9c9d6', 2.5);
+  ellipse(ctx, x, y - s * 0.02, s * 0.22, s * 0.05, '#a7a9b7', 2.5);
+  rr(ctx, x - s * 0.3, y - s * 0.5, s * 0.6, s * 0.18, s * 0.06); paint(ctx, '#f27aa9', 3);
+  rr(ctx, x - s * 0.26, y - s, s * 0.52, s * 0.55, s * 0.12); paint(ctx, '#f27aa9', 3);
+  rr(ctx, x - s * 0.2, y - s * 0.92, s * 0.4, s * 0.38, s * 0.08); paint(ctx, '#ff9fc4', 0);
+}
+
+// A clock to set: hands at {h, m}. A hand left as null isn't drawn. `active` lights up the hand being set,
+// `ghost` shows where the hands should go, faintly.
+export function clockFace(ctx, x, y, r, time, {active = null, ghost = null} = {}) {
+  const lw = Math.max(2.5, r * 0.035);
+  circle(ctx, x, y + r * 0.04, r * 1.08, 'rgba(91,58,41,.18)');
+  circle(ctx, x, y, r * 1.08, '#c3a6ec', lw);
+  circle(ctx, x, y, r * 0.94, '#fff', lw);
+  for (let i = 0; i < 60; i++) {
+    const a = i / 60 * Math.PI * 2, big = i % 5 === 0, r0 = r * (big ? 0.8 : 0.86);
+    ctx.beginPath(); ctx.moveTo(x + Math.sin(a) * r0, y - Math.cos(a) * r0); ctx.lineTo(x + Math.sin(a) * r * 0.9, y - Math.cos(a) * r * 0.9);
+    paint(ctx, null, big ? lw : lw * 0.45, big ? C.ink : 'rgba(91,58,41,.45)');
+  }
+  for (let n = 1; n <= 12; n++) {
+    const a = n / 12 * Math.PI * 2;
+    text(ctx, String(n), x + Math.sin(a) * r * 0.64, y - Math.cos(a) * r * 0.64, r * 0.19, {weight: 700});
+  }
+  const hand = (turn, len, width, color, glow) => {
+    const a = turn * Math.PI * 2, ex = x + Math.sin(a) * len, ey = y - Math.cos(a) * len;
+    ctx.lineCap = 'round';
+    if (glow) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); paint(ctx, null, width + r * 0.08, 'rgba(255,224,138,.9)'); }
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); paint(ctx, null, width + lw * 1.4, C.ink);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); paint(ctx, null, width, color);
+    ctx.lineCap = 'butt';
+  };
+  const hourTurn = t => ((t.h % 12) + (t.m || 0) / 60) / 12;
+  if (ghost) {
+    ctx.globalAlpha = 0.35;
+    hand(hourTurn(ghost), r * 0.45, r * 0.09, C.pink); hand(ghost.m / 60, r * 0.72, r * 0.05, C.skyD);
+    ctx.globalAlpha = 1;
+  }
+  if (time.h != null) hand(hourTurn(time), r * 0.45, r * 0.09, C.pink, active === 'hour');
+  if (time.m != null) hand(time.m / 60, r * 0.72, r * 0.05, C.skyD, active === 'minute');
+  circle(ctx, x, y, r * 0.07, C.ink);
+}
+// Which number on the clock (1-12) a tap at (px, py) is nearest, or null if it's not on the face.
+export function clockNumberAt(x, y, r, px, py) {
+  const dx = px - x, dy = py - y, d = Math.hypot(dx, dy);
+  if (d < r * 0.2 || d > r * 1.2) return null;
+  const n = Math.round(Math.atan2(dx, -dy) / (Math.PI * 2) * 12);
+  return ((n + 12) % 12) || 12;
+}
+
+// The measuring board: a ruler from 0 to `inches`, with a lock of hair lying along it from 0 to `hair`.
+// Returns where each inch mark is so taps can be matched to them. `cut` is the snip so far (the cut-off
+// end slides away as `fall` goes from 0 to 1); `mark` bounces a mark to show where to cut.
+export function measureBoard(ctx, x, y, w, inches, hair, {color = '#8b5a3c', cut = null, fall = 0, mark = null, counting = null, t = 0} = {}) {
+  const lw = Math.max(2, w * 0.006), pad = w * 0.06, step = (w - pad * 2) / inches, x0 = x + pad;
+  const boardH = w * 0.36;
+  rr(ctx, x, y, w, boardH, w * 0.04); paint(ctx, '#fff8ee', lw * 1.3);
+  // the hair: a wavy lock from 0 to its length, cut at `cut`
+  const hy = y + boardH * 0.3, hh = boardH * 0.2;
+  const lock = (from, to, dx, dy, alpha) => {
+    if (to <= from) return;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(dx, dy);
+    ctx.beginPath();
+    const a = x0 + from * step, b = x0 + to * step;
+    ctx.moveTo(a, hy - hh / 2);
+    for (let px = a; px <= b; px += 4) ctx.lineTo(px, hy - hh / 2 + Math.sin(px * 0.08) * hh * 0.18);
+    ctx.lineTo(b + hh * 0.3, hy);
+    for (let px = b; px >= a; px -= 4) ctx.lineTo(px, hy + hh / 2 + Math.sin(px * 0.08 + 1) * hh * 0.18);
+    ctx.closePath(); paint(ctx, color, lw);
+    ctx.beginPath();
+    for (let px = a + 6; px < b - 6; px += 14) { ctx.moveTo(px, hy - hh * 0.15); ctx.quadraticCurveTo(px + 6, hy, px + 12, hy + hh * 0.12); }
+    paint(ctx, null, lw * 0.6, 'rgba(255,255,255,.4)');
+    ctx.restore();
+  };
+  if (cut == null) lock(0, hair, 0, 0, 1);
+  else { lock(0, cut, 0, 0, 1); lock(cut, hair, fall * step * 1.5, fall * boardH * 0.9, 1 - fall); }
+  // the ruler
+  const ry = y + boardH * 0.52, rh = boardH * 0.4;
+  rr(ctx, x0 - step * 0.3, ry, step * (inches + 0.6), rh, rh * 0.15); paint(ctx, '#ffe08a', lw);
+  const marks = [];
+  for (let i = 0; i <= inches; i++) {
+    const mx = x0 + i * step;
+    marks.push(mx);
+    if (counting && i <= counting.from && i >= counting.to) { circle(ctx, mx, ry + rh * 0.72, step * 0.36, i === counting.to ? 'rgba(242,122,169,.55)' : 'rgba(159,227,192,.6)'); }
+    ctx.beginPath(); ctx.moveTo(mx, ry); ctx.lineTo(mx, ry + rh * 0.42); paint(ctx, null, lw, C.ink);
+    if (i < inches) { ctx.beginPath(); ctx.moveTo(mx + step / 2, ry); ctx.lineTo(mx + step / 2, ry + rh * 0.22); paint(ctx, null, lw * 0.6, C.ink); }
+    text(ctx, String(i), mx, ry + rh * 0.72, Math.min(step * 0.6, rh * 0.42), {weight: 700});
+  }
+  if (mark != null) {
+    const mx = x0 + mark * step, bob = Math.abs(Math.sin(t * 6)) * step * 0.25;
+    ctx.beginPath(); ctx.moveTo(mx, ry - 4 - bob); ctx.lineTo(mx - step * 0.25, ry - step * 0.45 - bob); ctx.lineTo(mx + step * 0.25, ry - step * 0.45 - bob); ctx.closePath(); paint(ctx, C.pink, lw);
+  }
+  return {marks, top: y, bottom: y + boardH, hy, step};
+}
+// Snipping scissors, drawn open or closed.
+export function scissors(ctx, x, y, s, open = 0.4) {
+  for (const k of [-1, 1]) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(k * open * 0.5);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 0.06, -s * 0.55); ctx.lineTo(s * 0.06, -s * 0.5); ctx.closePath(); paint(ctx, '#e8eef5', Math.max(1.5, s * 0.03));
+    circle(ctx, k * s * 0.08, s * 0.22, s * 0.11, C.pink, Math.max(1.5, s * 0.03));
+    ctx.restore();
+  }
+}
+// A finishing touch on a client's head: a bow, sparkles or a flower. x, y is the top of the head.
+export function styleTouch(ctx, id, x, y, s, t = 0) {
+  const lw = Math.max(1.5, s * 0.06);
+  if (id === 'bow') {
+    for (const k of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + k * s * 0.6, y - s * 0.45, x + k * s * 0.55, y + s * 0.3); ctx.closePath(); paint(ctx, C.pink, lw); }
+    circle(ctx, x, y, s * 0.14, '#e8508a', lw);
+  } else if (id === 'flower') {
+    for (let i = 0; i < 5; i++) circle(ctx, x + Math.cos(i * 1.257) * s * 0.22, y + Math.sin(i * 1.257) * s * 0.22, s * 0.18, '#fff1a8', lw);
+    circle(ctx, x, y, s * 0.13, '#ffb38a', lw);
+  } else {
+    for (let i = 0; i < 4; i++) {
+      const a = i * 1.7 + t * 0.6, rx = x + Math.cos(a) * s * 0.7, ry = y - s * 0.2 + Math.sin(a) * s * 0.45, k = 0.7 + 0.3 * Math.sin(t * 5 + i);
+      starPath(ctx, rx, ry, s * 0.2 * k); paint(ctx, '#ffe08a', lw * 0.8);
+    }
+  }
+}
+
 // ---------- scenes ----------
 function sky(ctx, W, H, t, top = '#9fd8ff', bottom = '#e6f6ff') {
   const g = ctx.createLinearGradient(0, 0, 0, H * 0.6);
