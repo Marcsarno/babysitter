@@ -1,0 +1,23 @@
+Round 6 art for the same kids' game: the hair salon. Same style as the attached character sheets and all the earlier pictures. Please generate each image below as a SEPARATE image, one at a time, in order, without asking me to confirm between images. After each one, tell me its file name.
+
+STYLE FOR EVERY IMAGE: children's picture-book cartoon illustration, clean bold dark-brown outlines, soft simple shading, rounded friendly shapes, bright pastel palette of lavender, strawberry pink, mint green, buttercream yellow, sky blue and chocolate brown, matching the attached character sheets.
+RULES FOR EVERY IMAGE: no text, letters, numbers, words, logos or writing anywhere (signs stay blank). Nothing cropped.
+SCENES (BG): tall 9:16 (1080x1920), full background, and NO people and NO animals in them (the game adds the characters).
+EVERYTHING ELSE: square 1024x1024, one subject centered, plain pure white background, no shadow on the ground. Baxter is the only exception: always on a solid bright blue background.
+
+THE SALON
+BG12-salon: Inside a cozy little hair salon, seen straight from the front. Lavender striped wallpaper, a big round-cornered mirror with a pink frame on the left half of the back wall, a wooden shelf of colorful shampoo bottles on the right, a string of little round lights along the top, and a checkered cream-and-lavender floor. Keep the floor in the bottom third clear and empty (the game adds the chair, the desk and the characters).
+R1-chair: A pink salon chair seen from the front, with a round silver base and a footrest. Empty.
+R2-clock: A big round wall clock with a lavender rim and a plain white face with 12 short tick marks around the edge. NO numbers and NO hands (the game adds them).
+R3-desk: A small salon front desk seen from the front, pastel lavender with a pink top, an open appointment book and a little bell on it.
+R4-scissors: A pair of pink hairdressing scissors, slightly open, seen from the side.
+R5-bow: A big pink hair bow with a little knot in the middle, seen straight on.
+R6-sparkles: A sparkly hair clip shaped like a yellow star, with three little sparkles around it.
+R7-flower: A hair clip with a white daisy-like flower and a peach center.
+R8-salon-front: The finished hair salon building seen straight from the front: a lavender shop with a pointed roof, a round pale sign at the top showing pink scissors, a blank sign board across the front, a big window under a pink-and-white striped awning on the left, and a pink door on the right. The whole building, standing on the ground.
+
+ARIANNA AND BAXTER AT THE SALON (keep them exactly like the character sheets)
+A10-stylist: Arianna standing, full body, facing the viewer, holding a pair of pink hairdressing scissors up in one hand and a comb in the other, big proud smile.
+B10-bow: Baxter sitting and smiling, freshly groomed and extra fluffy, with a little pink bow on top of his head. Solid bright blue background.
+
+That's 11 images.

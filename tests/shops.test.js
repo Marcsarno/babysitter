@@ -24,6 +24,7 @@ test('an old saved game keeps everything and gains an empty building fund', () =
 });
 
 test('the jar shows up after day 4 and saves for the salon, then the toy shop', () => {
+  SH.SHOPS.toy.soon = false;   // as it will be once the toy shop is playable
   const save = L.newGame(1);
   save.day = 4;
   assert.equal(SH.fundOpen(save), false);
@@ -68,6 +69,7 @@ test('customers book visits on cupcake days, up to a limit', () => {
 });
 
 test('pacing: saving part of a typical day opens the salon around day 12 and the toy shop around day 25', () => {
+  SH.SHOPS.toy.soon = false;
   // a typical day's profit grows as the shop does; she saves a bit over a third of it
   const save = L.newGame(1);
   for (let d = 1; d <= 40 && save.shops.built.length < 2; d++) {
@@ -87,4 +89,12 @@ test('each shop has an empty lot of its own on the map', () => {
   const save = L.newGame(1);
   save.shops.built.push('salon');
   assert.deepEqual(SH.lotsTaken(save), {[SH.SHOPS.salon.lot]: 'salon'});
+});
+
+test('the jar never saves for a shop that is not playable yet', () => {
+  SH.SHOPS.toy.soon = true;
+  const save = L.newGame(1);
+  save.day = 6; save.shops.built = ['salon'];
+  assert.equal(SH.fundFor(save), null);
+  assert.equal(SH.drop(save, 5), 'none');
 });

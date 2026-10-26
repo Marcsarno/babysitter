@@ -20,16 +20,16 @@ let W = 0, H = 0, now = 0;
 // ---------- storage ----------
 const readJSON = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
 const writeJSON = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
-const settings = {voice: true, sound: true, music: true, easyDrive: true, bigKid: false, shops: false, ...readJSON(SETTINGS_KEY)};
-// The new shops stay hidden until they're ready to try: open the game once with ?shops to show them (?shops=0 hides them).
+const settings = {voice: true, sound: true, music: true, easyDrive: true, bigKid: false, ...readJSON(SETTINGS_KEY)};
+delete settings.shops; // the old preview switch
+// Grown-ups can open the game with ?shops for a shortcut in Settings that builds the next shop straight away.
 const query = new URLSearchParams(location.search);
-if (query.has('shops')) settings.shops = query.get('shops') !== '0';
 function applySettings() { audio.sound = settings.sound; audio.voice = settings.voice; musicOn(settings.music); writeJSON(SETTINGS_KEY, settings); }
 applySettings();
 let save = L.migrate(readJSON(L.SAVE_KEY));
 // A copy of her saved game from before the new shops, kept just in case.
 try { const raw = localStorage.getItem(L.SAVE_KEY); if (raw && !localStorage.getItem(L.SAVE_KEY + '.before-shops')) localStorage.setItem(L.SAVE_KEY + '.before-shops', raw); } catch {}
-const shopsOn = () => settings.shops && !!save;
+const shopsOn = () => !!save;
 // Progress is saved between days; leaving mid-day comes back to the start of that day.
 const persist = () => writeJSON(L.SAVE_KEY, save);
 
@@ -1754,8 +1754,7 @@ function openSettings() {
     row('music', 'Music', 'Gentle music in the background'),
     row('easyDrive', 'Easy driving', 'The van follows the road and turns at corners'),
     row('bigKid', 'Big Kid mode', 'Harder word problems and deals, the grid sooner'),
-    query.has('shops') || settings.shops ? row('shops', 'New shops (preview)', 'The building fund jar, the hair salon and the toy shop') : null,
-    settings.shops && save && SH.fundFor(save) ? h('div', {class: 'toggle'}, h('div', null, 'Build the next shop now', h('small', null, `Skip the jar: Builder Bo builds the ${SH.SHOPS[SH.fundFor(save)].short.toLowerCase()} tomorrow morning`)),
+    query.has('shops') && save && SH.fundFor(save) ? h('div', {class: 'toggle'}, h('div', null, 'Build the next shop now', h('small', null, `Skip the jar: Builder Bo builds the ${SH.SHOPS[SH.fundFor(save)].short.toLowerCase()} tomorrow morning`)),
       btn('Build', () => {
         // change the saved game, not today's, so today starts over from the morning as going home does
         save = L.migrate(readJSON(L.SAVE_KEY)) || save;
