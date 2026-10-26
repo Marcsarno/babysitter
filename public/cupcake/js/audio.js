@@ -1,6 +1,6 @@
-// Little synthesized sounds and the read-aloud voice. Nothing to download.
+// Little synthesized sounds, the read-aloud voices and the background music.
 let ac = null, master = null, engine = null;
-export const settings = {sound: true, voice: true};
+export const settings = {sound: true, voice: true, music: true};
 
 function ctx() {
   if (!ac) {
@@ -12,7 +12,7 @@ function ctx() {
   if (ac.state === 'suspended') ac.resume();
   return ac;
 }
-export function unlock() { ctx(); }
+export function unlock() { ctx(); syncMusic(); }
 
 function tone(freq, dur, {type = 'sine', vol = 0.3, slide = 0, delay = 0} = {}) {
   if (!settings.sound) return;
@@ -164,17 +164,58 @@ export function speak(parts, {interrupt = true, customer = null} = {}) {
   const mine = ++token;
   list.forEach(text => buffer(text, customer));
   (async () => {
+    duck(true);
     for (const text of list) {
       const buf = await buffer(text, customer);
       if (mine !== token) return;
       if (buf) await playBuffer(buf); else await deviceSay(text);
       if (mine !== token) return;
     }
+    duck(false);
   })();
 }
 export function hush() {
   token++;
+  duck(false);
   try { playing?.stop(); } catch {}
   playing = null;
   try { window.speechSynthesis?.cancel(); } catch {}
+}
+
+// ---------- music ----------
+// One looping track for each part of the day (art/cupcake/music.py prepares them). Tracks cross-fade
+// when the part changes, and the music dips while someone is talking. Nothing plays until the first tap.
+const MUSIC_LEVEL = 0.3, DUCKED = 0.1;
+let musicFiles = {}, musicBus = null, wanted = null, current = null;
+export async function loadMusic(b) {
+  try { const r = await fetch(`${b}music/index.json`); if (r.ok) musicFiles = await r.json(); } catch {}
+}
+// Play the first of these tracks that exists, or nothing.
+export function music(names) {
+  wanted = [].concat(names || []).find(n => musicFiles[n]) || null;
+  syncMusic();
+}
+export function musicOn(on) { settings.music = on; syncMusic(); }
+export function pauseMusic(paused) { if (current) paused ? current.el.pause() : current.el.play().catch(() => {}); }
+function syncMusic() {
+  const name = settings.music ? wanted : null;
+  if (current?.name === name || !ac) return;
+  if (current) {
+    const old = current;
+    old.gain.gain.setTargetAtTime(0, ac.currentTime, 0.25);
+    setTimeout(() => { old.el.pause(); old.src.disconnect(); }, 1500);
+    current = null;
+  }
+  if (!name) return;
+  if (!musicBus) { musicBus = ac.createGain(); musicBus.gain.value = MUSIC_LEVEL; musicBus.connect(ac.destination); }
+  const el = new Audio(`${base}music/${musicFiles[name]}`);
+  el.loop = true;
+  const src = ac.createMediaElementSource(el), gain = ac.createGain();
+  gain.gain.value = 0; src.connect(gain); gain.connect(musicBus);
+  gain.gain.setTargetAtTime(1, ac.currentTime, 0.4);
+  el.play().catch(() => {});
+  current = {name, el, src, gain};
+}
+function duck(down) {
+  if (musicBus) musicBus.gain.setTargetAtTime(down ? DUCKED : MUSIC_LEVEL, ac.currentTime, down ? 0.08 : 0.5);
 }

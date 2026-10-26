@@ -3,7 +3,7 @@ import * as L from './logic.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN} from './town.js';
 import * as D from './draw.js';
 import {loadArt, drawPose, image, CUSTOMER_ART} from './art.js';
-import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice, preloadCustomer} from './audio.js';
+import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice, preloadCustomer, loadMusic, music, musicOn, pauseMusic} from './audio.js';
 import {S, GREET} from './say.js';
 
 const BASE = new URL('../', import.meta.url).pathname;
@@ -18,8 +18,8 @@ let W = 0, H = 0, now = 0;
 // ---------- storage ----------
 const readJSON = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
 const writeJSON = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
-const settings = {voice: true, sound: true, easyDrive: true, bigKid: false, ...readJSON(SETTINGS_KEY)};
-function applySettings() { audio.sound = settings.sound; audio.voice = settings.voice; writeJSON(SETTINGS_KEY, settings); }
+const settings = {voice: true, sound: true, music: true, easyDrive: true, bigKid: false, ...readJSON(SETTINGS_KEY)};
+function applySettings() { audio.sound = settings.sound; audio.voice = settings.voice; musicOn(settings.music); writeJSON(SETTINGS_KEY, settings); }
 applySettings();
 let save = L.migrate(readJSON(L.SAVE_KEY));
 // Progress is saved between days; leaving mid-day comes back to the start of that day.
@@ -183,6 +183,7 @@ function go(next, arg) {
   scene = next;
   ui.replaceChildren();
   next.enter?.(arg);
+  music(SCENE_MUSIC.get(next)?.());
 }
 
 const Title = {
@@ -1269,6 +1270,7 @@ function openSettings() {
   const close = modal(h('h2', null, 'Settings'),
     row('voice', 'Read aloud', 'Customers and tips are spoken out loud'),
     row('sound', 'Sounds', 'Coins, barks and beeps'),
+    row('music', 'Music', 'Gentle music in the background'),
     row('easyDrive', 'Easy driving', 'The van follows the road and turns at corners'),
     row('bigKid', 'Big Kid mode', 'Harder word problems and deals, the grid sooner'),
     h('div', {class: 'actions'}, btn('Done', () => close(), 'pink')));
@@ -1307,7 +1309,7 @@ for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) cv.addEventList
 addEventListener('keydown', e => { if (e.key === ' ' && !e.repeat) scene?.press?.(); });
 addEventListener('keyup', e => { if (e.key === ' ') scene?.release?.(); });
 let last = performance.now(), paused = false;
-document.addEventListener('visibilitychange', () => { paused = document.hidden; if (paused) { hush(); engineOff(); } last = performance.now(); });
+document.addEventListener('visibilitychange', () => { paused = document.hidden; if (paused) { hush(); engineOff(); } pauseMusic(paused); last = performance.now(); });
 function frame(ts) {
   const dt = Math.min(0.05, (ts - last) / 1000);
   last = ts;
@@ -1327,13 +1329,24 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 
+// Which music plays where: the first track in each list that has been made (Suno codes M1-M9).
+const SCENE_MUSIC = new Map([
+  [Title, () => ['m1-title']],
+  [DayStart, () => ['m3-market']], [Market, () => ['m3-market']],
+  [Kitchen, () => ['m4-kitchen']], [Bake, () => ['m4-kitchen']],
+  [Street, () => [day?.event === 'birthday' && 'm8-birthday', day?.event === 'rain' && 'm9-rain', 'm2-shop'].filter(Boolean)],
+  [Find, () => ['m5-drive', 'm2-shop']], [Drive, () => ['m5-drive', 'm2-shop']], [Doorstep, () => ['m5-drive', 'm2-shop']],
+  [Results, () => ['m6-evening', 'm2-shop']], [Upgrades, () => ['m6-evening', 'm2-shop']],
+  [SeasonEnd, () => ['m7-season-end', 'm1-title']],
+]);
+
 // For automated checks: read-only peek at the game.
 const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd};
 window.__cupcake = {get save() { return save; }, get day() { return day; }, scenes: SCENES, town, get scene() { return Object.keys(SCENES).find(k => SCENES[k] === scene); }};
 
 resize();
 const loadbar = document.getElementById('loadbar');
-await Promise.all([loadArt(BASE, k => { if (loadbar) loadbar.style.width = `${Math.round(k * 100)}%`; }), loadVoice(BASE), document.fonts?.ready]);
+await Promise.all([loadArt(BASE, k => { if (loadbar) loadbar.style.width = `${Math.round(k * 100)}%`; }), loadVoice(BASE), loadMusic(BASE), document.fonts?.ready]);
 go(Title);
 requestAnimationFrame(frame);
 if ('serviceWorker' in navigator && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') navigator.serviceWorker.register(`${BASE}sw.js`, {scope: BASE}).catch(() => {});
