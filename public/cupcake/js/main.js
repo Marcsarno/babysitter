@@ -368,21 +368,39 @@ const DayStart = {
 };
 
 // ---------- market ----------
+// The market goes one kind at a time, like walking down three aisles: cake, then frosting, then
+// toppings, with a big Next button between them, so nothing is hidden below the bottom of the screen.
+const AISLES = [['cake', 'Cake', '🍰'], ['frosting', 'Frosting', '🍦'], ['topping', 'Toppings', '🍒']];
 const Market = {
   enter() {
     hud(true);
-    this.panel = h('div', {class: 'panel', style: 'max-height:70%'});
+    this.aisle = 0;
+    this.panel = h('div', {class: 'panel market', style: 'max-height:80%'});
     mount(this.panel);
     this.render();
     coach(save.day >= 4 && !save.seen.market4 ? 'market4' : 'market');
   },
+  // a kind is ready when there's some of everything of that kind her menu uses
+  ready(kind) {
+    const need = save.menu.filter(Boolean).flatMap(L.parts).filter(id => L.INGREDIENTS[id].kind === kind);
+    return need.every(id => save.stock[id] > 0);
+  },
+  goAisle(i) {
+    if (i === this.aisle) return;
+    sfx.tap();
+    this.aisle = i;
+    document.querySelector('.savings')?.remove();
+    this.render();
+    if (i) speak(S.aisle[AISLES[i][0]]);
+  },
   render() {
     const used = new Set(save.menu.filter(Boolean).flatMap(L.parts));
     const list = h('div', {class: 'list scroll'});
-    const groups = {cake: 'Cake', frosting: 'Frosting', topping: 'Toppings'};
-    for (const kind of L.KINDS) {
-      list.append(h('div', {class: 'section'}, groups[kind]));
-      for (const id of L.unlockedIds(save).filter(i => L.INGREDIENTS[i].kind === kind)) {
+    const [kind] = AISLES[this.aisle];
+    {
+      // what's on her menu comes first
+      const ids = L.unlockedIds(save).filter(i => L.INGREDIENTS[i].kind === kind).sort((a, b) => used.has(b) - used.has(a));
+      for (const id of ids) {
         const deals = day.deals[id] || L.dealsFor(day.r, save.day, settings.bigKid, id);
         day.deals[id] = deals;
         const dealBtn = (deal, other) => h('button', {class: `deal ${deal.vendor}`, onclick: e => this.buy(id, deal, other, e.currentTarget)},
@@ -394,13 +412,27 @@ const Market = {
           deals[1] ? dealBtn(deals[1], deals[0]) : h('div', {class: 'deal closed'}, 'Bulk Barn', h('small', null, 'opens day 4'))));
       }
     }
-    const canMake = fillCounts().reduce((a, b) => a + b, 0);
+    const canMake = fillCounts().reduce((a, b) => a + b, 0), last = this.aisle === AISLES.length - 1;
+    // the three aisles as a path across the top: where she is, where she's been, and what's next
+    const path = h('div', {class: 'aisles'}, ...AISLES.flatMap(([k, label, icon], i) => [
+      i ? h('span', {class: 'arrow'}, '→') : null,
+      h('button', {class: 'aisle' + (i === this.aisle ? ' now' : this.ready(k) ? ' done' : ''), onclick: () => this.goAisle(i)},
+        h('span', {class: 'icon'}, icon), label, i !== this.aisle && this.ready(k) ? ' ✓' : ''),
+    ]).filter(Boolean));
+    const nextLabel = last ? 'Kitchen →' : `Next: ${AISLES[this.aisle + 1][1]} →`;
+    const more = h('div', {class: 'more'}, '↓ more below');
     this.panel.replaceChildren(
       h('div', {class: 'row-end'}, h('h2', null, 'Market'), h('div', {class: 'spacer'}), h('div', {class: 'muted'}, `Fridge holds ${L.pantryCap(save)} of each`)),
-      list,
-      h('div', {class: 'row-end'}, h('div', {class: 'grow muted', style: 'flex:1'}, `You can bake ${canMake} cupcake${canMake === 1 ? '' : 's'}`), btn('Kitchen →', () => go(Kitchen), 'pink')),
+      path,
+      h('div', {class: 'listwrap'}, list, more),
+      h('div', {class: 'row-end'}, h('div', {class: 'grow muted', style: 'flex:1'}, `You can bake ${canMake} cupcake${canMake === 1 ? '' : 's'}`),
+        btn(nextLabel, () => (last ? go(Kitchen) : this.goAisle(this.aisle + 1)), 'pink big nudge')),
     );
     this.list = list;
+    // if the list is taller than the screen, a bouncing hint shows until she scrolls to the bottom
+    const hint = () => more.classList.toggle('show', list.scrollHeight - list.scrollTop - list.clientHeight > 8);
+    list.addEventListener('scroll', hint);
+    requestAnimationFrame(hint);
   },
   buy(id, deal, other, el) {
     const res = L.buy(save, id, deal);
@@ -477,9 +509,12 @@ const Kitchen = {
         if (n < 0 || (delta > 0 && L.maxMore(save, day.counts, i) < 1)) { sfx.gentle(); if (delta > 0) toast(L.ovenCap(save) <= day.counts.reduce((a, b) => a + b, 0) ? `The oven holds ${L.ovenCap(save)}.` : 'You need more ingredients for that one.'); return; }
         day.counts[i] = n; sfx.pop(); this.render();
       };
-      slots.append(h('div', {class: 'slot'}, c,
+      // when no more fit, the + greys out and says why
+      const full = L.maxMore(save, day.counts, i) < 1, why = full ? (L.ovenCap(save) <= day.counts.reduce((a, b) => a + b, 0) ? 'Oven full' : 'Out of ingredients') : null;
+      slots.append(h('div', {class: 'slot' + (day.counts[i] ? ' chosen' : '')}, c,
         h('div', null, h('div', {class: 'name'}, d.name), h('div', {class: 'meta'}, `Sells for $${d.price} · costs $${L.designCost(d)} to make`), h('button', {class: 'edit', onclick: () => { sfx.tap(); openDesigner(i); }}, 'Change it')),
-        h('div', {class: 'stepper'}, h('button', {onclick: step(-1), 'aria-label': 'Less'}, '−'), h('b', null, day.counts[i] || 0), h('button', {onclick: step(1), 'aria-label': 'More'}, '+'))));
+        h('div', {class: 'stepper'}, h('button', {onclick: step(-1), 'aria-label': 'Less', class: day.counts[i] ? '' : 'off'}, '−'), h('b', null, day.counts[i] || 0), h('button', {onclick: step(1), 'aria-label': 'More', class: full ? 'off' : ''}, '+'),
+          why ? h('small', {class: 'why'}, why) : null)));
     });
     const total = day.counts.reduce((a, b) => a + b, 0);
     this.panel.replaceChildren(
@@ -538,7 +573,7 @@ const Bake = {
       return b;
     };
     if (name === 'pour') { this.st = {fill: 0}; this.say(S.pour); this.panel.replaceChildren(this.tipEl(S.pour), holdBtn('Hold to pour 🥣')); }
-    if (name === 'bake') { this.st = {bake: 0, frost: 0}; this.say(S.oven); sfx.oven(); this.panel.replaceChildren(this.tipEl(S.oven), btn('Take them out! 🧤', () => this.takeOut(), 'pink big wide')); }
+    if (name === 'bake') { this.st = {bake: 0, frost: 0}; this.say(S.oven); sfx.oven(); this.outBtn = btn('Take them out! 🧤', () => this.takeOut(), 'pink big wide'); this.panel.replaceChildren(this.tipEl(S.oven), this.outBtn); }
     if (name === 'frost') { this.st.frost = 0.001; this.say(S.frost); this.panel.replaceChildren(this.tipEl(S.frost), holdBtn('Hold to frost 🍦')); }
     if (name === 'toppings') {
       this.st.tops = [];
@@ -644,7 +679,7 @@ const Bake = {
         D.cupcake(ctx, d, cx, oy + oh * 0.66, s * 0.6, now, false, this.st);
         ctx.restore();
         ovenWin = win;
-        this.meter(Math.min(ox + ow + 18, W - 22), oy, oh);
+        this.meter(ox + ow * 0.08, oy - 44, ow * 0.84);
       } else {
       const ow = s * 1.25, oh = s * 1.2, ox = cx - ow / 2, oy = base - oh + s * 0.08;
       D.rr(ctx, ox - 14, oy - 14, ow + 28, oh + 28, 22); ctx.fillStyle = '#f6f1fb'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
@@ -653,18 +688,15 @@ const Bake = {
       glow.addColorStop(0, `rgba(255,${220 - heat * 60},${150 - heat * 90},1)`); glow.addColorStop(1, '#5a3d33');
       D.rr(ctx, ox, oy, ow, oh, 14); ctx.fillStyle = glow; ctx.fill(); ctx.stroke();
       for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(ox + 12, base + 2 - i * 6); ctx.lineTo(ox + ow - 12, base + 2 - i * 6); ctx.strokeStyle = `rgba(255,${120 + i * 40},60,${0.4 + heat * 0.5})`; ctx.lineWidth = 3; ctx.stroke(); }
-      this.meter(cx + ow / 2 + 26, oy, oh);
+      this.meter(ox, oy - 58, ow);
       }
     }
     const stage = this.name === 'done' ? null : this.st;
     const bounce = this.name === 'done' ? -Math.abs(Math.sin(now * 4)) * s * 0.04 : 0;
     if (!ovenWin) D.cupcake(ctx, d, cx, base + bounce, s, now, false, stage);
     if (this.name === 'pour') {
-      // fill line
-      const ly = base + wy * 0.82;
-      ctx.fillStyle = 'rgba(159,227,192,.45)'; ctx.fillRect(cx - s * 0.5, base + wy * 0.9, s, wy * -0.16);
-      ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(cx - s * 0.52, ly); ctx.lineTo(cx + s * 0.52, ly); ctx.lineWidth = 3; ctx.strokeStyle = '#3f9e6e'; ctx.stroke(); ctx.setLineDash([]);
-      D.text(ctx, 'fill line', cx + s * 0.58, ly, 14, {align: 'left', color: '#3f9e6e', weight: 700, stroke: '#fff', sw: 4});
+      // the perfect fill zone
+      this.band(cx - s * 0.52, cx + s * 0.52, base + wy * 0.75, base + wy * 0.89, 'Fill to here!', this.holding && Math.abs(this.st.fill - 0.82) < 0.07);
       // the mixing bowl, tipping while she pours
       const bowl = image('k1-bowl');
       if (bowl) {
@@ -688,9 +720,9 @@ const Bake = {
       }
     }
     if (this.name === 'frost') {
-      const topY = base - s * 0.385 - s * 0.53;
-      ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(cx - s * 0.4, topY); ctx.lineTo(cx + s * 0.4, topY); ctx.lineWidth = 3; ctx.strokeStyle = '#3f9e6e'; ctx.stroke(); ctx.setLineDash([]);
-      D.text(ctx, 'top line', cx + s * 0.46, topY, 14, {align: 'left', color: '#3f9e6e', weight: 700, stroke: '#fff', sw: 4});
+      // the perfect height for the swirl
+      const swirlY = v => base - s * 0.385 - v * s * 0.53;
+      if (!this.scored) this.band(cx - s * 0.42, cx + s * 0.42, swirlY(0.93), swirlY(1.07), 'Swirl to here!', this.holding && Math.abs(this.st.frost - 1) < 0.07);
       // the piping bag, circling as the swirl builds
       const ny = base - s * 0.385 - Math.min(1.3, this.st.frost) * s * 0.53 - s * 0.03, nx = cx + (this.holding ? Math.sin(now * 9) * s * 0.18 : 0);
       const bag = image('k2-piping-bag');
@@ -720,16 +752,36 @@ const Bake = {
     arianna(this.name === 'done' ? (this.stars === 3 ? 'cheer' : 'wave') : this.holding ? 'think' : 'stand', W * 0.12, base + H * 0.03, H * 0.28, {face: 'right'});
     baxter(this.name === 'done' ? 'excited' : 'tilt', W * 0.89, base + H * 0.035, H * 0.1);
   },
-  meter(x, y, hgt) {
-    // pale -> golden -> brown, with the golden zone marked
-    const w = 22, g = ctx.createLinearGradient(0, y + hgt, 0, y);
+  meter(x, y, len) {
+    // a bar across the top of the oven, pale -> golden -> brown, with the golden part glowing and a marker
+    // sliding along it as they bake; it lights up with "Now!" when it's time to take them out
+    const hh = 26, g = ctx.createLinearGradient(x, 0, x + len, 0);
     g.addColorStop(0, '#fff3cf'); g.addColorStop(0.5, '#f2b544'); g.addColorStop(0.75, '#d68a2c'); g.addColorStop(1, '#6e4022');
-    D.rr(ctx, x - w / 2, y, w, hgt, 10); ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
-    const zone = v => y + hgt - (v / 1.2) * hgt;
-    ctx.lineWidth = 3; ctx.strokeStyle = '#3f9e6e'; ctx.strokeRect(x - w / 2 - 4, zone(0.78), w + 8, zone(0.58) - zone(0.78));
-    const my = zone(Math.min(1.2, this.st.bake || 0));
-    ctx.beginPath(); ctx.moveTo(x - w / 2 - 12, my - 8); ctx.lineTo(x - w / 2 - 2, my); ctx.lineTo(x - w / 2 - 12, my + 8); ctx.closePath(); ctx.fillStyle = D.C.ink; ctx.fill();
-    D.text(ctx, 'golden', x, zone(0.68), 11, {weight: 700, color: '#fff', stroke: D.C.ink, sw: 3});
+    D.rr(ctx, x, y, len, hh, 13); ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+    const at = v => x + (v / 1.2) * len;
+    const ready = !this.scored && Math.abs((this.st.bake || 0) - 0.68) * 0.8 < 0.07;
+    this.band(at(0.59), at(0.77), y - 5, y + hh + 5, null, ready, true);
+    D.text(ctx, ready ? 'Now!' : 'golden', (at(0.59) + at(0.77)) / 2, y + hh / 2 + 1, ready ? 17 : 13, {weight: 700, color: '#fff', stroke: D.C.ink, sw: 3});
+    // the marker: a little cupcake-coloured arrow above the bar
+    const mx = at(Math.min(1.2, this.st.bake || 0));
+    ctx.beginPath(); ctx.moveTo(mx, y - 2); ctx.lineTo(mx - 11, y - 20); ctx.lineTo(mx + 11, y - 20); ctx.closePath(); ctx.fillStyle = D.C.pink; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+    this.outBtn?.classList.toggle('ready', ready);
+  },
+  // The target to aim for: a soft green band that pulses, with a bouncing arrow pointing at it.
+  // It turns gold with "Let go!" while the batter or frosting is right in it.
+  band(x0, x1, y0, y1, label, inZone, slim = false) {
+    const pulse = 0.5 + 0.5 * Math.sin(now * 5), top = Math.min(y0, y1), hh = Math.abs(y1 - y0);
+    ctx.save();
+    ctx.shadowColor = inZone ? '#ffd23d' : '#5fd39a'; ctx.shadowBlur = 10 + pulse * 16;
+    D.rr(ctx, x0, top, x1 - x0, hh, Math.min(10, hh / 2));
+    ctx.fillStyle = inZone ? `rgba(255,214,90,${0.6 + pulse * 0.3})` : `rgba(159,227,192,${slim ? 0.25 + pulse * 0.25 : 0.4 + pulse * 0.3})`; ctx.fill();
+    ctx.restore();
+    D.rr(ctx, x0, top, x1 - x0, hh, Math.min(10, hh / 2)); ctx.lineWidth = 3.5; ctx.strokeStyle = inZone ? '#e0a100' : '#2f8a5c'; ctx.stroke();
+    if (slim) return;
+    const ay = top + hh / 2, ax = x0 - 8 + Math.sin(now * 6) * 6;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax - 24, ay - 14); ctx.lineTo(ax - 24, ay + 14); ctx.closePath();
+    ctx.fillStyle = inZone ? '#ffd23d' : D.C.pink; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+    D.text(ctx, inZone ? 'Let go!' : label, x1, top - 16, inZone ? 22 : 17, {align: 'right', weight: 700, color: inZone ? '#c27a00' : '#2f8a5c', stroke: '#fff', sw: 5});
   },
 };
 
