@@ -272,3 +272,31 @@ button { font-family: inherit; color: inherit; touch-action: manipulation; }
 .stock { display: flex; gap: 10px; }
 .stock > div { flex: 1; display: flex; gap: 6px; }
 .stock > div .btn.mint { flex: 1; }
+
+/* the market's three aisles, one at a time */
+.market .list { gap: 6px; }
+.market .item { padding: 4px 8px; grid-template-columns: 42px 1fr auto auto; }
+.market .item img { width: 42px; height: 42px; }
+.market .deal { min-height: 46px; }
+.aisles { display: flex; align-items: center; gap: 4px; }
+.aisles .arrow { font-weight: 700; opacity: .5; }
+.aisle { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; border: 2.5px solid var(--ink); border-radius: 14px; background: #fff; font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; padding: 2px 4px; opacity: .7; }
+.aisle .icon { font-size: 18px; }
+.aisle.done { background: #e2f7ec; opacity: .9; }
+.aisle.now { background: var(--pink); color: #fff; opacity: 1; box-shadow: 0 3px 0 var(--ink); transform: scale(1.06); }
+.panel > .listwrap { position: relative; display: flex; flex-direction: column; min-height: 0; flex: 0 1 auto; }
+.listwrap > .list { min-height: 0; }
+.more { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); background: var(--ink); color: #fff; border-radius: 99px; padding: 3px 12px; font-size: 14px; font-weight: 700; pointer-events: none; opacity: 0; transition: opacity .2s; }
+.more.show { opacity: .9; animation: bob 1s infinite; }
+@keyframes bob { 50% { transform: translateX(-50%) translateY(-5px); } }
+.btn.nudge { animation: nudge 1.6s ease-in-out infinite; }
+@keyframes nudge { 0%, 70%, 100% { transform: none; } 80% { transform: scale(1.06); } 90% { transform: scale(.98); } }
+/* the oven button lights up when the cupcakes are golden */
+.btn.ready { background: #ffd23d; color: var(--ink); text-shadow: none; animation: ready .5s ease-in-out infinite alternate; }
+@keyframes ready { to { transform: scale(1.05); box-shadow: 0 4px 0 var(--ink), 0 0 0 7px rgba(255, 210, 61, .55); } }
+@media (prefers-reduced-motion: reduce) { .btn.nudge, .btn.ready, .more.show { animation: none; } }
+/* kitchen: a chosen cupcake is highlighted, and + or − greys out when it can't do anything */
+.slot.chosen { background: #fff3f8; border-color: var(--pink); box-shadow: 0 0 0 2px var(--pink); }
+.stepper { position: relative; }
+.stepper button.off { background: #ece6e1; color: rgba(91, 58, 41, .4); border-color: rgba(91, 58, 41, .35); box-shadow: none; }
+.stepper .why { position: absolute; right: 0; bottom: -17px; font-size: 11px; font-weight: 700; white-space: nowrap; opacity: .75; }

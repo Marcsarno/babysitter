@@ -44,6 +44,7 @@ export const S = {
     party: 'Party day! Someone will order a big batch.',
   },
   firstDay: "Let's go shopping for ingredients!",
+  aisle: {frosting: 'Now pick your frosting!', topping: 'Now pick your toppings!'},
   openShop: "Let's open the shop!",
   broke: 'Not enough money for that one.',
   full: 'Your fridge is full of that! A bigger fridge holds more.',
