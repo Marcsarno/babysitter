@@ -19,9 +19,11 @@ Art prompts are in [`arianna-cupcakes-art-prompts.md`](arianna-cupcakes-art-prom
 - **End of day:** earned, spent and profit; a bar graph and a profit line graph; pricing tips; a money bar that unlocks 12 ingredients.
 - **Upgrades:** oven, fridge, sign, menu board, van, decorations and van paint. The season ends at day 40 with a trophy, then free play continues.
 - **Extras:** rain days, party days and Baxter's Birthday (dog customers, double tips); the sticker book; read-aloud and sound toggles; Big Kid mode; offline install.
-- **Voice:** every line is pre-recorded with the Kokoro "Heart" voice (`js/say.js` lists them; `art/cupcake/voice.mjs` records them). Free-typed cupcake names are shown but not spoken. A line without a recording falls back to the device voice.
+- **Voices:** every line is pre-recorded with Kokoro in the voice cast for whoever says it (picked on the voice casting page; `CAST` in `js/say.js`). Santa narrates the instructions and math help, Arianna says her own lines, and each customer has their own voice: 15 voices and 9,536 lines. `art/cupcake/voice.mjs` records each voice into one pack, pitch-shifted without changing speed, and the game fetches only the bytes of each sentence. Recording resumes after an interruption, and `--pack` ships the voices finished so far. Free-typed cupcake names are shown but not spoken.
+- **Music:** Suno tracks for the title, shop, market and kitchen (`art/cupcake/music.py` prepares them). They cross-fade between screens and dip while anyone talks. The driving, end-of-day, season-end, birthday and rainy-day tracks aren't made yet; those screens borrow the shop or title music.
+- **Polish:** a loading screen (the opening screens' pictures load first), cross-fades, feelings bubbles, soft shadows, a money counter that rolls, golden-hour light, the doorbell delivery, the goal cheer, a season track, and coins that fly when buying.
 
-**Art:** every round 1–3 picture is in the game:
+**Art:** every round 1–4 picture is in the game (170 pictures):
 - Arianna, Baxter and their poses.
 - All 13 customers.
 - The title and icon.
@@ -30,15 +32,15 @@ Art prompts are in [`arianna-cupcakes-art-prompts.md`](arianna-cupcakes-art-prom
 - The bowl, piping bag and oven in the mini-game.
 - Both vans, recolored in the browser for each van paint.
 - The town-map tiles, the shop decorations, the coin, the register and the season trophies.
+- Round 4: customers' happy and unsure pictures, batter and liners, feelings bubbles, number-line house fronts, park pieces, ducks and cars, menu frames, the celebration scene and the number-line street.
 
 Any picture that is missing falls back to the code drawing. New art goes in `art/cupcake/` named by its prompt code; `art/cupcake/process.py` cuts it out.
 
 **Not built yet:**
 - Regulars who come back and ask for their favorite.
 - Carrying several orders per trip (van capacity).
-- Background music.
 - Negative numbers and fractions in Big Kid mode. Big Kid mode currently means harder word problems, harder deals and the grid sooner.
-- The hair salon and toy shop (their empty lots are already in the town).
+- The hair salon and toy shop (their empty lots are already in the town). See section 8 for the plan.
 
 ## 1. What we know about the original
 
@@ -199,7 +201,7 @@ Each phase goes live so Arianna can play it and steer.
 - **Save key:** `ariannaCupcakes.save.v1`. Mahjong uses `tilebloom.save.v1` and Little Chaos uses `littleChaosBest`.
 - **Offline copy:** the service worker is scoped to `/cupcake/`. Its cache names start with `cupcake-` and never end in `-core`, because Mahjong's worker deletes other caches ending in `-core`.
 - **App icon:** a separate manifest and icon, so it installs as its own app.
-- **Image format:** game art ships as `.webp`. `.vercelignore` has a `*.png` rule that keeps every PNG off the live site, including ones under `public/`. Mahjong's `favicon.png` returns 404 in production because of it.
+- **Image format:** game art ships as `.webp`. `.vercelignore` keeps only the root-level PNGs (`/*.png`) and the art sources (`/art/`) off the live site, so PNGs under `public/` (like Mahjong's icons) still ship.
 - **Publishing:** the whole site is built and tested before every push, so a cupcake change can't hold up Mahjong updates.
 
 ---
@@ -210,3 +212,39 @@ Each phase goes live so Arianna can play it and steer.
 3. Her first flavors and toppings? (Default: vanilla, chocolate and strawberry cake; pink, white and chocolate frosting; sprinkles, cherry, gummy bear.)
 4. Baxter's bandana color? (Default: mint green, so he stands out against the pink van.)
 5. Her outfit in the game? (Default: pink baker's apron over a mint t-shirt.)
+
+## 8. Next: the hair salon and toy shop (agreed plan)
+
+**Rule one: the cupcake shop stays exactly as it is.** The new shops add to the game and never change cupcake gameplay. Her saved game, stickers, trophies and upgrades carry over untouched.
+
+**How they fit in**
+- **Building fund jar:** she chooses to drop savings into a jar. When it's full, Builder Bo builds the shop on one of the two fenced lots, followed by a grand opening. The jar teaches saving, and the usual cupcake upgrades stay just as reachable. Pacing targets: the salon opens around day 12, the toy shop around day 25.
+- **Shop days are bonus days:** they don't use up the 40-day cupcake season. A nudge on the day card ("3 appointments booked at the salon!") helps her choose; there's no calendar.
+- **Same town and people:** the same customers, voices, van, money and sticker book are shared, and the end-of-day graph shows profit by shop.
+
+**One short loop per shop, two math topics, one per step**
+- **Hair salon:** book on the clock, then cut and style. Prices are whole dollars, and payment happens on its own.
+  - **Telling time** when booking, in steps over the season: o'clock, then half past, then quarter past and to, then 5-minute times. The digital time shows beside the clock face at first, then fades out.
+  - **Measuring** when cutting: "It's 9 inches. Make it 6!" She snips at the ruler mark, which is 9 − 3.
+  - People get styled; animals get groomed in the same flow. Clients leave in their painted happy pose with a drawn-on bow or sparkle.
+- **Toy shop:** stock the shelves, then sell.
+  - **Tens and ones** when stocking: toys come in boxes of 10 plus loose ones.
+  - **Counting coins** when paying: customers hand over quarters, dimes, nickels and pennies, and she checks the amount. Making change is a Big Kid mode option.
+  - Occasional events: a toy survey picture graph, gift wrapping in halves and fourths, and party deliveries in the van.
+- **No fail states and no countdown timers.** Mistakes get hints, as with cupcakes.
+
+**Kept small on purpose**
+- **Voices:** the narrator (one voice) says every number. Customers get about 10 short number-free lines each. Toy prices go in 5-cent steps. That's about 700 clips (about 6 MB) per shop, roughly an hour of recording.
+- **Art:** about 12 pictures for the salon, about 15 for the toy shop, and about 4 shared (a construction site, Builder Bo with a hammer, and two map roofs). Customers reuse their happy pictures; the haircut happens on one painted hair piece.
+
+**Order: the gameplay is built first, and the art comes after she has tried it**
+1. **Foundation, no new art:** her saved game updated safely, the fund jar, the shop picker and nudge, and Builder Bo's construction moment with a stand-in picture. Plus a full-screen iPad layout if that's her device.
+2. **Salon prototype** with drawn stand-ins. Arianna tries it.
+3. **Salon finished:** its art prompts, voices, then it goes live.
+4. **Toy shop prototype.** Arianna tries it.
+5. **Toy shop finished:** art, voices, live.
+
+**A shop is done when** a day takes 8 minutes or less, there's no way to fail, every line is voiced, the play-through test covers a full day, her saved game carries over, and she has played it once without getting confused.
+
+**Still to decide:** whether she plays mostly on an iPad or a phone, and whether shops unlock with the building fund jar or as a Season 2.
+
