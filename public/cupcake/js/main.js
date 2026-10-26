@@ -2,7 +2,7 @@
 import * as L from './logic.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN} from './town.js';
 import * as D from './draw.js';
-import {loadArt, drawPose, image, CUSTOMER_ART} from './art.js';
+import {loadArt, drawPose, poseWidth, image, CUSTOMER_ART} from './art.js';
 import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice, preloadCustomer, loadMusic, music, musicOn, pauseMusic} from './audio.js';
 import {S, GREET} from './say.js';
 
@@ -80,15 +80,25 @@ function hud(show = true) {
     h('div', {class: 'chip'}, `Day ${day ? day.number : save.day}`),
     ev ? h('div', {class: 'chip event'}, {rain: '🌧️ Rainy', birthday: '🎉 Baxter’s birthday', party: '🎈 Party day'}[ev]) : null,
     h('div', {class: 'spacer'}),
-    h('div', {class: 'chip cash', id: 'cash'}, `$${save.cash}`),
+    h('div', {class: 'chip cash', id: 'cash'}, `$${(cashShown = save.cash)}`),
     h('button', {class: 'chip icon', 'aria-label': 'Menu', onclick: () => { sfx.tap(); openMenu(); }}, '☰'),
   ].filter(Boolean));
 }
+// The money counter rolls up to the new amount, starting just after the coins land.
+let cashShown = 0, cashRoll = 0;
 function cashChanged() {
   const el = document.getElementById('cash');
   if (!el) return;
-  el.textContent = `$${save.cash}`;
-  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  const from = cashShown, to = save.cash, start = performance.now() + (to > from ? 350 : 0), roll = ++cashRoll;
+  const step = ts => {
+    if (roll !== cashRoll) return;
+    const k = Math.max(0, Math.min(1, (ts - start) / 650));
+    cashShown = Math.round(from + (to - from) * (1 - (1 - k) ** 3));
+    el.textContent = `$${cashShown}`;
+    if (k < 1) requestAnimationFrame(step);
+    else { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  };
+  requestAnimationFrame(step);
 }
 function cashPoint() {
   const el = document.getElementById('cash');
@@ -126,8 +136,20 @@ function openArea() {
   const a = app.getBoundingClientRect(), p = ui.querySelector('.panel')?.getBoundingClientRect();
   return [hudEl.getBoundingClientRect().bottom - a.top, p ? p.top - a.top : H];
 }
-function arianna(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts}); }
-function baxter(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts}); }
+// A soft shadow on the ground under someone's feet, so they stand on the painted scenes.
+function shadow(g, x, y, w) {
+  g.beginPath(); g.ellipse(x, y - w * 0.02, w * 0.36, w * 0.075, 0, 0, Math.PI * 2);
+  g.fillStyle = 'rgba(70,45,30,.2)'; g.fill();
+}
+const SEATED = ['drive', 'ride'];
+function arianna(pose, x, y, hgt, opts = {}) {
+  if (!SEATED.includes(pose)) shadow(ctx, x, y, poseWidth('arianna', pose, hgt) * 0.8);
+  if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts});
+}
+function baxter(pose, x, y, hgt, opts = {}) {
+  if (!SEATED.includes(pose)) shadow(ctx, x, y, poseWidth('baxter', pose, hgt));
+  if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts});
+}
 const ART_SCALE = {girl: 0.8, boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1, pug: 0.82, poodle: 0.9, spot: 0.9};   // kids and little animals stand a bit shorter, the bear taller
 // Draw a feelings bubble for someone; it pops in again whenever the feeling changes.
 function feeling(who, kind, x, y, size) {
@@ -138,6 +160,7 @@ function drawCustomer(g, type, x, y, hgt, opts) {
   const img = image(CUSTOMER_ART[type]);
   if (img) {
     hgt *= ART_SCALE[type] || 1;
+    shadow(g, x, y, hgt * img.width / img.height);
     const bob = opts.walking ? -Math.abs(Math.sin((opts.t || 0) * 9)) * hgt * 0.03 : 0;
     const w = hgt * img.width / img.height;
     g.drawImage(img, x - w / 2, y - hgt + bob, w, hgt);
@@ -801,6 +824,13 @@ const Street = {
     day.shelf[slot] -= order.answer;
     day.sold[slot] = (day.sold[slot] || 0) + order.answer;
     day.soldCount += order.answer;
+    if (!day.goalHit && day.soldCount >= day.goal) {
+      // the day's goal, reached mid-day: a cheer right away
+      day.goalHit = true;
+      const cheer = h('div', {class: 'banner goal'}, '⭐ Goal reached! ⭐');
+      ui.append(cheer); sfx.unlock(); confettiBurst(W / 2, H * 0.3, 40);
+      setTimeout(() => cheer.remove(), 1600);
+    }
     day.sales += total; save.cash += total;
     if (L.willingToPay(w.type, d, save.day, w.mood, day.quality?.[slot]) - d.price >= 3) day.cheap[slot] = (day.cheap[slot] || 0) + 1;
     const newSticker = !save.stickers[w.type];
@@ -838,6 +868,14 @@ const Street = {
       drawCustomer(ctx, w.type, w.x, g.feet, g.ch, {t: now + w.t, walking: w.state === 'in' || w.state === 'out', face: w.face, dir: -1});
       // a feelings bubble: a heart when served, a question mark for a wrong count, a sweat drop at a high price
       feeling(w, w.face === 'wow' ? 'heart' : w.face === 'hmm' ? (now - (this.oopsAt ?? -9) < 2.5 ? 'question' : 'sweat') : null, w.x + g.ch * 0.2, g.feet - g.ch * (ART_SCALE[w.type] || 1) * 0.98, g.ch * 0.26);
+    }
+    // the light warms towards sunset as the day's customers go by
+    const late = Math.min(1, (day.next + (this.closing ? 2 : 0)) / Math.max(1, day.passers.length));
+    if (late > 0.15 && day.event !== 'rain') {
+      ctx.save(); ctx.globalCompositeOperation = 'multiply';
+      const glow = ctx.createLinearGradient(0, 0, 0, H);
+      glow.addColorStop(0, `rgba(255,170,130,${(late - 0.15) * 0.7})`); glow.addColorStop(1, `rgba(255,205,160,${(late - 0.15) * 0.38})`);
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H); ctx.restore();
     }
   },
 };
@@ -1094,14 +1132,15 @@ const Drive = {
 const Doorstep = {
   enter(job) {
     hud(true);
-    this.job = job; this.t = 0; this.paid = false; this.handed = false;
+    this.job = job; this.t = 0; this.paid = false; this.handed = false; this.rang = false;
     this.variant = (job.address.mode === 'line' ? job.address.n : job.address.x * 7 + job.address.y) % 6;
     mount();
   },
   update(dt) {
     this.t += dt;
-    if (this.t > 1.3 && !this.handed) { this.handed = true; speak(S.hereYouGo); }
-    if (this.t > 2.3 && !this.paid) {
+    if (this.t > 1.3 && !this.rang) { this.rang = true; sfx.doorbell(); }
+    if (this.t > 1.9 && !this.handed) { this.handed = true; speak(S.hereYouGo); }
+    if (this.t > 2.8 && !this.paid) {
       this.paid = true;
       const tip = this.job.tip;
       day.tips += tip; save.cash += tip; cashChanged();
@@ -1116,8 +1155,12 @@ const Doorstep = {
   draw() {
     const s = D.doorstep(ctx, W, H, {t: now, variant: this.variant});
     const ch = s.painted ? s.doorH * 0.95 : Math.min(H * 0.24, W * 0.5);
+    // the customer opens the door after the bell
+    const open = Math.max(0, Math.min(1, (this.t - 1.5) / 0.25));
+    ctx.save(); ctx.globalAlpha = open;
     drawCustomer(ctx, this.job.w.type, s.door.x, s.gy + 4, ch, {t: now, face: this.paid ? 'happy' : 'wow'});
-    feeling(this, this.paid ? 'heart' : 'sparkles', s.door.x + ch * 0.22, s.gy - ch * (ART_SCALE[this.job.w.type] || 1) * 0.95, ch * 0.26);
+    ctx.restore();
+    if (open >= 1) feeling(this, this.paid ? 'heart' : 'sparkles', s.door.x + ch * 0.22, s.gy - ch * (ART_SCALE[this.job.w.type] || 1) * 0.95, ch * 0.26);
     const k = Math.min(1, this.t / 1.3);
     // on a painted house she walks up the lawn from the sidewalk; on the drawn one, along the ground
     const [x0, y0] = s.painted ? s.start : [W * 0.04, s.gy + 6], [x1, y1] = s.painted ? s.path : [s.door.x - W * 0.26, s.gy + 6];
@@ -1148,8 +1191,8 @@ const Results = {
     const mb = L.moneyBar(save);
     const card = h('div', {class: 'card results'},
       h('h2', null, `Day ${entry.day} done!`),
-      h('div', {class: 'big3'}, h('div', null, h('small', null, 'Earned'), h('b', null, `$${entry.earned}`)), h('div', null, h('small', null, 'Spent'), h('b', null, `$${entry.spent}`)),
-        h('div', {class: 'profit ' + (entry.profit >= 0 ? 'gain' : 'loss')}, h('small', null, 'Profit'), h('b', null, `${entry.profit < 0 ? '−' : ''}$${Math.abs(entry.profit)}`))),
+      h('div', {class: 'big3'}, h('div', null, h('small', null, 'Earned'), countUp(entry.earned)), h('div', null, h('small', null, 'Spent'), countUp(entry.spent)),
+        h('div', {class: 'profit ' + (entry.profit >= 0 ? 'gain' : 'loss')}, h('small', null, 'Profit'), countUp(entry.profit, 300))),
       h('div', {class: 'muted center', style: 'margin-top:4px'}, `Cupcakes $${entry.sales} + tips $${entry.tips}`),
       h('h3', null, 'Cupcakes sold'), bars,
       save.history.length >= 3 ? [h('h3', null, 'Profit each day'), line] : null,
@@ -1186,13 +1229,24 @@ function canvasSize(c) {
   const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
   return [g, r.width, r.height];
 }
-function drawBars(c, sold) {
+// A dollar amount that counts up from $0 when it appears.
+function countUp(value, delay = 0) {
+  const el = h('b', null, '$0'), show = v => (el.textContent = `${v < 0 ? '−' : ''}$${Math.abs(v)}`);
+  if (calm.matches) { show(value); return el; }
+  const start = performance.now() + delay;
+  const step = ts => { const k = Math.max(0, Math.min(1, (ts - start) / 800)); show(Math.round(value * (1 - (1 - k) ** 3))); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  return el;
+}
+// The bars grow up from the bottom.
+function drawBars(c, sold, grow = calm.matches ? 1 : 0) {
+  if (grow < 1) requestAnimationFrame(() => drawBars(c, sold, Math.min(1, grow + 0.06)));
   const [g, w, hh] = canvasSize(c);
   const max = Math.max(4, ...sold.map(s => s.count)), bw = Math.min(70, (w - 40) / sold.length - 16);
   g.strokeStyle = 'rgba(91,58,41,.15)'; g.lineWidth = 1;
   for (let v = 0; v <= max; v += Math.max(1, Math.ceil(max / 4))) { const y = hh - 28 - (hh - 50) * v / max; g.beginPath(); g.moveTo(26, y); g.lineTo(w - 8, y); g.stroke(); D.text(g, String(v), 14, y, 12); }
   sold.forEach((s, i) => {
-    const x = 34 + i * (w - 42) / sold.length + ((w - 42) / sold.length - bw) / 2, bh = (hh - 50) * s.count / max;
+    const x = 34 + i * (w - 42) / sold.length + ((w - 42) / sold.length - bw) / 2, bh = (hh - 50) * s.count / max * (1 - (1 - grow) ** 3);
     D.rr(g, x, hh - 28 - bh, bw, Math.max(bh, 2), 6); g.fillStyle = ['#f27aa9', '#9fe3c0', '#ffd23d', '#8ccaf5'][i % 4]; g.fill(); g.lineWidth = 2; g.strokeStyle = D.C.ink; g.stroke();
     D.text(g, String(s.count), x + bw / 2, hh - 36 - bh, 15, {weight: 700});
     D.cupcake(g, s.design, x + bw / 2, hh - 2, 24);

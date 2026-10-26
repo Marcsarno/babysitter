@@ -44,6 +44,7 @@ export const sfx = {
   gentle: () => { tone(392, 0.18, {type: 'sine', vol: 0.22}); tone(330, 0.25, {type: 'sine', vol: 0.2, delay: 0.14}); },
   bark: () => { tone(560, 0.09, {type: 'sawtooth', vol: 0.14, slide: -260}); noise(0.08, {vol: 0.12, freq: 900, q: 3}); tone(600, 0.1, {type: 'sawtooth', vol: 0.12, slide: -300, delay: 0.16}); noise(0.08, {vol: 0.1, freq: 900, q: 3, delay: 0.16}); },
   honk: () => { tone(392, 0.22, {type: 'square', vol: 0.1}); tone(494, 0.22, {type: 'square', vol: 0.08}); },
+  doorbell: () => { tone(659, 0.55, {type: 'sine', vol: 0.28}); tone(523, 0.8, {type: 'sine', vol: 0.28, delay: 0.42}); },
   ding: () => { tone(1318, 0.5, {type: 'sine', vol: 0.25}); tone(1760, 0.6, {type: 'sine', vol: 0.12, delay: 0.02}); },
   oven: () => { noise(0.6, {vol: 0.08, freq: 300, q: 0.5}); tone(880, 0.3, {type: 'sine', vol: 0.2, delay: 0.6}); tone(1175, 0.4, {type: 'sine', vol: 0.2, delay: 0.75}); },
   unlock: () => [659, 784, 988, 1319, 1568].forEach((f, i) => tone(f, 0.22, {type: 'triangle', vol: 0.2, delay: i * 0.09})),
