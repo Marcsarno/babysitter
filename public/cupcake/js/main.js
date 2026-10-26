@@ -1,5 +1,6 @@
 // Arianna's Cupcakes: screens and the flow of a day.
 import * as L from './logic.js';
+import * as SH from './shops.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN, T} from './town.js';
 import * as D from './draw.js';
 import {loadArt, allArt, drawPose, poseWidth, image, CUSTOMER_ART} from './art.js';
@@ -18,10 +19,16 @@ let W = 0, H = 0, now = 0;
 // ---------- storage ----------
 const readJSON = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
 const writeJSON = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
-const settings = {voice: true, sound: true, music: true, easyDrive: true, bigKid: false, ...readJSON(SETTINGS_KEY)};
+const settings = {voice: true, sound: true, music: true, easyDrive: true, bigKid: false, shops: false, ...readJSON(SETTINGS_KEY)};
+// The new shops stay hidden until they're ready to try: open the game once with ?shops to show them (?shops=0 hides them).
+const query = new URLSearchParams(location.search);
+if (query.has('shops')) settings.shops = query.get('shops') !== '0';
 function applySettings() { audio.sound = settings.sound; audio.voice = settings.voice; musicOn(settings.music); writeJSON(SETTINGS_KEY, settings); }
 applySettings();
 let save = L.migrate(readJSON(L.SAVE_KEY));
+// A copy of her saved game from before the new shops, kept just in case.
+try { const raw = localStorage.getItem(L.SAVE_KEY); if (raw && !localStorage.getItem(L.SAVE_KEY + '.before-shops')) localStorage.setItem(L.SAVE_KEY + '.before-shops', raw); } catch {}
+const shopsOn = () => settings.shops && !!save;
 // Progress is saved between days; leaving mid-day comes back to the start of that day.
 const persist = () => writeJSON(L.SAVE_KEY, save);
 
@@ -232,8 +239,13 @@ function mapLife(van) {
     ctx.restore();
   }
 }
-let townImg = null;
-const townCanvas = () => townImg || (townImg = D.renderTown(town, TS));
+let townImg = null, townKey = '';
+// redrawn when a new shop goes up on one of the empty lots
+function townCanvas() {
+  const taken = shopsOn() ? SH.lotsTaken(save) : {}, key = JSON.stringify(taken);
+  if (!townImg || key !== townKey) { townKey = key; townImg = D.renderTown(town, TS, taken); }
+  return townImg;
+}
 
 // ---------- the current day ----------
 let day = null;
@@ -252,6 +264,8 @@ let scene = null;
 let fadeFrom = null;
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
 function go(next, arg) {
+  // the morning after the building fund jar fills, Builder Bo builds the new shop before the day starts
+  if (next === DayStart && shopsOn() && save.shops.building) { next = Build; arg = save.shops.building; }
   if (scene && W && !calm.matches) {
     const c = document.createElement('canvas');
     c.width = cv.width; c.height = cv.height; c.getContext('2d').drawImage(cv, 0, 0);
@@ -301,10 +315,13 @@ function cabPeople(g, box) {
   drawPose(g, 'arianna', 'drive', box.x + box.w * 0.4, box.y + box.h * 1.9, box.h * 2.1, {face: 'right', t: now});
 }
 function confirmNew() {
-  const close = modal(h('h2', null, 'Start a new season?'), h('p', {class: 'center'}, 'The shop starts over on day 1 with $50. Stickers stay in the book.'),
+  const close = modal(h('h2', null, 'Start a new season?'), h('p', {class: 'center'}, `The shop starts over on day 1 with $50. Stickers stay in the book${shopsOn() && save.shops.built.length ? ', and your new shops stay open' : ''}.`),
     h('div', {class: 'actions'}, btn('Keep my shop', () => close(), 'ghost'), btn('Start over', () => {
       const stickers = save?.stickers || {}, seen = save?.seen || {};
-      save = L.newGame(); save.stickers = stickers; save.seen = seen; persist(); close(); go(DayStart);
+      const built = save?.shops?.built || [];
+      save = L.newGame(); save.stickers = stickers; save.seen = seen; save.shops.built = [...built];
+      for (const id of built) save.shops.booked[id] = 3;
+      persist(); close(); go(DayStart);
     }, 'pink')));
 }
 
@@ -314,7 +331,7 @@ const DayStart = {
     persist();
     hud(true);
     const lines = S.event;
-    const first = save.day === 1;
+    const first = save.day === 1, built = shopsOn() ? save.shops.built : [];
     mount(h('div', {class: 'back', style: 'align-items:start;padding-top:calc(env(safe-area-inset-top,0px) + 70px)'}, h('div', {class: 'card daycard'},
       h('div', {class: 'muted'}, save.day > L.SEASON_DAYS ? 'Free play' : `Day ${save.day} of ${L.SEASON_DAYS}`),
       h('div', {class: 'num'}, `Day ${save.day}`),
@@ -322,8 +339,22 @@ const DayStart = {
         h('i', {style: `width:${Math.round(100 * save.day / L.SEASON_DAYS)}%`}), image('u3-trophy-gold') ? h('img', {src: `${BASE}art/u3-trophy-gold.webp`, alt: ''}) : null) : null,
       day.event ? h('div', {class: 'event'}, lines[day.event]) : null,
       first ? h('p', null, 'Buy cake, frosting and toppings at the market. Then bake, sell, and deliver around town with Baxter!') : null,
-      h('div', {class: 'actions'}, btn('Go to the market →', () => go(Market), 'pink big')))));
-    speak([S.day(save.day), day.event ? lines[day.event] : first ? S.firstDay : S.openShop]);
+      built.length ? this.picker(built) : h('div', {class: 'actions'}, btn('Go to the market →', () => go(Market), 'pink big')))));
+    // a shop with customers waiting gets a mention, to help her choose
+    const busy = built.map(id => [id, SH.booked(save, id)]).filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1])[0];
+    speak([S.day(save.day), day.event ? lines[day.event] : first ? S.firstDay : S.openShop, busy ? S.nudge[busy[0]](busy[1]) : null].filter(Boolean));
+  },
+  // where to today: the cupcake shop (a day of the season) or a new shop (a bonus day)
+  picker(built) {
+    const card = (cls, icon, name, sub, onclick) => h('button', {class: 'shoppick ' + cls, onclick: () => { sfx.tap(); onclick(); }}, h('span', {class: 'icon'}, icon), h('span', {class: 'grow'}, h('b', null, name), h('small', null, sub)), h('span', null, '→'));
+    return h('div', {class: 'picker'},
+      h('div', {class: 'muted'}, 'Where to today?'),
+      card('cupcake', '🧁', 'Cupcake shop', save.day > L.SEASON_DAYS ? 'Go to the market' : `Day ${save.day} of the season`, () => go(Market)),
+      ...built.map(id => {
+        const n = SH.booked(save, id);
+        return card(id, SH.SHOPS[id].icon, SH.SHOPS[id].short, n ? S.nudge[id](n) : 'A bonus day', () => go(ShopDay, id));
+      }),
+      h('div', {class: 'muted small'}, 'A day at a new shop is a bonus day. Your cupcake season waits for you.'));
   },
   draw() {
     D.morning(ctx, W, H, {t: now});
@@ -1259,6 +1290,7 @@ const Results = {
     const leftovers = day.shelf.reduce((a, b) => a + b, 0);
     const sold = save.menu.map((d, i) => d && {name: d.name, count: day.sold[i] || 0, design: d}).filter(Boolean);
     const {entry, unlocked} = L.endDay(save, {sales: day.sales, tips: day.tips, spent: day.spent, sold: sold.map(s => ({name: s.name, count: s.count})), leftovers, goal: day.goal, soldCount: day.soldCount, cheap: Object.keys(day.cheap).filter(i => day.cheap[i] >= 2).map(i => save.menu[i]?.name)});
+    SH.afterCupcakeDay(save);
     persist();
     this.entry = entry;
     const bars = h('canvas'), line = h('canvas');
@@ -1267,6 +1299,8 @@ const Results = {
     if (leftovers) notes.push(`${leftovers} leftover cupcake${leftovers > 1 ? 's' : ''} went to the neighbors.`);
     for (const [i, n] of Object.entries(day.cheap)) if (n >= 2) notes.push(`💡 ${n} customers would have happily paid more for ${save.menu[i].name}.`);
     for (const [i, n] of Object.entries(day.pricey)) notes.push(`💡 ${n} customer${n > 1 ? 's' : ''} thought ${save.menu[i].name} cost too much.`);
+    const saving = shopsOn() && SH.fundOpen(save) && SH.fundFor(save);
+    if (saving) notes.push(`🫙 Building fund: $${save.shops.fund} of $${SH.SHOPS[saving].cost} for the ${SH.SHOPS[saving].short.toLowerCase()}. Tap Upgrades to save.`);
     const mb = L.moneyBar(save);
     const card = h('div', {class: 'card results'},
       h('h2', null, `Day ${entry.day} done!`),
@@ -1343,9 +1377,13 @@ function drawLine(c, history) {
 
 // ---------- upgrades ----------
 const Upgrades = {
-  enter() { hud(true); this.panel = h('div', {class: 'panel', style: 'max-height:80%'}); mount(this.panel); this.render(); coach('upgrades'); },
+  enter() {
+    hud(true); this.panel = h('div', {class: 'panel', style: 'max-height:80%'}); mount(this.panel); this.render();
+    coach(save.seen.upgrades && shopsOn() && SH.fundOpen(save) ? 'fund' : 'upgrades');
+  },
   render() {
     const list = h('div', {class: 'list scroll'});
+    if (shopsOn() && SH.fundOpen(save)) list.append(...this.fund());
     for (const [key, u] of Object.entries(L.UPGRADES)) {
       const cost = L.upgradeCost(save, key), lvl = save.upg[key];
       list.append(h('div', {class: 'up'},
@@ -1360,6 +1398,29 @@ const Upgrades = {
       h('i', {style: `background:linear-gradient(${p.body} 60%, ${p.stripe} 60%)`}), p.name, h('br'), save.paints.includes(id) ? (save.paint === id ? '✓' : 'Use') : `$${p.cost}`))));
     this.panel.replaceChildren(h('div', {class: 'row-end'}, h('h2', null, 'Upgrades'), h('div', {style: 'flex:1'}), h('div', {class: 'muted'}, `${save.stars} ⭐`)), list,
       h('div', {class: 'row-end'}, h('div', {style: 'flex:1'}), btn(Results.entry?.day === L.SEASON_DAYS ? 'Finish the season →' : 'Next day →', () => { persist(); Results.next(); }, 'pink big')));
+  },
+  // the building fund jar, saving for the next new shop
+  fund() {
+    const id = SH.fundFor(save);
+    if (save.shops.building) return [h('div', {class: 'section'}, 'Building fund'), h('div', {class: 'up'}, h('div', null, h('div', {class: 'name'}, `${SH.SHOPS[save.shops.building].icon} The jar is full!`), h('div', {class: 'muted'}, `Builder Bo builds the ${SH.SHOPS[save.shops.building].short.toLowerCase()} tonight.`)), h('b', null, '🎉'))];
+    if (!id) return [];
+    const shop = SH.SHOPS[id], k = save.shops.fund / shop.cost;
+    this.jar = h('div', {class: 'jar', 'aria-hidden': 'true'}, h('i', {style: `height:${Math.round(k * 100)}%`}));
+    return [h('div', {class: 'section'}, 'Building fund'),
+      h('div', {class: 'fund'}, this.jar,
+        h('div', {class: 'grow'}, h('div', {class: 'name'}, `${shop.icon} ${shop.short}`), h('div', {class: 'muted'}, `$${save.shops.fund} of $${shop.cost} saved`),
+          h('div', {class: 'drops'}, ...SH.DROPS.map(a => btn(`+ $${a}`, () => this.drop(a), SH.canDrop(save, a) ? 'mint small' : 'ghost small')))))];
+  },
+  drop(amount) {
+    const res = SH.drop(save, amount);
+    if (res === 'keep') { sfx.gentle(); toast(S.keepCash); speak(S.keepCash); return; }
+    if (res === 'none') return;
+    cashChanged();
+    if (this.jar) coinsOut(this.jar, Math.ceil(amount / 2));
+    if (res === 'full') { sfx.unlock(); confettiBurst(W / 2, H * 0.25, 50); speak(S.fundFull[save.shops.building]); }
+    else { sfx.coin(); speak(S.intoJar); }
+    persist();
+    this.render();
   },
   buy(fn, name) {
     const res = fn();
@@ -1400,6 +1461,87 @@ const SeasonEnd = {
   },
 };
 
+// ---------- a new shop goes up ----------
+// The morning after the building fund jar fills: she taps to help Builder Bo hammer, the shop rises a
+// part at a time, and she cuts the ribbon for the grand opening.
+const Build = {
+  enter(id) {
+    hud(true);
+    Object.assign(this, {id, stage: 0, hitAt: -9, cut: false});
+    this.panel = h('div', {class: 'panel'});
+    mount(this.panel);
+    this.render();
+    speak([S.build[id], S.bo.hi], {customer: 'builder'});
+  },
+  render() {
+    const shop = SH.SHOPS[this.id], n = D.BUILD_STAGES;
+    if (this.stage < n) this.panel.replaceChildren(h('h2', null, `Building the ${shop.short.toLowerCase()}`),
+      h('div', {class: 'bar'}, h('i', {style: `width:${Math.round(100 * this.stage / n)}%`}), h('span', null, this.stage ? `${this.stage} of ${n}` : 'Tap to hammer!')),
+      btn('🔨 Hammer!', () => this.hammer(), 'pink big wide'));
+    else if (!this.cut) this.panel.replaceChildren(h('h2', null, 'All done!'), h('div', {class: 'muted'}, 'Cut the ribbon to open the shop.'), btn('✂️ Cut the ribbon!', () => this.cutRibbon(), 'pink big wide'));
+    else this.panel.replaceChildren(h('h2', null, `${shop.name} is open!`),
+      h('div', {class: 'muted'}, 'Pick it on the morning card for a bonus day. Your cupcake season waits for you.'),
+      btn('Yay! →', () => go(DayStart), 'pink big wide'));
+  },
+  tap() { if (this.stage < D.BUILD_STAGES) this.hammer(); },
+  hammer() {
+    if (this.stage >= D.BUILD_STAGES) return;
+    this.stage++; this.hitAt = now;
+    sfx.hammer();
+    if (this.site) confettiBurst(this.site.x, this.site.y, 8);
+    if (this.stage === D.BUILD_STAGES) { sfx.yes(); speak([S.bo.done, S.cutRibbon], {customer: 'builder'}); }
+    this.render();
+  },
+  cutRibbon() {
+    this.cut = true;
+    SH.finishBuilding(save);
+    persist();
+    sfx.unlock(); confettiBurst(W / 2, H * 0.3, 90);
+    speak(S.grandOpening[this.id]);
+    this.render();
+  },
+  draw() {
+    const [top, bottom] = openArea(), room = bottom - top;
+    const gy = top + room * 0.64, front = top + room * 0.98;
+    D.siteScene(ctx, W, H, gy, now);
+    const w = Math.min(W * 0.8, room * 0.85), hit = now - this.hitAt;
+    const shake = hit < 0.15 ? Math.sin(hit * 90) * w * 0.006 : 0;
+    D.shopFront(ctx, this.id, W / 2 + shake, gy, w, this.stage, {ribbon: this.stage >= D.BUILD_STAGES && !this.cut, t: now});
+    this.site = {x: W / 2, y: gy - w * 0.1};
+    // everyone stands on the sidewalk in front, below the door and the ribbon
+    const ch = Math.min(room * 0.31, W * 0.5), bx = W * 0.17;
+    drawCustomer(ctx, 'builder', bx, front, ch, {t: now, face: hit < 0.5 || this.cut ? 'wow' : null});
+    if (!this.cut) hammerIn(bx + ch * 0.17, front - ch * 0.4, ch * 0.24, hit < 0.2 ? -0.9 + hit * 6 : 0.3);
+    arianna(this.cut ? 'cheer' : 'stand', W * 0.82, front + 2, ch * 1.08);
+    baxter(this.cut ? 'excited' : 'sit', W * 0.52, front + 2, ch * 0.42, {face: 'right'});
+  },
+};
+// A stand-in hammer in Builder Bo's hand, swinging down on each tap.
+function hammerIn(x, y, s, angle) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+  D.rr(ctx, -s * 0.05, -s * 0.9, s * 0.1, s, s * 0.04); ctx.fillStyle = D.C.wood; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = D.C.ink; ctx.stroke();
+  D.rr(ctx, -s * 0.28, -s * 1.05, s * 0.56, s * 0.22, s * 0.05); ctx.fillStyle = '#a7a9b7'; ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// ---------- a bonus day at a new shop ----------
+// Stand-in until each shop's own day is built.
+const ShopDay = {
+  enter(id) {
+    hud(true);
+    this.id = id;
+    const shop = SH.SHOPS[id];
+    mount(h('div', {class: 'panel'}, h('h2', null, shop.name), h('div', {class: 'muted'}, 'Customers are on their way! This shop opens for business soon.'),
+      btn('← Back to the morning', () => go(DayStart), 'pink big wide')));
+  },
+  draw() {
+    const [top, bottom] = openArea(), room = bottom - top, gy = top + room * 0.8;
+    D.siteScene(ctx, W, H, gy, now);
+    D.shopFront(ctx, this.id, W / 2, gy, Math.min(W * 0.7, room * 0.85), D.BUILD_STAGES, {t: now});
+    arianna('wave', W * 0.8, top + room * 0.98, Math.min(room * 0.45, W * 0.5));
+  },
+};
+
 // ---------- menus ----------
 function openSettings() {
   const row = (key, name, desc) => {
@@ -1412,6 +1554,13 @@ function openSettings() {
     row('music', 'Music', 'Gentle music in the background'),
     row('easyDrive', 'Easy driving', 'The van follows the road and turns at corners'),
     row('bigKid', 'Big Kid mode', 'Harder word problems and deals, the grid sooner'),
+    query.has('shops') || settings.shops ? row('shops', 'New shops (preview)', 'The building fund jar, the hair salon and the toy shop') : null,
+    settings.shops && save && SH.fundFor(save) ? h('div', {class: 'toggle'}, h('div', null, 'Build the next shop now', h('small', null, `Skip the jar: Builder Bo builds the ${SH.SHOPS[SH.fundFor(save)].short.toLowerCase()} tomorrow morning`)),
+      btn('Build', () => {
+        // change the saved game, not today's, so today starts over from the morning as going home does
+        save = L.migrate(readJSON(L.SAVE_KEY)) || save;
+        save.shops.building = SH.fundFor(save); persist(); close(); go(DayStart);
+      }, 'mint small')) : null,
     h('div', {class: 'actions'}, btn('Done', () => close(), 'pink')));
 }
 function openStickers() {
@@ -1477,11 +1626,12 @@ const SCENE_MUSIC = new Map([
   [Find, () => ['m5-drive', 'm2-shop']], [Drive, () => ['m5-drive', 'm2-shop']], [Doorstep, () => ['m5-drive', 'm2-shop']],
   [Results, () => ['m6-evening', 'm2-shop']], [Upgrades, () => ['m6-evening', 'm2-shop']],
   [SeasonEnd, () => ['m7-season-end', 'm1-title']],
+  [Build, () => ['m1-title']], [ShopDay, () => ['m2-shop']],
 ]);
 
 // For automated checks: read-only peek at the game.
-const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd};
-window.__cupcake = {get save() { return save; }, get day() { return day; }, scenes: SCENES, town, get scene() { return Object.keys(SCENES).find(k => SCENES[k] === scene); }};
+const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd, Build, ShopDay};
+window.__cupcake = {get save() { return save; }, get day() { return day; }, scenes: SCENES, town, get scene() { return Object.keys(SCENES).find(k => SCENES[k] === scene); }, go: (name, arg) => go(SCENES[name], arg)};
 
 resize();
 const loadbar = document.getElementById('loadbar');

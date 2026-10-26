@@ -13,7 +13,7 @@ export const CAST = {
   pug: 'am_echo@1.2', poodle: 'bf_isabella@1.1', spot: 'am_adam@1.1',
 };
 const ARIANNA = ['firstDay', 'openShop', 'designDone', 'ding', 'closing', 'comingUp', 'hereYouGo'];
-const CUSTOMER = ['woof', 'thanks'];
+const CUSTOMER = ['woof', 'thanks', 'bo'];
 
 export const VENDOR = {corner: 'Corner Market', barn: 'Bulk Barn'};
 export const GREET = ['Hi Arianna!', 'Hello there!', 'Ooh, cupcakes!', 'Yum, it smells so good!', 'Hi! Hi Baxter!'];
@@ -31,6 +31,7 @@ export const S = {
     driveFree: 'Hold the arrows to steer to the bouncing house!',
     upgrades: 'Spend your savings to grow the shop. Or save up for something big!',
     bake: "Let's bake! Follow each step to make the yummiest cupcakes.",
+    fund: 'This is the building fund jar! Save money in it, and Builder Bo will build a new shop.',
   },
   day: n => `Day ${n}!`,
   event: {
@@ -91,6 +92,18 @@ export const S = {
   messy: 'A little messy, but still yummy!',
   stars: n => ['One star! Still yummy!', 'Two stars! Nice baking!', 'Three stars! A perfect batch!'][n - 1],
   fancy: 'Fancy cupcakes sell for more!',
+  // the building fund jar and the new shops (shops.js)
+  intoJar: 'Into the jar!',
+  keepCash: 'Keep some money for the market!',
+  fundFull: {salon: 'The jar is full! Builder Bo will build the hair salon tonight!', toy: 'The jar is full! Builder Bo will build the toy shop tonight!'},
+  build: {salon: 'Builder Bo is building the hair salon! Tap to help him hammer!', toy: 'Builder Bo is building the toy shop! Tap to help him hammer!'},
+  cutRibbon: 'All done! Cut the ribbon!',
+  grandOpening: {salon: 'Grand opening! The hair salon is open!', toy: 'Grand opening! The toy shop is open!'},
+  bo: {hi: "Let's build it!", done: 'Ta-da! All done!'},
+  nudge: {
+    salon: n => (n === 1 ? 'One appointment is booked at the salon!' : `${n} appointments are booked at the salon!`),
+    toy: n => (n === 1 ? 'One customer is waiting at the toy shop!' : `${n} customers are waiting at the toy shop!`),
+  },
 };
 
 export const N_MAX = {day: 99, money: 20, goal: 20, profit: 200, count: 15};
@@ -116,6 +129,7 @@ export function linesBy() {
   for (let n = 1; n <= 10; n++) says(`Please bring them to house ${n}!`);
   for (let t = 1; t <= 6; t++) says(S.tip(t));
   for (let n = 1; n <= 3; n++) add(S.stars(n));
+  for (let n = 1; n <= 5; n++) { add(S.nudge.salon(n)); add(S.nudge.toy(n)); }
   for (const id in INGREDIENTS) add(S.newIngredient(id));
   for (const u of Object.values(UPGRADES)) add(S.bought(u.name));
   for (const d of Object.values(DECOR)) add(S.bought(d.name));

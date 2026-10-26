@@ -2,6 +2,7 @@
 // The look matches the character sheets: dark-brown outlines, soft pastel fills, one shadow tone.
 import {T} from './town.js';
 import {PAINTS} from './logic.js';
+import {SHOPS} from './shops.js';
 import {image, hasArt} from './art.js';
 
 export const C = {
@@ -635,7 +636,7 @@ function tree(ctx, cx, cy, s, lw, v) {
 // Painted map tiles (T1-T12); the -tile copies are square and untrimmed so they line up with the grid.
 const PARK_ART = ['t17-playground', 't18-fountain', 't16-bench'];
 const HOUSE_TILES = ['t1-house-pink-tile', 't2-house-blue-tile', 't3-house-yellow-tile', 't4-house-lavender-tile', 't5-house-mint-tile', 't6-house-peach-tile'];
-export function renderTown(town, S) {
+export function renderTown(town, S, taken = {}) {
   const cv = document.createElement('canvas');
   cv.width = town.w * S; cv.height = town.h * S;
   const ctx = cv.getContext('2d');
@@ -724,8 +725,9 @@ export function renderTown(town, S) {
     const b = lots[v] || (lots[v] = {x0: x, y0: y, x1: x, y1: y});
     b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y);
   }
-  for (const b of Object.values(lots)) {
+  for (const [v, b] of Object.entries(lots)) {
     const x0 = b.x0 * S + S * 0.12, y0 = b.y0 * S + S * 0.12, w = (b.x1 - b.x0 + 1) * S - S * 0.24, h = (b.y1 - b.y0 + 1) * S - S * 0.24;
+    if (taken[v]) { shopRoof(ctx, taken[v], b.x0 * S, b.y0 * S, (b.x1 - b.x0 + 1) * S, (b.y1 - b.y0 + 1) * S, S, lw); continue; }
     if (image('t12-lot')) ctx.drawImage(image('t12-lot'), x0 - S * 0.06, y0 - S * 0.06, w + S * 0.12, h + S * 0.12);
     else { ctx.setLineDash([S * 0.12, S * 0.08]); rr(ctx, x0, y0, w, h, S * 0.08); paint(ctx, null, lw * 1.2, '#c18d5f'); ctx.setLineDash([]); }
     const cx = x0 + w / 2, cy = y0 + h / 2;
@@ -734,6 +736,106 @@ export function renderTown(town, S) {
     ctx.beginPath(); ctx.moveTo(cx, cy + S * 0.25); ctx.lineTo(cx, cy + S * 0.55); paint(ctx, null, lw * 1.5, '#a8784a');
   }
   return cv;
+}
+
+// A new shop seen from above on the map: a paved yard, a striped roof and the shop's sign in the middle.
+function shopRoof(ctx, id, x, y, w, h, S, lw) {
+  const shop = SHOPS[id];
+  ctx.fillStyle = '#f3e7d3'; ctx.fillRect(x, y, w, h);
+  const rx = x + S * 0.3, ry = y + S * 0.3, rw = w - S * 0.6, rh = h - S * 0.75;
+  ctx.fillStyle = 'rgba(91,58,41,.18)'; ctx.fillRect(rx + S * 0.08, ry + S * 0.1, rw, rh);
+  rr(ctx, rx, ry, rw, rh, S * 0.14); paint(ctx, shop.color, lw);
+  ctx.save(); rr(ctx, rx, ry, rw, rh, S * 0.14); ctx.clip();
+  for (let i = 0; i < 12; i += 2) { ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(rx + i * rw / 12, ry, rw / 12, rh); }
+  ctx.restore();
+  rr(ctx, rx, ry, rw, rh, S * 0.14); paint(ctx, null, lw);
+  circle(ctx, rx + rw / 2, ry + rh / 2, S * 0.5, '#fff8ee', lw);
+  shopIcon(ctx, id, rx + rw / 2, ry + rh / 2, S * 0.62);
+  // the awning along the front, facing the street below
+  rr(ctx, rx + rw * 0.2, ry + rh - S * 0.05, rw * 0.6, S * 0.28, S * 0.06); paint(ctx, shop.trim, lw);
+}
+
+// Each new shop's sign: scissors for the salon, a teddy bear for the toy shop. x, y is the middle.
+export function shopIcon(ctx, id, x, y, s) {
+  const lw = Math.max(1.5, s * 0.06);
+  ctx.save(); ctx.translate(x, y);
+  if (id === 'salon') {
+    for (const k of [-1, 1]) {
+      ctx.beginPath(); ctx.moveTo(k * s * 0.12, s * 0.12); ctx.lineTo(-k * s * 0.18, -s * 0.42); ctx.lineTo(-k * s * 0.05, -s * 0.4); ctx.closePath(); paint(ctx, '#e8eef5', lw);
+      circle(ctx, k * s * 0.2, s * 0.26, s * 0.14, C.pink, lw);
+      circle(ctx, k * s * 0.2, s * 0.26, s * 0.06, '#fff8ee', lw * 0.7);
+    }
+    circle(ctx, 0, -s * 0.04, s * 0.04, C.ink);
+  } else {
+    for (const k of [-1, 1]) { circle(ctx, k * s * 0.26, -s * 0.24, s * 0.13, '#c9915f', lw); circle(ctx, k * s * 0.26, -s * 0.24, s * 0.06, '#f2c9a0'); }
+    circle(ctx, 0, 0, s * 0.33, '#c9915f', lw);
+    ellipse(ctx, 0, s * 0.1, s * 0.15, s * 0.11, '#f2c9a0', lw * 0.7);
+    circle(ctx, 0, s * 0.05, s * 0.04, C.ink);
+    for (const k of [-1, 1]) circle(ctx, k * s * 0.12, -s * 0.07, s * 0.035, C.ink);
+  }
+  ctx.restore();
+}
+
+// A new shop going up, seen from the front: x is its middle, y the ground, w its width. Builder Bo adds a
+// part each time she taps: 1 the base, 2 the frame, 3 the walls, 4 the roof, 5 the window, door and
+// awning, 6 the sign. A red ribbon hangs across the door until she cuts it.
+export const BUILD_STAGES = 6;
+export function shopFront(ctx, id, x, y, w, stage, {ribbon = false, t = 0} = {}) {
+  const shop = SHOPS[id], lw = Math.max(2, w * 0.012);
+  const wallH = w * 0.6, left = x - w / 2, top = y - wallH;
+  if (stage < 1) {
+    // the fenced lot
+    for (let i = 0; i <= 8; i++) { rr(ctx, left + i * w / 8 - w * 0.025, y - w * 0.2, w * 0.05, w * 0.2, w * 0.01); paint(ctx, C.wood, lw); }
+    rr(ctx, left - w * 0.03, y - w * 0.15, w * 1.06, w * 0.04, w * 0.01); paint(ctx, C.woodD, lw);
+    return;
+  }
+  rr(ctx, left - w * 0.04, y - w * 0.05, w * 1.08, w * 0.06, w * 0.01); paint(ctx, '#d9cfc3', lw);
+  if (stage === 2) {
+    for (let i = 0; i <= 4; i++) { rr(ctx, left + i * w / 4 - w * 0.02, top, w * 0.04, wallH - w * 0.05, 0); paint(ctx, C.wood, lw); }
+    rr(ctx, left - w * 0.02, top - w * 0.02, w * 1.04, w * 0.05, 0); paint(ctx, C.woodD, lw);
+    return;
+  }
+  if (stage >= 3) {
+    rr(ctx, left, top, w, wallH - w * 0.05, w * 0.02); paint(ctx, mix(shop.color, '#ffffff', 0.45), lw);
+    for (let i = 1; i < 6; i++) { ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(left + i * w / 6 - w * 0.008, top + w * 0.02, w * 0.016, wallH - w * 0.1); }
+  }
+  if (stage >= 4) {
+    ctx.beginPath(); ctx.moveTo(left - w * 0.08, top + w * 0.02); ctx.lineTo(x, top - w * 0.3); ctx.lineTo(left + w * 1.08, top + w * 0.02); ctx.closePath(); paint(ctx, shop.color, lw);
+    circle(ctx, x, top - w * 0.13, w * 0.08, '#fff8ee', lw);
+  }
+  if (stage >= 5) {
+    // big window on the left, door on the right, striped awning over the window
+    rr(ctx, left + w * 0.08, top + w * 0.2, w * 0.46, w * 0.26, w * 0.02); paint(ctx, '#d6efff', lw);
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(left + w * 0.12, top + w * 0.23, w * 0.06, w * 0.18);
+    rr(ctx, left + w * 0.64, top + w * 0.18, w * 0.26, wallH - w * 0.23, w * 0.03); paint(ctx, shop.trim, lw);
+    circle(ctx, left + w * 0.69, top + w * 0.36, w * 0.015, C.ink);
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath(); ctx.rect(left + w * 0.05 + i * w * 0.087, top + w * 0.1, w * 0.087, w * 0.08); paint(ctx, i % 2 ? '#fff' : shop.trim, lw * 0.8);
+      ctx.beginPath(); ctx.arc(left + w * 0.05 + (i + 0.5) * w * 0.087, top + w * 0.18, w * 0.0435, 0, Math.PI); paint(ctx, i % 2 ? '#fff' : shop.trim, lw * 0.8);
+    }
+  }
+  if (stage >= 6) {
+    shopIcon(ctx, id, x, top - w * 0.13, w * 0.12);
+    rr(ctx, left + w * 0.12, top - w * 0.02, w * 0.76, w * 0.1, w * 0.03); paint(ctx, '#fff8ee', lw);
+    const size = fitSize(ctx, shop.name, w * 0.06, w * 0.7, 700);
+    text(ctx, shop.name, x, top + w * 0.03, size, {weight: 700});
+  }
+  if (ribbon) {
+    const ry = top + w * 0.38, sway = Math.sin(t * 2) * w * 0.006;
+    ctx.beginPath(); ctx.moveTo(left - w * 0.02, ry); ctx.quadraticCurveTo(x, ry + w * 0.05 + sway, left + w * 1.02, ry); paint(ctx, null, w * 0.025, '#e8506a');
+    for (const k of [-1, 1]) { ellipse(ctx, x + k * w * 0.05, ry + w * 0.03, w * 0.05, w * 0.03, '#e8506a', lw * 0.8); }
+    circle(ctx, x, ry + w * 0.035, w * 0.022, '#c23a52', lw * 0.8);
+  }
+}
+
+// The street in front of the building site: sky, hills, a lawn and the sidewalk. Returns the ground line.
+export function siteScene(ctx, W, H, gy, t = 0) {
+  sky(ctx, W, H, t);
+  hills(ctx, W, gy - H * 0.08, '#cdeccf', H * 0.03, 0.8);
+  hills(ctx, W, gy - H * 0.03, C.grass, H * 0.02, 2.2);
+  ctx.fillStyle = '#ecd3a3'; ctx.fillRect(0, gy - H * 0.01, W, H * 0.03);
+  ctx.fillStyle = '#efe6dc'; ctx.fillRect(0, gy + H * 0.02, W, H * 0.06);
+  ctx.fillStyle = C.road; ctx.fillRect(0, gy + H * 0.08, W, H);
 }
 
 // ---------- scenes ----------

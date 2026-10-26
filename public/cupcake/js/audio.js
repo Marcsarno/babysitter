@@ -48,6 +48,7 @@ export const sfx = {
   ding: () => { tone(1318, 0.5, {type: 'sine', vol: 0.25}); tone(1760, 0.6, {type: 'sine', vol: 0.12, delay: 0.02}); },
   oven: () => { noise(0.6, {vol: 0.08, freq: 300, q: 0.5}); tone(880, 0.3, {type: 'sine', vol: 0.2, delay: 0.6}); tone(1175, 0.4, {type: 'sine', vol: 0.2, delay: 0.75}); },
   unlock: () => [659, 784, 988, 1319, 1568].forEach((f, i) => tone(f, 0.22, {type: 'triangle', vol: 0.2, delay: i * 0.09})),
+  hammer: () => { noise(0.07, {vol: 0.32, freq: 1800, q: 2}); tone(170, 0.1, {type: 'square', vol: 0.12, slide: -60}); },
   sniff: () => [0, 0.12, 0.24].forEach(d => noise(0.07, {vol: 0.14, freq: 2500, q: 1.5, delay: d})),
 };
 

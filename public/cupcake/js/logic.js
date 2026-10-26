@@ -1,4 +1,5 @@
 // Arianna's Cupcakes: the rules of the business, kept free of drawing so they can be tested.
+import {freshShops} from './shops.js';
 
 export const SAVE_KEY = 'ariannaCupcakes.save.v1';
 export const START_CASH = 50;
@@ -100,6 +101,7 @@ export function newGame(seed = Date.now() & 0xffffff) {
     upg: {oven: 0, pantry: 0, sign: 0, menu: 0, van: 0},
     deco: [], paints: ['pink'], paint: 'pink',
     history: [], stickers: {}, stars: 0, seen: {},
+    shops: freshShops(),
   };
 }
 
@@ -397,7 +399,7 @@ export function trophyFor(profit) {
 export function migrate(data) {
   if (!data || data.v !== 1) return null;
   const fresh = newGame(data.seed);
-  const save = {...fresh, ...data, upg: {...fresh.upg, ...data.upg}};
+  const save = {...fresh, ...data, upg: {...fresh.upg, ...data.upg}, shops: {...fresh.shops, ...data.shops}};
   for (const id in INGREDIENTS) if (!(id in save.stock)) save.stock[id] = 0;
   while (save.menu.length < menuSlots(save)) save.menu.push(null);
   return save;
