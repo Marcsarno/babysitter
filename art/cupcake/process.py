@@ -34,8 +34,9 @@ FACING = {
     'a8-walk': 'right', 'b7-walk': 'right', 'v1-van-side': 'right', 'v2-van-top': 'right',
 }
 # Target height by code prefix: characters, cupcake parts (I), baking tools (K), van (V), town map pieces (T),
-# decorations (D) and icons (U). Background scenes (BG, S1) are kept whole, not cut out.
-HEIGHT = {'a': 720, 'b': 520, 'c': 600, 'i': 512, 'k': 600, 'v': 600, 't': 256, 'd': 400, 'u': 320}
+# decorations (D), icons (U), feelings bubbles (E), number-line house fronts (H) and menu frames (P).
+# Background scenes (BG, S1) are kept whole, not cut out.
+HEIGHT = {'a': 720, 'b': 520, 'c': 600, 'i': 512, 'k': 600, 'v': 600, 't': 256, 'd': 400, 'u': 320, 'e': 256, 'h': 400, 'p': 600}
 
 
 def dilate(mask, r):
@@ -130,7 +131,7 @@ def main():
             save(fit(trim(fig), HEIGHT[name[0]] if name[0] in HEIGHT else 720), name)
             made.append(name)
     for p in sorted(HERE.iterdir()):
-        m = re.match(r'^((?:BG|[ABCSIKVTDU])\d+)-([a-z0-9-]+)\.(png|jpe?g|webp)$', p.name, re.I)
+        m = re.match(r'^((?:BG|[ABCSIKVTDUEHP])\d+)-([a-z0-9-]+)\.(png|jpe?g|webp)$', p.name, re.I)
         if not m or p.name in SHEETS:
             continue
         name = f'{m.group(1)}-{m.group(2)}'.lower()

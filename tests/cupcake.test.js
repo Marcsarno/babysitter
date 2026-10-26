@@ -170,7 +170,21 @@ test('easy driving holds a turn until the next corner', () => {
   assert.ok(van.y < y0);
 });
 
-import {S, allLines, GREET} from '../public/cupcake/js/say.js';
+import {S, allLines, linesBy, CAST, GREET} from '../public/cupcake/js/say.js';
+
+test('each line has one speaker, customers say their own lines, and everyone has a voice', () => {
+  const by = linesBy(), owner = new Map();
+  for (const [who, lines] of Object.entries(by)) for (const t of lines) { assert.ok(!owner.has(t), `"${t}" is said by ${owner.get(t)} and ${who}`); owner.set(t, who); }
+  const customer = t => assert.equal(owner.get(t), 'customer', t);
+  GREET.forEach(customer); [S.woof, S.thanks, S.pricey(5), S.tip(3)].forEach(customer);
+  for (let seed = 0; seed < 200; seed++) {
+    L.makeOrder(L.rng(seed), 1 + (seed % 5), 1 + (seed % 15), seed % 6 === 0).say.forEach(customer);
+    L.addressSpoken(L.makeAddress(L.rng(seed), seed % 2 ? 3 : 20, seed % 3 === 0)).forEach(customer);
+  }
+  [S.openShop, S.ding, S.goal(8), S.comingUp, S.hereYouGo].forEach(t => assert.equal(owner.get(t), 'arianna', t));
+  [S.coach.market, S.countIt(4), S.perfect].forEach(t => assert.equal(owner.get(t), 'narrator', t));
+  for (const who of ['narrator', 'arianna', ...Object.keys(L.CUSTOMERS)]) assert.match(CAST[who], /^[ab][fm]_[a-z]+(@[\d.]+)?$/, who);
+});
 
 test('every sentence the game reads aloud has a recording in the voice catalog', () => {
   const lines = new Set(allLines());

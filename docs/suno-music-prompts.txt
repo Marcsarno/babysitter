@@ -1,0 +1,54 @@
+MUSIC FOR ARIANNA'S CUPCAKES: Suno prompts
+
+For every track:
+1. Custom mode. Turn Instrumental ON. Leave the lyrics empty.
+2. Paste the Style text into "Style of Music".
+3. Open Advanced Options and paste this into Exclude (the same for every track):
+   vocals, singing, choir, humming, rap, spoken word
+4. Paste the Title. Make two versions, keep the better one, download it as MP3.
+5. Name the file with its code, like M2-shop.mp3, and send them over (a zip is perfect).
+
+Full-length songs are fine. I'll cut each one down, make it loop smoothly, and play it quietly under the voices.
+Prefer the version with a steady feel all the way through: no big build-ups, no sudden drops, no long fade at the start.
+
+
+M1-title
+Title: Arianna's Cupcakes
+Style: whimsical children's pop, cheerful and catchy, bright ukulele, glockenspiel lead melody, hand claps, bouncy upright bass, 112 BPM, instrumental, no vocals
+
+M2-shop
+Title: Open for Business
+Style: cozy acoustic café, gentle and warm, soft ukulele strumming, felt piano melody, light shaker, steady relaxed groove, 96 BPM, instrumental, no vocals
+
+M3-market
+Title: Morning Market
+Style: acoustic folk, bright and curious morning mood, fingerpicked acoustic guitar, light accordion, pizzicato strings, bouncy, 102 BPM, instrumental, no vocals
+
+M4-kitchen
+Title: Baking Time
+Style: playful pizzicato orchestral, cheeky and busy, marimba lead, pizzicato strings, soft xylophone, woodblock tick-tock, 108 BPM, instrumental, no vocals
+
+M5-drive
+Title: Delivery Drive
+Style: upbeat funk pop, sunny road-trip energy, bouncy electric bass, bright Rhodes electric piano, hand claps, light drum kit, whistled melody, 124 BPM, instrumental, no vocals
+
+M6-evening
+Title: End of the Day
+Style: gentle lullaby, calm and cozy, music box melody, warm felt piano, soft string pad, slow and sleepy, 72 BPM, instrumental, no vocals
+
+M7-season-end
+Title: Season Champion
+Style: triumphant celebration fanfare, joyful and proud, bright brass section, marching snare, glockenspiel, cymbal swells, 120 BPM, instrumental, no vocals
+
+M8-birthday
+Title: Baxter's Birthday
+Style: silly polka party, goofy and fun, kazoo melody, ukulele, tuba bass, hand claps, 116 BPM, instrumental, no vocals
+
+M9-rain
+Title: Rainy Day Bakery
+Style: mellow jazz café, cozy rainy afternoon, felt piano, brushed snare, warm upright bass, gentle and calm, 84 BPM, instrumental, no vocals
+
+
+Where each one plays:
+M1 title screen · M2 the shop (customers and orders) · M3 the market · M4 the kitchen and the baking mini-game
+M5 driving and finding houses · M6 end of the day and the upgrades · M7 end of the season · M8 replaces M2 on Baxter's birthday · M9 replaces M2 on rainy days

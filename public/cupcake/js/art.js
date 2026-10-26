@@ -29,15 +29,19 @@ const CROPS = {
 export const CUSTOMER_ART = {grandma: 'c1-grandma', builder: 'c2-builder', boy: 'c3-boy', bunny: 'c4-bunny', cat: 'c5-cat', bear: 'c6-bear', mail: 'c7-mail', duck: 'c8-duck', girl: 'c9-girl', dad: 'c10-dad', pug: 'c11-pug', poodle: 'c12-poodle', spot: 'c13-spot'};
 
 const images = {};
-export async function loadArt(base) {
+// onProgress(fraction) is called as pictures arrive, for the loading screen.
+export async function loadArt(base, onProgress = () => {}) {
   try {
     const res = await fetch(`${base}art/manifest.json`, {cache: 'no-cache'});
     if (res.ok) Object.assign(FILES, await res.json());
   } catch {}
-  await Promise.all(Object.keys(FILES).map(name => new Promise(done => {
+  const names = Object.keys(FILES);
+  let loaded = 0;
+  await Promise.all(names.map(name => new Promise(done => {
     const img = new Image();
-    img.onload = () => { images[name] = img; done(); };
-    img.onerror = () => done();
+    const finish = () => { onProgress(++loaded / names.length); done(); };
+    img.onload = () => { images[name] = img; finish(); };
+    img.onerror = finish;
     img.src = `${base}art/${name}.webp`;
   })));
 }

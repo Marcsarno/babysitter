@@ -1,0 +1,87 @@
+Round 4 art for the same kids' game, in the same style as the attached character sheets and all the earlier pictures. Please generate each image below as a SEPARATE image, one at a time, in order, without asking me to confirm between images. After each one, tell me its file name.
+
+STYLE FOR EVERY IMAGE: children's picture-book cartoon illustration, clean bold dark-brown outlines, soft simple shading, rounded friendly shapes, bright pastel palette of strawberry pink, mint green, buttercream yellow, sky blue and chocolate brown, matching the attached character sheets.
+RULES FOR EVERY IMAGE: no text, letters, numbers, words, logos or writing anywhere (signs stay blank). Nothing cropped.
+SCENES (BG): tall 9:16 (1080x1920), full background, and NO people and NO animals in them (the game adds the characters).
+EVERYTHING ELSE: square 1024x1024, one subject centered, plain pure white background, no shadow on the ground. Baxter is the only exception: always on a solid bright blue background.
+
+CUSTOMER FEELINGS (two extra pictures of each customer. Each must look EXACTLY like that customer's earlier picture: same face, colors, clothes and size, standing, full body, facing the viewer)
+C1-grandma-happy: Grandma Rose (curly gray hair, round glasses, lavender cardigan, small handbag) delighted, hands clasped together under her chin, big smile.
+C1-grandma-hmm: Grandma Rose unsure, one hand on her cheek, eyebrows raised, small worried smile.
+C2-builder-happy: Builder Bo (orange vest, yellow hard hat) cheering with both fists up, huge grin.
+C2-builder-hmm: Builder Bo scratching the back of his hard hat, puzzled frown.
+C3-boy-happy: Little Leo (about 5, striped shirt, shorts, red balloon) jumping with joy, both feet off the ground, still holding the balloon.
+C3-boy-hmm: Little Leo with a pouty lip, looking down, holding the balloon.
+C4-bunny-happy: Bunny Belle (white bunny, blue overalls, floppy ears) hopping happily, ears up, paws together.
+C4-bunny-hmm: Bunny Belle with droopy ears and a small frown.
+C5-cat-happy: Ginger Cat (striped sweater, little scarf) with eyes closed in a happy smile, paws on her tummy, tail curled up.
+C5-cat-hmm: Ginger Cat with one paw on her chin, thinking, tail low.
+C6-bear-happy: Big Bear (brown, green bow tie, round tummy) patting his tummy with a huge happy smile.
+C6-bear-hmm: Big Bear with a sad little frown, paws together.
+C7-mail-happy: Max the Mail Carrier (blue cap, mail bag) giving a big thumbs-up.
+C7-mail-hmm: Max the Mail Carrier with a hand on his chin, thinking.
+C8-duck-happy: Dot the Duck (red raincoat, little rain boots) flapping her wings happily.
+C8-duck-hmm: Dot the Duck with her wings folded and a little frown.
+C9-girl-happy: Sophie (curly dark pigtails, sunny yellow dress, white sneakers) twirling happily, arms out.
+C9-girl-hmm: Sophie with her hands on her hips, pouting a little.
+C10-dad-happy: Mr. Patel (short black hair, round glasses, mint-green polo, khaki pants) laughing, one hand raised in a wave.
+C10-dad-hmm: Mr. Patel looking at his wallet, eyebrows raised.
+C11-pug-happy: Peanut the Pug (pink sweater, blue party hat) wiggling with joy, tongue out.
+C11-pug-hmm: Peanut the Pug with sad puppy eyes.
+C12-poodle-happy: Princess Poodle (lavender top, blue party hat) striking a proud happy pose, chin up.
+C12-poodle-hmm: Princess Poodle with her nose in the air, unimpressed.
+C13-spot-happy: Domino the dalmatian (mint-green shirt, blue party hat) jumping with joy.
+C13-spot-hmm: Domino with his head tilted and ears down.
+
+MORE OF ARIANNA AND BAXTER (keep them exactly like the character sheets)
+A9-serve: Arianna from the waist up, facing the viewer, holding a pink cupcake box out in front of her with both hands, big proud smile. White background.
+B8-run: Baxter running as fast as he can, seen exactly from the side, facing right, all four paws off the ground, ears flying back. Solid bright blue background.
+B9-party: Baxter sitting and smiling, wearing a little blue party hat. Solid bright blue background.
+
+MORE CUPCAKE PARTS (exactly the same straight side view, size and position as the earlier I1-I5 cupcakes, so they line up with them)
+I19-batter-vanilla: The pink pleated liner from I1, filled almost to the top with raw, pale, glossy vanilla batter with a flat wet top. Not baked, no dome.
+I20-batter-chocolate: The mint liner from I2, filled the same way with raw chocolate batter.
+I21-batter-strawberry: The yellow liner from I3, filled the same way with raw pink strawberry batter.
+I22-batter-lemon: The light blue liner from I4, filled the same way with raw lemon-yellow batter.
+I23-batter-redvelvet: The white liner from I5, filled the same way with raw red velvet batter.
+I24-liner-pink: Only the empty pink pleated liner from I1, nothing inside.
+I25-liner-mint: Only the empty mint liner from I2.
+I26-liner-yellow: Only the empty yellow liner from I3.
+I27-liner-blue: Only the empty light blue liner from I4.
+I28-liner-white: Only the empty white liner from I5.
+
+FEELINGS BUBBLES (small icons that pop up over a customer's head)
+E1-heart: A round white speech bubble with a pink heart inside.
+E2-thinking: A white thought cloud with three small dots inside.
+E3-question: A white thought cloud with one big pink question mark inside (the question mark is the only symbol allowed).
+E4-sweat: One big light-blue sweat drop.
+E5-sparkles: A little cluster of three yellow sparkles.
+E6-wow: A small yellow starburst, like a "wow!" pop, with nothing written on it.
+E7-note: Two little pink music notes, as if someone is happily humming.
+
+HOUSE FRONTS FOR THE NUMBER LINE (small cottages seen straight from the front, all the same size and shape, so they line up in a row)
+H1-front-pink: A small pink cottage front with a door in the middle, a pointed roof, two little windows and a flower pot.
+H2-front-blue: The same cottage front in sky blue.
+H3-front-yellow: The same cottage front in buttercream yellow.
+H4-front-lavender: The same cottage front in lavender.
+H5-front-mint: The same cottage front in mint green.
+H6-front-peach: The same cottage front in peach.
+
+MORE TOWN MAP PIECES (seen from straight above, top-down like a map, matching the earlier T pieces)
+T13-car-blue: A small rounded sky-blue car seen from directly above, facing right.
+T14-car-yellow: The same car in buttercream yellow.
+T15-ducks: A mother duck and three ducklings in a line, seen from above, walking to the right.
+T16-bench: A wooden park bench seen from above.
+T17-playground: A little playground seen from above: a slide and a swing set on soft sand. Square footprint.
+T18-fountain: A round stone fountain with sparkling blue water, seen from above.
+
+FRAMES FOR THE MENUS (these get stretched to fit boxes in the game, so keep the borders even all the way around and the middle completely plain)
+P1-card: A cream-colored recipe card with an even pink scalloped border all the way around and a plain empty middle. Straight on, rectangle.
+P2-banner: A pink ribbon banner with folded ends, blank in the middle, straight across.
+P3-bubble: A round-cornered white speech bubble with an even dark-brown outline and a small tail at the bottom left, empty inside.
+
+SCENES
+BG9-celebration: The cupcake shop front at dusk, decorated for a big party: bunting, balloons, string lights, and fireworks in a pink and purple sky. A clear sidewalk across the bottom third for characters to stand on.
+BG10-numberline: A long straight sunny street seen from the side, with a green lawn strip and a sidewalk running all the way across the bottom third, and a blue sky with soft clouds. NO houses or buildings (the game adds them), just distant hills and trees far in the background.
+
+That's 66 images. If you get tired, stop after the customer feelings and keep going in a new message later.

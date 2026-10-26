@@ -3,7 +3,7 @@ import * as L from './logic.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN} from './town.js';
 import * as D from './draw.js';
 import {loadArt, drawPose, image, CUSTOMER_ART} from './art.js';
-import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice} from './audio.js';
+import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice, preloadCustomer, loadMusic, music, musicOn, pauseMusic} from './audio.js';
 import {S, GREET} from './say.js';
 
 const BASE = new URL('../', import.meta.url).pathname;
@@ -18,8 +18,8 @@ let W = 0, H = 0, now = 0;
 // ---------- storage ----------
 const readJSON = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
 const writeJSON = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
-const settings = {voice: true, sound: true, easyDrive: true, bigKid: false, ...readJSON(SETTINGS_KEY)};
-function applySettings() { audio.sound = settings.sound; audio.voice = settings.voice; writeJSON(SETTINGS_KEY, settings); }
+const settings = {voice: true, sound: true, music: true, easyDrive: true, bigKid: false, ...readJSON(SETTINGS_KEY)};
+function applySettings() { audio.sound = settings.sound; audio.voice = settings.voice; musicOn(settings.music); writeJSON(SETTINGS_KEY, settings); }
 applySettings();
 let save = L.migrate(readJSON(L.SAVE_KEY));
 // Progress is saved between days; leaving mid-day comes back to the start of that day.
@@ -59,16 +59,17 @@ function portrait(who, pose = 'stand', size = 108) {
   else drawCustomer(g, who, size / 2, size * 2.1, size * 2.3, {});
   return c;
 }
-// A one-time tip from Arianna the first time each screen shows up.
+// A one-time tip from the narrator the first time each screen shows up.
 function coach(key, seenKey = key) {
   if (save.seen[seenKey]) return;
   save.seen[seenKey] = true;
   const msg = S.coach[key];
-  const el = h('div', {class: 'coach'}, portrait('arianna'), h('div', {class: 'grow'}, msg), btn('OK', () => el.remove(), 'small mint'));
+  const el = h('div', {class: 'coach'}, h('img', {class: 'narrator', src: `${BASE}icon-192.png`, alt: ''}), h('div', {class: 'grow'}, msg), btn('OK', () => el.remove(), 'small mint'));
   app.append(el);
   speak(msg);
 }
-function speakerButton(getText) { return h('button', {class: 'speaker', 'aria-label': 'Read it to me', onclick: () => speak(getText())}, '🔊'); }
+// customer: whose voice reads customer lines
+function speakerButton(getText, customer = null) { return h('button', {class: 'speaker', 'aria-label': 'Read it to me', onclick: () => speak(getText(), {customer})}, '🔊'); }
 
 // ---------- HUD ----------
 function hud(show = true) {
@@ -128,6 +129,11 @@ function openArea() {
 function arianna(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts}); }
 function baxter(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts}); }
 const ART_SCALE = {girl: 0.8, boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1, pug: 0.82, poodle: 0.9, spot: 0.9};   // kids and little animals stand a bit shorter, the bear taller
+// Draw a feelings bubble for someone; it pops in again whenever the feeling changes.
+function feeling(who, kind, x, y, size) {
+  if (who.feeling !== kind) { who.feeling = kind; who.feelingAt = now; }
+  if (kind) D.emote(ctx, kind, x, y, size, now - who.feelingAt);
+}
 function drawCustomer(g, type, x, y, hgt, opts) {
   const img = image(CUSTOMER_ART[type]);
   if (img) {
@@ -162,13 +168,22 @@ function newDay() {
 
 // ---------- scenes ----------
 let scene = null;
+// The old screen fades out over the new one for a moment instead of jumping.
+let fadeFrom = null;
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
 function go(next, arg) {
+  if (scene && W && !calm.matches) {
+    const c = document.createElement('canvas');
+    c.width = cv.width; c.height = cv.height; c.getContext('2d').drawImage(cv, 0, 0);
+    fadeFrom = {c, t: now};
+  }
   scene?.exit?.();
   hush();
   document.querySelectorAll('.coach, .savings, .toast, .ticket, .banner').forEach(e => e.remove());
   scene = next;
   ui.replaceChildren();
   next.enter?.(arg);
+  music(SCENE_MUSIC.get(next)?.());
 }
 
 const Title = {
@@ -698,6 +713,7 @@ const Street = {
       if (day.next >= day.passers.length || day.shelf.every(n => n <= 0)) { this.close(); return; }
       const p = day.passers[day.next++];
       this.walker = {...p, x: W + 60, state: 'in', face: 'happy', t: 0};
+      preloadCustomer(p.type);
       return;
     }
     w.t += dt;
@@ -718,9 +734,9 @@ const Street = {
   },
   say(w, msg) {
     this.bubble?.remove();
-    this.bubble = h('div', {class: 'bubble', style: `top:${H * 0.17}px`}, h('div', {class: 'who'}, L.CUSTOMERS[w.type].name), h('div', {class: 'say'}, h('div', null, msg), speakerButton(() => msg)));
+    this.bubble = h('div', {class: 'bubble', style: `top:${H * 0.17}px`}, h('div', {class: 'who'}, L.CUSTOMERS[w.type].name), h('div', {class: 'say'}, h('div', null, msg), speakerButton(() => msg, w.type)));
     ui.append(this.bubble);
-    speak(msg);
+    speak(msg, {customer: w.type});
   },
   close() {
     if (this.closing) return;
@@ -744,9 +760,9 @@ const Street = {
     const hintBox = h('div');
     this.bubble?.remove();
     this.bubble = h('div', {class: 'bubble', style: `top:${H * 0.15}px`}, h('div', {class: 'who'}, L.CUSTOMERS[w.type].name),
-      h('div', {class: 'say'}, h('div', null, line1, h('br'), h('b', null, order.text)), speakerButton(() => spoken)), hintBox);
+      h('div', {class: 'say'}, h('div', null, line1, h('br'), h('b', null, order.text)), speakerButton(() => spoken, w.type)), hintBox);
     ui.append(this.bubble);
-    speak(spoken);
+    speak(spoken, {customer: w.type});
     const screen = h('div', {class: 'screen'}, h('span', {class: 'what'}, `How many ${d.name}?`), h('span', null, ''));
     const show = () => { screen.lastChild.textContent = typed || '_'; };
     const key = k => () => {
@@ -790,7 +806,7 @@ const Street = {
     const newSticker = !save.stickers[w.type];
     save.stickers[w.type] = (save.stickers[w.type] || 0) + 1;
     w.face = 'wow';
-    sfx.chaChing(); cashChanged();
+    sfx.chaChing(); cashChanged(); speak(S.comingUp);
     const g = this.geom();
     coinsTo(g.spot, g.feet - g.ch * 0.6, Math.min(12, order.answer * 2));
     const ticket = h('div', {class: 'ticket'}, 'Order ticket', h('br'), h('b', null, `${order.answer} × ${d.name}`), h('br'), `${order.answer} × $${d.price} = $${total}`, newSticker ? h('div', {style: 'margin-top:6px;color:#f27aa9'}, '⭐ New sticker!') : null);
@@ -799,8 +815,8 @@ const Street = {
     setTimeout(() => {
       ticket.remove();
       if (scene !== this) return;
-      this.bubble.replaceChildren(h('div', {class: 'who'}, L.CUSTOMERS[w.type].name), h('div', {class: 'say'}, h('div', null, h('b', null, msg)), speakerButton(() => [S.thanks, ...L.addressSpoken(address)])));
-      speak([S.thanks, ...L.addressSpoken(address)]);
+      this.bubble.replaceChildren(h('div', {class: 'who'}, L.CUSTOMERS[w.type].name), h('div', {class: 'say'}, h('div', null, h('b', null, msg)), speakerButton(() => [S.thanks, ...L.addressSpoken(address)], w.type)));
+      speak([S.thanks, ...L.addressSpoken(address)], {customer: w.type});
       this.panel.className = 'panel';
       this.panel.replaceChildren(btn(address.mode === 'line' ? 'Find the house →' : 'Find it on the map →', () => go(Find, {w, slot, order, address}), 'pink big wide'));
     }, 1700);
@@ -818,7 +834,11 @@ const Street = {
     D.vanSide(ctx, W * 0.02, g.road, Math.min(W * 0.5, H * 0.3), save.paint, {t: now, name: D.streetArt(W, H) ? '' : SHOP_NAME});
     baxter(this.walker?.state === 'order' ? 'excited' : 'sit', W * 0.88, g.feet - H * 0.005, Math.min(H * 0.11, W * 0.24));
     const w = this.walker;
-    if (w) drawCustomer(ctx, w.type, w.x, g.feet, g.ch, {t: now + w.t, walking: w.state === 'in' || w.state === 'out', face: w.face, dir: -1});
+    if (w) {
+      drawCustomer(ctx, w.type, w.x, g.feet, g.ch, {t: now + w.t, walking: w.state === 'in' || w.state === 'out', face: w.face, dir: -1});
+      // a feelings bubble: a heart when served, a question mark for a wrong count, a sweat drop at a high price
+      feeling(w, w.face === 'wow' ? 'heart' : w.face === 'hmm' ? (now - (this.oopsAt ?? -9) < 2.5 ? 'question' : 'sweat') : null, w.x + g.ch * 0.2, g.feet - g.ch * (ART_SCALE[w.type] || 1) * 0.98, g.ch * 0.26);
+    }
   },
 };
 
@@ -844,12 +864,12 @@ const Find = {
     this.help = h('div', {class: 'findhelp'});
     this.helpSay(a.mode === 'line' ? S.tapHouse : S.tapCorner);
     mount(h('div', {class: 'target'}, a.mode === 'line' ? `🏠 House ${a.n}` : `📍 (${a.x}, ${a.y})`), this.help);
-    speak(L.addressSpoken(a));
+    speak(L.addressSpoken(a), {customer: job.w.type});
     coach(a.mode === 'line' ? 'findline' : 'findgrid');
   },
   helpSay(msg, spoken = null) {
     const a = this.job.address;
-    this.help.replaceChildren(h('div', {class: 'bubble', style: 'position:static'}, h('div', {class: 'say'}, h('div', null, h('b', null, L.addressText(a)), h('br'), msg), speakerButton(() => spoken || L.addressSpoken(a)))));
+    this.help.replaceChildren(h('div', {class: 'bubble', style: 'position:static'}, h('div', {class: 'say'}, h('div', null, h('b', null, L.addressText(a)), h('br'), msg), speakerButton(() => spoken || L.addressSpoken(a), this.job.w.type))));
   },
   layout() {
     const a = this.job.address;
@@ -1074,28 +1094,30 @@ const Drive = {
 const Doorstep = {
   enter(job) {
     hud(true);
-    this.job = job; this.t = 0; this.paid = false;
+    this.job = job; this.t = 0; this.paid = false; this.handed = false;
     this.variant = (job.address.mode === 'line' ? job.address.n : job.address.x * 7 + job.address.y) % 6;
     mount();
   },
   update(dt) {
     this.t += dt;
-    if (this.t > 1.5 && !this.paid) {
+    if (this.t > 1.3 && !this.handed) { this.handed = true; speak(S.hereYouGo); }
+    if (this.t > 2.3 && !this.paid) {
       this.paid = true;
       const tip = this.job.tip;
       day.tips += tip; save.cash += tip; cashChanged();
       const g = {x: W * 0.62, y: H * 0.45};
       coinsTo(g.x, g.y, tip * 2); confettiBurst(g.x, g.y, 24); sfx.yes();
       const msg = S.tip(tip);
-      mount(h('div', {class: 'bubble', style: `top:${H * 0.12}px`}, h('div', {class: 'who'}, L.CUSTOMERS[this.job.w.type].name), h('div', {class: 'say'}, h('div', null, msg), speakerButton(() => msg))),
+      mount(h('div', {class: 'bubble', style: `top:${H * 0.12}px`}, h('div', {class: 'who'}, L.CUSTOMERS[this.job.w.type].name), h('div', {class: 'say'}, h('div', null, msg), speakerButton(() => msg, this.job.w.type))),
         h('div', {class: 'findhelp'}, btn('Back to the shop →', () => go(Street, true), 'pink big wide')));
-      speak(msg);
+      speak(msg, {customer: this.job.w.type});
     }
   },
   draw() {
     const s = D.doorstep(ctx, W, H, {t: now, variant: this.variant});
     const ch = s.painted ? s.doorH * 0.95 : Math.min(H * 0.24, W * 0.5);
     drawCustomer(ctx, this.job.w.type, s.door.x, s.gy + 4, ch, {t: now, face: this.paid ? 'happy' : 'wow'});
+    feeling(this, this.paid ? 'heart' : 'sparkles', s.door.x + ch * 0.22, s.gy - ch * (ART_SCALE[this.job.w.type] || 1) * 0.95, ch * 0.26);
     const k = Math.min(1, this.t / 1.3);
     // on a painted house she walks up the lawn from the sidewalk; on the drawn one, along the ground
     const [x0, y0] = s.painted ? s.start : [W * 0.04, s.gy + 6], [x1, y1] = s.painted ? s.path : [s.door.x - W * 0.26, s.gy + 6];
@@ -1248,6 +1270,7 @@ function openSettings() {
   const close = modal(h('h2', null, 'Settings'),
     row('voice', 'Read aloud', 'Customers and tips are spoken out loud'),
     row('sound', 'Sounds', 'Coins, barks and beeps'),
+    row('music', 'Music', 'Gentle music in the background'),
     row('easyDrive', 'Easy driving', 'The van follows the road and turns at corners'),
     row('bigKid', 'Big Kid mode', 'Harder word problems and deals, the grid sooner'),
     h('div', {class: 'actions'}, btn('Done', () => close(), 'pink')));
@@ -1286,7 +1309,7 @@ for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) cv.addEventList
 addEventListener('keydown', e => { if (e.key === ' ' && !e.repeat) scene?.press?.(); });
 addEventListener('keyup', e => { if (e.key === ' ') scene?.release?.(); });
 let last = performance.now(), paused = false;
-document.addEventListener('visibilitychange', () => { paused = document.hidden; if (paused) { hush(); engineOff(); } last = performance.now(); });
+document.addEventListener('visibilitychange', () => { paused = document.hidden; if (paused) { hush(); engineOff(); } pauseMusic(paused); last = performance.now(); });
 function frame(ts) {
   const dt = Math.min(0.05, (ts - last) / 1000);
   last = ts;
@@ -1296,17 +1319,34 @@ function frame(ts) {
     updateParts(dt);
     ctx.clearRect(0, 0, W, H);
     scene?.draw?.();
+    if (fadeFrom) {
+      const k = (now - fadeFrom.t) / 0.3;
+      if (k >= 1) fadeFrom = null;
+      else { ctx.globalAlpha = 1 - k; ctx.drawImage(fadeFrom.c, 0, 0, W, H); ctx.globalAlpha = 1; }
+    }
     D.confetti(ctx, parts);
   }
   requestAnimationFrame(frame);
 }
+
+// Which music plays where: the first track in each list that has been made (Suno codes M1-M9).
+const SCENE_MUSIC = new Map([
+  [Title, () => ['m1-title']],
+  [DayStart, () => ['m3-market']], [Market, () => ['m3-market']],
+  [Kitchen, () => ['m4-kitchen']], [Bake, () => ['m4-kitchen']],
+  [Street, () => [day?.event === 'birthday' && 'm8-birthday', day?.event === 'rain' && 'm9-rain', 'm2-shop'].filter(Boolean)],
+  [Find, () => ['m5-drive', 'm2-shop']], [Drive, () => ['m5-drive', 'm2-shop']], [Doorstep, () => ['m5-drive', 'm2-shop']],
+  [Results, () => ['m6-evening', 'm2-shop']], [Upgrades, () => ['m6-evening', 'm2-shop']],
+  [SeasonEnd, () => ['m7-season-end', 'm1-title']],
+]);
 
 // For automated checks: read-only peek at the game.
 const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd};
 window.__cupcake = {get save() { return save; }, get day() { return day; }, scenes: SCENES, town, get scene() { return Object.keys(SCENES).find(k => SCENES[k] === scene); }};
 
 resize();
-await Promise.all([loadArt(BASE), loadVoice(BASE), document.fonts?.ready]);
+const loadbar = document.getElementById('loadbar');
+await Promise.all([loadArt(BASE, k => { if (loadbar) loadbar.style.width = `${Math.round(k * 100)}%`; }), loadVoice(BASE), loadMusic(BASE), document.fonts?.ready]);
 go(Title);
 requestAnimationFrame(frame);
 if ('serviceWorker' in navigator && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') navigator.serviceWorker.register(`${BASE}sw.js`, {scope: BASE}).catch(() => {});

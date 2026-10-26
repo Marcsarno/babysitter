@@ -964,6 +964,34 @@ export function cozy(ctx, W, H, o = {}) {
   ellipse(ctx, W * 0.5, H * 0.83, W * 0.3, H * 0.045, '#d9c8f5', 0);
 }
 
+// A little feelings bubble over someone's head (E1-E7 pictures, drawn in code until they exist).
+// It pops in over the first fifth of a second and bobs gently; x, y is its bottom centre, s its size.
+const EMOTE_ART = {heart: 'e1-heart', thinking: 'e2-thinking', question: 'e3-question', sweat: 'e4-sweat', sparkles: 'e5-sparkles', wow: 'e6-wow', note: 'e7-note'};
+export function emote(ctx, kind, x, y, s, age) {
+  const pop = age < 0.2 ? Math.sin(Math.min(1, age / 0.2) * Math.PI * 0.75) / Math.sin(Math.PI * 0.75) : 1;
+  ctx.save(); ctx.translate(x, y - Math.sin(age * 3) * s * 0.04); ctx.scale(pop, pop);
+  const img = image(EMOTE_ART[kind]);
+  if (img) { const w = s * img.width / img.height; ctx.drawImage(img, -w / 2, -s, w, s); ctx.restore(); return; }
+  const lw = Math.max(1.5, s * 0.05), cy = -s * 0.55, r = s * 0.42;
+  if (kind === 'sweat') {
+    ctx.beginPath(); ctx.moveTo(0, -s * 0.95); ctx.quadraticCurveTo(s * 0.32, -s * 0.4, 0, -s * 0.1); ctx.quadraticCurveTo(-s * 0.32, -s * 0.4, 0, -s * 0.95); paint(ctx, '#9fd4f7', lw);
+    ellipse(ctx, -s * 0.06, -s * 0.38, s * 0.05, s * 0.09, 'rgba(255,255,255,.8)');
+  } else if (kind === 'sparkles') {
+    for (const [dx, dy, k] of [[-0.25, -0.35, 0.8], [0.22, -0.6, 1], [-0.05, -0.85, 0.6]]) { starPath(ctx, dx * s, dy * s, s * 0.2 * k); paint(ctx, '#ffe066', lw * 0.8); }
+  } else {
+    // a round white bubble with a little tail
+    ctx.beginPath(); ctx.arc(0, cy, r, 0, Math.PI * 2); paint(ctx, '#fff', lw);
+    ctx.beginPath(); ctx.moveTo(-s * 0.08, cy + r * 0.92); ctx.lineTo(-s * 0.16, -s * 0.02); ctx.lineTo(s * 0.06, cy + r * 0.95); ctx.closePath(); paint(ctx, '#fff', 0);
+    ctx.beginPath(); ctx.moveTo(-s * 0.09, cy + r * 0.97); ctx.lineTo(-s * 0.16, -s * 0.02); ctx.lineTo(s * 0.06, cy + r * 0.97); paint(ctx, null, lw);
+    if (kind === 'heart') { heartPath(ctx, 0, cy + s * 0.04, s * 0.26); paint(ctx, '#ff7eb6', lw * 0.7); }
+    else if (kind === 'thinking') for (let i = -1; i <= 1; i++) circle(ctx, i * s * 0.15, cy, s * 0.055, C.ink);
+    else if (kind === 'question') text(ctx, '?', 0, cy + s * 0.02, s * 0.5, {color: C.pink, weight: 700});
+    else if (kind === 'note') text(ctx, '♪', 0, cy + s * 0.02, s * 0.48, {color: C.pink, weight: 700});
+    else { starPath(ctx, 0, cy, s * 0.24); paint(ctx, '#ffd23d', lw * 0.7); }
+  }
+  ctx.restore();
+}
+
 export function confetti(ctx, parts) {
   for (const p of parts) {
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a);
