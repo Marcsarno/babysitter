@@ -21,7 +21,17 @@ Art prompts are in [`arianna-cupcakes-art-prompts.md`](arianna-cupcakes-art-prom
 - **Extras:** rain days, party days and Baxter's Birthday (dog customers, double tips); the sticker book; read-aloud and sound toggles; Big Kid mode; offline install.
 - **Voice:** every line is pre-recorded with the Kokoro "Heart" voice (`js/say.js` lists them; `art/cupcake/voice.mjs` records them). Free-typed cupcake names are shown but not spoken. A line without a recording falls back to the device voice.
 
-**Art:** Arianna and Baxter come from the two character sheets. Every other pose uses a stand-in from the sheets until its picture arrives. Customers are drawn in code until C1–C8 arrive.
+**Art:** every round 1–3 picture is in the game:
+- Arianna, Baxter and their poses.
+- All 13 customers.
+- The title and icon.
+- The painted shop, kitchen, market, three houses, cozy room and morning street.
+- Cupcakes built from the cake, frosting and topping pictures.
+- The bowl, piping bag and oven in the mini-game.
+- Both vans, recolored in the browser for each van paint.
+- The town-map tiles, the shop decorations, the coin, the register and the season trophies.
+
+Any picture that is missing falls back to the code drawing. New art goes in `art/cupcake/` named by its prompt code; `art/cupcake/process.py` cuts it out.
 
 **Not built yet:**
 - Regulars who come back and ask for their favorite.
