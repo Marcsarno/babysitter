@@ -2,6 +2,7 @@
 import * as L from './logic.js';
 import * as SH from './shops.js';
 import * as SA from './salon.js';
+import * as TY from './toys.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN, T} from './town.js';
 import * as D from './draw.js';
 import {loadArt, allArt, drawPose, poseWidth, image, CUSTOMER_ART} from './art.js';
@@ -83,9 +84,9 @@ function speakerButton(getText, customer = null) { return h('button', {class: 's
 function hud(show = true) {
   hudEl.classList.toggle('hidden', !show || !save);
   if (!show || !save) return;
-  const ev = scene === Salon ? null : day?.event;
+  const ev = scene === Salon || scene === ToyShop ? null : day?.event;
   hudEl.replaceChildren(...[
-    h('div', {class: 'chip'}, scene === Salon ? '✂️ Salon' : `Day ${day ? day.number : save.day}`),
+    h('div', {class: 'chip'}, scene === Salon ? '✂️ Salon' : scene === ToyShop ? '🧸 Toy shop' : `Day ${day ? day.number : save.day}`),
     ev ? h('div', {class: 'chip event'}, {rain: '🌧️ Rainy', birthday: '🎉 Baxter’s birthday', party: '🎈 Party day'}[ev]) : null,
     h('div', {class: 'spacer'}),
     h('div', {class: 'chip cash', id: 'cash'}, `$${(cashShown = save.cash)}`),
@@ -355,7 +356,7 @@ const DayStart = {
         const n = SH.booked(save, id);
         // a shop needs bookings: each cupcake day brings one more
         if (!n) return card(id + ' off', SH.SHOPS[id].icon, SH.SHOPS[id].short, 'No bookings yet. Open the cupcake shop today!', () => { toast(S.noBookings); speak(S.noBookings); });
-        return card(id, SH.SHOPS[id].icon, SH.SHOPS[id].short, S.nudge[id](n), () => (id === 'salon' ? go(Salon) : go(ShopDay, id)));
+        return card(id, SH.SHOPS[id].icon, SH.SHOPS[id].short, S.nudge[id](n), () => (id === 'salon' ? go(Salon) : go(ToyShop)));
       }),
       h('div', {class: 'muted small'}, 'A day at a new shop is a bonus day. Your cupcake season waits for you.'));
   },
@@ -1727,6 +1728,180 @@ const Salon = {
     }
   },
 };
+// ---------- a day at the toy shop ----------
+// First the shelves get stocked with boxes of ten and loose toys (tens and ones), then customers bring the
+// money they've saved: she counts it up on the register, and they buy the best toy it pays for.
+// No timers and no way to fail: a wrong answer gets a hint, then the answer.
+const ToyShop = {
+  enter() {
+    hud(true);
+    this.played = save.shops.log.filter(e => e.shop === 'toy').length;
+    const r = this.r = L.rng((save.seed ^ Math.imul(this.played + 202, 2654435761)) >>> 0);
+    const ids = Object.keys(TY.TOYS).sort(() => r() - 0.5).slice(0, TY.SHELVES), level = TY.stockLevel(this.played, settings.bigKid);
+    this.shelves = ids.map(id => ({id, need: TY.makeStock(r, level), tens: 0, ones: 0, done: false, tries: 0, ghost: null}));
+    this.queue = SA.clients(r, Math.max(1, SH.booked(save, 'toy')));
+    this.queue.forEach(preloadCustomer);
+    Object.assign(this, {si: 0, i: -1, earned: 0, served: [], c: null, waitUntil: 0});
+    this.panel = h('div', {class: 'panel'});
+    mount(this.panel);
+    this.startShelf();
+    coach('toy');
+  },
+  say(text, ...more) { return h('div', {class: 'status'}, h('div', {class: 'grow'}, text), ...more); },
+  // stocking: boxes of ten and loose toys until the shelf has what it needs
+  startShelf() {
+    const sh = this.shelves[this.si];
+    this.renderShelf();
+    speak([this.si ? null : S.toySays.welcome, S.shelfNeeds(sh.need), this.si || this.played ? null : S.boxOfTen].filter(Boolean));
+  },
+  renderShelf() {
+    const sh = this.shelves[this.si], task = `${TY.TOYS[sh.id].name}: ${S.shelfNeeds(sh.need)}`;
+    const add = (k, d) => () => { if (sh.done) return; sh[k] = Math.max(0, Math.min(k === 'tens' ? 9 : 19, sh[k] + d)); sfx.pop(); this.renderShelf(); };
+    this.panel.replaceChildren(this.say(task, speakerButton(() => S.shelfNeeds(sh.need))),
+      h('div', {class: 'stock'},
+        h('div', null, btn('📦 Box of 10', add('tens', 1), 'mint'), btn('−', add('tens', -1), 'ghost small')),
+        h('div', null, btn('➕ One toy', add('ones', 1), 'mint'), btn('−', add('ones', -1), 'ghost small'))),
+      h('div', {class: 'row-end'}, h('div', {class: 'muted grow'}, TY.stockLevel(this.played, settings.bigKid) === 0 ? `${sh.tens} box${sh.tens === 1 ? '' : 'es'} and ${sh.ones} loose` : ''),
+        btn('Done!', () => this.checkShelf(), 'pink')));
+  },
+  checkShelf() {
+    const sh = this.shelves[this.si];
+    if (sh.done) return;
+    if (sh.tens * 10 + sh.ones === sh.need) {
+      sh.done = true; sh.ghost = null;
+      sfx.yes(); confettiBurst(W / 2, this.shelfY?.[this.si] ?? H * 0.4, 20);
+      speak(S.toySays.full);
+      this.waitUntil = now + 1.2;
+      return;
+    }
+    sh.tries++;
+    sfx.gentle();
+    if (sh.tries >= 2) sh.ghost = TY.tensOnes(sh.need);
+    speak(sh.tries >= 2 ? S.tensAndOnes(sh.need) : S.boxOfTen);
+  },
+  // selling: count the customer's money on the register
+  nextCustomer() {
+    this.i++;
+    if (this.i >= this.queue.length) return this.finish();
+    const type = this.queue[this.i];
+    const c = this.c = {type, money: TY.makeMoney(this.r, TY.coinLevel(this.played, settings.bigKid)), typed: '', tries: 0, phase: 'count', t0: now};
+    const screen = h('div', {class: 'screen'}, h('span', {class: 'what'}, 'How much money?'), h('span', null, ''));
+    const show = () => { screen.lastChild.textContent = TY.dollars(+c.typed || 0); };
+    const key = k => () => {
+      if (c.phase !== 'count') return;
+      sfx.tap();
+      if (k === 'del') c.typed = c.typed.slice(0, -1);
+      else if (k === 'ok') return this.checkMoney(show);
+      else if (c.typed.length < 3) c.typed = (c.typed + k).replace(/^0+(?=\d)/, '');
+      show();
+    };
+    removeEventListener('keydown', this.keyHandler);
+    this.keyHandler = e => { if (/^\d$/.test(e.key)) key(e.key)(); else if (e.key === 'Backspace') key('del')(); else if (e.key === 'Enter') key('ok')(); };
+    addEventListener('keydown', this.keyHandler);
+    const keys = h('div', {class: 'keys'});
+    for (const k of ['1', '2', '3', 'del', '4', '5', '6', 'ok', '7', '8', '9', '0']) keys.append(h('button', {class: 'key' + (k === 'ok' ? ' ok' : k === 'del' ? ' del' : ''), onclick: key(k), style: k === '0' ? 'grid-column: 2' : ''}, k === 'del' ? '⌫' : k === 'ok' ? 'OK' : k));
+    this.panel.className = 'panel register';
+    this.panel.replaceChildren(this.say(h('span', null, h('b', null, L.CUSTOMERS[type].name), h('br'), S.shopper.hi), speakerButton(() => S.shopper.hi, type)), screen, keys);
+    show();
+    speak([S.shopper.hi], {customer: type});
+    if (!this.i) setTimeout(() => { if (this.c === c && c.phase === 'count') speak(S.countMoney); }, 2600);
+  },
+  checkMoney(show) {
+    const c = this.c, total = c.money.total;
+    if (!c.typed) { sfx.gentle(); return; }
+    if (+c.typed !== total) {
+      c.tries++;
+      sfx.gentle();
+      if (c.tries >= 2) { c.counting = true; c.typed = String(total); show(); speak([S.moneyHint, S.thatsMoney(total)]); }
+      else { c.typed = ''; show(); speak(TY.coinLevel(this.played, settings.bigKid) >= 2 ? [S.coinNames, S.moneyHint] : S.moneyHint); }
+      return;
+    }
+    // counted: they buy the best toy it pays for
+    const stocked = this.shelves.filter(sh => sh.tens * 10 + sh.ones > 0).map(sh => sh.id);
+    const toy = TY.choose(this.r, total, stocked), price = toy ? TY.TOYS[toy].price : 0;
+    Object.assign(c, {phase: 'buy', toy, t0: now});
+    removeEventListener('keydown', this.keyHandler);
+    if (toy) {
+      const sh = this.shelves.find(x => x.id === toy);
+      if (sh.ones) sh.ones--; else { sh.tens--; sh.ones = 9; }   // open a box when the loose ones run out
+      this.earned += price;
+      save.stickers[c.type] = (save.stickers[c.type] || 0) + 1;
+      this.served.push(c.type);
+      sfx.chaChing();
+      if (this.tray) coinsTo(this.tray.x, this.tray.y, 8);
+    }
+    this.panel.className = 'panel';
+    this.panel.replaceChildren(this.say(h('span', null, h('b', null, L.CUSTOMERS[c.type].name), h('br'), toy ? `Buys a ${TY.TOYS[toy].one} for ${TY.dollars(price)}` : 'Just looking today!'), toy ? h('b', {class: 'earned'}, `+${TY.dollars(price)}`) : null),
+      btn(this.i + 1 < this.queue.length ? 'Next customer →' : 'Close the shop →', () => this.nextCustomer(), 'pink big wide'));
+    speak([S.thatsMoney(total)]);
+    if (toy) setTimeout(() => { if (this.c === c) speak([S.shopper[toy], S.shopper.yay], {customer: c.type}); }, 1500);
+  },
+  finish() {
+    removeEventListener('keydown', this.keyHandler);
+    this.c = null; this.done = true;
+    const jarBefore = save.shops.cents || 0, toCash = TY.bankCents(save, this.earned);
+    save.cash += toCash;
+    save.shops.log.push({shop: 'toy', day: save.day, earned: this.earned / 100, clients: this.served.length});
+    save.shops.booked.toy = 0;
+    persist(); cashChanged();
+    mount(h('div', {class: 'back', style: 'background:transparent'}, h('div', {class: 'card results center'},
+      h('h2', null, 'Toy shop day done!'),
+      h('div', {class: 'big3'}, h('div', null, h('small', null, 'Customers'), h('b', null, String(this.served.length))), h('div', {class: 'profit gain'}, h('small', null, 'Sold'), h('b', null, TY.dollars(this.earned)))),
+      h('div', {class: 'note'}, `🫙 Coin jar: ${jarBefore}¢ + ${TY.dollars(this.earned)} → $${toCash} for your cash, and ${save.shops.cents}¢ stays in the jar.`),
+      h('p', {class: 'muted'}, '100 cents make 1 dollar!'),
+      h('div', {class: 'actions'}, btn('Back to the morning →', () => go(DayStart), 'pink')))));
+    sfx.unlock(); confettiBurst(W / 2, H * 0.3, 60);
+    speak([S.toyDone, S.hundredCents]);
+  },
+  exit() { removeEventListener('keydown', this.keyHandler); },
+  update() {
+    if (this.waitUntil && now > this.waitUntil) {
+      this.waitUntil = 0;
+      this.si++;
+      if (this.si < this.shelves.length) this.startShelf(); else this.nextCustomer();
+    }
+  },
+  draw() {
+    const [top, bottom] = openArea(), room = bottom - top, c = this.c;
+    const gy = top + room * 0.82;
+    D.toyRoom(ctx, W, H, gy, now);
+    const ch = Math.min(room * 0.4, W * 0.5);
+    if (this.done) { arianna('cheer', W * 0.4, gy + room * 0.14, ch); baxter('excited', W * 0.7, gy + room * 0.14, ch * 0.4); return; }
+    if (!c) {
+      // the three shelves, the one being stocked lit up
+      this.shelfY = [];
+      this.shelves.forEach((sh, i) => {
+        const y = top + room * (0.3 + i * 0.27);
+        this.shelfY.push(y - 30);
+        if (i === this.si) { D.rr(ctx, 6, y - room * 0.25, W - 12, room * 0.26, 16); ctx.fillStyle = 'rgba(255,224,138,.35)'; ctx.fill(); }
+        D.text(ctx, `${TY.TOYS[sh.id].name}${sh.done ? ' ✓' : i === this.si ? `: ${sh.need}` : ''}`, 16, y - room * 0.21, 16, {align: 'left', weight: 700});
+        D.toyShelf(ctx, 14, y, W - 28, sh.id, sh.tens, sh.ones, {ghost: i === this.si ? sh.ghost : null});
+      });
+      return;
+    }
+    // the customer's money on the counter tray, the customer, and Arianna at the register
+    const pieces = c.money.pieces, s = Math.min(W / 6.5, room * 0.13), perRow = 5;
+    const rows = Math.ceil(pieces.length / perRow), tx = W / 2, ty = top + 14;
+    D.rr(ctx, 10, ty, W - 20, rows * s * 1.05 + 20, 18); ctx.fillStyle = 'rgba(255,248,238,.95)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
+    this.tray = {x: tx, y: ty + 40};
+    // counting help: biggest first, with the running total over each piece
+    const order = pieces.map((p, i) => i).sort((a, b) => TY.MONEY[pieces[b]] - TY.MONEY[pieces[a]]);
+    const running = {};
+    order.reduce((sum, i) => (running[i] = sum + TY.MONEY[pieces[i]]), 0);
+    const labels = TY.coinLevel(this.played, settings.bigKid) < 2;
+    pieces.forEach((p, i) => {
+      const row = Math.floor(i / perRow), col = i % perRow, n = Math.min(perRow, pieces.length - row * perRow);
+      const x = tx + (col - (n - 1) / 2) * s * 1.12, y = ty + 10 + s * 0.52 + row * s * 1.05;
+      D.moneyPiece(ctx, p, x, y, p === 'dollar' ? s * 0.62 : s, labels);
+      if (c.counting) D.text(ctx, TY.dollars(running[i]).replace('$0.', '') + (running[i] < 100 ? '¢' : ''), x, y - s * 0.5, 13, {weight: 700, color: D.C.pink, stroke: '#fff', sw: 4});
+    });
+    const fy = gy + room * 0.14;
+    arianna('wave', W * 0.22, fy, ch);
+    drawCustomer(ctx, c.type, W * 0.76, fy, ch * 0.9, {t: now, face: c.phase === 'buy' && c.toy ? 'wow' : null});
+    if (c.phase === 'buy' && c.toy) D.toyIcon(ctx, c.toy, W * 0.6, fy - ch * 0.45, ch * 0.22);
+  },
+};
+
 // ---------- a bonus day at a new shop ----------
 // Stand-in until each shop's own day is built.
 const ShopDay = {
@@ -1747,6 +1922,8 @@ const ShopDay = {
 
 // ---------- menus ----------
 function openSettings() {
+  // grown-ups (?shops) can build the next shop straight away, even one that isn't open to everyone yet
+  const nextShop = query.has('shops') && save && !save.shops.building ? SH.ORDER.find(id => !save.shops.built.includes(id)) : null;
   const row = (key, name, desc) => {
     const sw = h('button', {class: 'switch' + (settings[key] ? ' on' : ''), 'aria-label': name, onclick: () => { settings[key] = !settings[key]; sw.classList.toggle('on', settings[key]); applySettings(); sfx.tap(); }});
     return h('div', {class: 'toggle'}, h('div', null, name, h('small', null, desc)), sw);
@@ -1757,11 +1934,11 @@ function openSettings() {
     row('music', 'Music', 'Gentle music in the background'),
     row('easyDrive', 'Easy driving', 'The van follows the road and turns at corners'),
     row('bigKid', 'Big Kid mode', 'Harder word problems and deals, the grid sooner'),
-    query.has('shops') && save && SH.fundFor(save) ? h('div', {class: 'toggle'}, h('div', null, 'Build the next shop now', h('small', null, `Skip the jar: Builder Bo builds the ${SH.SHOPS[SH.fundFor(save)].short.toLowerCase()} tomorrow morning`)),
+    nextShop ? h('div', {class: 'toggle'}, h('div', null, 'Build the next shop now', h('small', null, `Skip the jar: Builder Bo builds the ${SH.SHOPS[nextShop].short.toLowerCase()} tomorrow morning`)),
       btn('Build', () => {
         // change the saved game, not today's, so today starts over from the morning as going home does
         save = L.migrate(readJSON(L.SAVE_KEY)) || save;
-        save.shops.building = SH.fundFor(save); persist(); close(); go(DayStart);
+        save.shops.building = nextShop; persist(); close(); go(DayStart);
       }, 'mint small')) : null,
     h('div', {class: 'actions'}, btn('Done', () => close(), 'pink')));
 }
@@ -1828,11 +2005,11 @@ const SCENE_MUSIC = new Map([
   [Find, () => ['m5-drive', 'm2-shop']], [Drive, () => ['m5-drive', 'm2-shop']], [Doorstep, () => ['m5-drive', 'm2-shop']],
   [Results, () => ['m6-evening', 'm2-shop']], [Upgrades, () => ['m6-evening', 'm2-shop']],
   [SeasonEnd, () => ['m7-season-end', 'm1-title']],
-  [Build, () => ['m1-title']], [ShopDay, () => ['m2-shop']], [Salon, () => ['m2-shop']],
+  [Build, () => ['m1-title']], [ShopDay, () => ['m2-shop']], [Salon, () => ['m2-shop']], [ToyShop, () => ['m2-shop']],
 ]);
 
 // For automated checks: read-only peek at the game.
-const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd, Build, ShopDay, Salon};
+const SCENES = {Title, DayStart, Market, Kitchen, Bake, Street, Find, Drive, Doorstep, Results, Upgrades, SeasonEnd, Build, ShopDay, Salon, ToyShop};
 window.__cupcake = {get save() { return save; }, get day() { return day; }, scenes: SCENES, town, get scene() { return Object.keys(SCENES).find(k => SCENES[k] === scene); }, go: (name, arg) => go(SCENES[name], arg)};
 
 resize();

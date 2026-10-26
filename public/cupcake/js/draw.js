@@ -1026,6 +1026,71 @@ export function styleTouch(ctx, id, x, y, s, t = 0) {
   }
 }
 
+// ---------- the toy shop (stand-ins until its pictures are made) ----------
+export function toyRoom(ctx, W, H, gy, t = 0) {
+  ctx.fillStyle = '#e3f2ff'; ctx.fillRect(0, 0, W, gy);
+  for (let i = 0; i < 18; i++) { starPath(ctx, (i * 97.3) % W, 30 + (i * 53.7) % (gy * 0.6), 6 + (i % 3) * 2); paint(ctx, ['#ffe08a', '#ffc6dc', '#c3a6ec'][i % 3], 0); }
+  // bunting along the top
+  bunting(ctx, 0, W, H * 0.1, 18, 10);
+  ctx.fillStyle = '#e8c49a'; ctx.fillRect(0, gy, W, H - gy);
+  for (let y = gy; y < H; y += 26) { ctx.fillStyle = 'rgba(193,141,95,.25)'; ctx.fillRect(0, y, W, 2); }
+}
+// A toy, drawn: x, y its middle, s its size.
+export function toyIcon(ctx, id, x, y, s) {
+  const lw = Math.max(1.2, s * 0.06);
+  if (id === 'teddy') shopIcon(ctx, 'toy', x, y, s * 1.2);
+  else if (id === 'ball') {
+    circle(ctx, x, y, s * 0.42, '#f27aa9', lw);
+    ctx.save(); ctx.beginPath(); ctx.arc(x, y, s * 0.42, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#ffe08a'; ctx.fillRect(x - s, y - s * 0.1, s * 2, s * 0.2); ctx.restore();
+    circle(ctx, x, y, s * 0.42, null, lw);
+  } else if (id === 'car') {
+    rr(ctx, x - s * 0.45, y - s * 0.12, s * 0.9, s * 0.3, s * 0.1); paint(ctx, '#86c3f2', lw);
+    rr(ctx, x - s * 0.22, y - s * 0.34, s * 0.44, s * 0.26, s * 0.08); paint(ctx, '#86c3f2', lw);
+    rr(ctx, x - s * 0.16, y - s * 0.29, s * 0.32, s * 0.15, s * 0.04); paint(ctx, '#e3f2ff', lw * 0.7);
+    circle(ctx, x - s * 0.24, y + s * 0.2, s * 0.11, C.ink); circle(ctx, x + s * 0.24, y + s * 0.2, s * 0.11, C.ink);
+  } else {
+    ctx.beginPath(); ctx.moveTo(x, y - s * 0.32); ctx.lineTo(x, y - s * 0.46); paint(ctx, null, lw, C.ink); circle(ctx, x, y - s * 0.48, s * 0.05, '#f27aa9');
+    rr(ctx, x - s * 0.24, y - s * 0.34, s * 0.48, s * 0.3, s * 0.06); paint(ctx, '#c9c9d6', lw);
+    circle(ctx, x - s * 0.1, y - s * 0.2, s * 0.05, '#8ccaf5'); circle(ctx, x + s * 0.1, y - s * 0.2, s * 0.05, '#8ccaf5');
+    rr(ctx, x - s * 0.3, y - s * 0.02, s * 0.6, s * 0.4, s * 0.06); paint(ctx, '#9fe3c0', lw);
+    circle(ctx, x, y + s * 0.18, s * 0.07, '#ffe08a');
+  }
+}
+// One shelf of a toy: closed boxes of ten on the left, loose toys on the right. Returns its height.
+export function toyShelf(ctx, x, y, w, id, tens, ones, {ghost = null} = {}) {
+  const lw = Math.max(2, w * 0.006), unit = Math.min(w / 10.5, 40);
+  const plank = y;
+  // boxes of ten, two rows if needed
+  for (let i = 0; i < tens; i++) {
+    const bx = x + 6 + (i % 5) * unit * 1.45, by = plank - unit * 1.2 - Math.floor(i / 5) * unit * 1.25;
+    rr(ctx, bx, by, unit * 1.35, unit * 1.15, 4); paint(ctx, '#e0b083', lw);
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx + 3, by + 3, unit * 1.35 - 6, unit * 0.18);
+    toyIcon(ctx, id, bx + unit * 0.45, by + unit * 0.62, unit * 0.62);
+    text(ctx, '10', bx + unit * 1.0, by + unit * 0.66, unit * 0.48, {weight: 700});
+  }
+  // loose ones, in a little row of up to nine
+  for (let i = 0; i < ones; i++) toyIcon(ctx, id, x + w * 0.58 + (i % 5) * unit * 0.86, plank - unit * 0.42 - Math.floor(i / 5) * unit * 0.86, unit * 0.8);
+  if (ghost) { ctx.globalAlpha = 0.3; toyShelf(ctx, x, y, w, id, ghost.tens, ghost.ones); ctx.globalAlpha = 1; }
+  rr(ctx, x - 4, plank, w + 8, unit * 0.32, 4); paint(ctx, '#c18d5f', lw);
+}
+// A dollar bill or a coin, x, y its middle, s its size. Labels show what each is worth while she learns.
+export const MONEY_STYLE = {dollar: ['#bfe6b0', 1.6], quarter: ['#d9dbe3', 0.62], dime: ['#d9dbe3', 0.44], nickel: ['#cfd1da', 0.53], penny: ['#e0a070', 0.47]};
+export function moneyPiece(ctx, kind, x, y, s, label = true) {
+  const [color, k] = MONEY_STYLE[kind], lw = Math.max(1.5, s * 0.04);
+  if (kind === 'dollar') {
+    rr(ctx, x - s * 0.8, y - s * 0.36, s * 1.6, s * 0.72, s * 0.06); paint(ctx, color, lw);
+    rr(ctx, x - s * 0.7, y - s * 0.27, s * 1.4, s * 0.54, s * 0.04); paint(ctx, null, lw * 0.6, '#5f9f5a');
+    circle(ctx, x, y, s * 0.2, '#e6f5df', lw * 0.6);
+    text(ctx, '$1', x, y + 1, s * 0.26, {weight: 700, color: '#2f6b2b'});
+    return;
+  }
+  circle(ctx, x, y + s * 0.03, s * k, 'rgba(91,58,41,.2)');
+  circle(ctx, x, y, s * k, color, lw);
+  circle(ctx, x, y, s * k * 0.8, null, lw * 0.5, 'rgba(91,58,41,.35)');
+  if (label) text(ctx, `${{quarter: 25, dime: 10, nickel: 5, penny: 1}[kind]}¢`, x, y + 1, s * k * 0.7, {weight: 700});
+}
+
 // ---------- scenes ----------
 function sky(ctx, W, H, t, top = '#9fd8ff', bottom = '#e6f6ff') {
   const g = ctx.createLinearGradient(0, 0, 0, H * 0.6);

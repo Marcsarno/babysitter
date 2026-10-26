@@ -269,3 +269,6 @@ button { font-family: inherit; color: inherit; touch-action: manipulation; }
 .styles .btn { flex: 1; min-height: 84px; }
 .styles .icon { display: block; font-size: 34px; }
 .earned { font-size: 24px; color: var(--mintD); }
+.stock { display: flex; gap: 10px; }
+.stock > div { flex: 1; display: flex; gap: 6px; }
+.stock > div .btn.mint { flex: 1; }

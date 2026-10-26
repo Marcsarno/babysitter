@@ -3,6 +3,7 @@
 // Lines with numbers are split into short sentences so every combination can be recorded.
 import {INGREDIENTS, UPGRADES, DECOR, PAINTS, dealsFor, compareDeals, orderSentences} from './logic.js';
 import {timePhrase, allTimes, allCuts, STYLES} from './salon.js';
+import {TOYS, amountPhrase, allAmounts} from './toys.js';
 
 // Who speaks in which Kokoro voice, as "voice" or "voice@pitch" (pitch shifted without changing speed).
 // Chosen in the voice casting page. Arianna says her own lines, each customer says theirs, and the
@@ -13,8 +14,8 @@ export const CAST = {
   bunny: 'af_nova@1.1', cat: 'bf_emma@1.1', bear: 'am_santa@0.88', duck: 'af_jessica@1.32',
   pug: 'am_echo@1.2', poodle: 'bf_isabella@1.1', spot: 'am_adam@1.1',
 };
-const ARIANNA = ['firstDay', 'openShop', 'designDone', 'ding', 'closing', 'comingUp', 'hereYouGo', 'salonSays'];
-const CUSTOMER = ['woof', 'thanks', 'bo', 'client'];
+const ARIANNA = ['firstDay', 'openShop', 'designDone', 'ding', 'closing', 'comingUp', 'hereYouGo', 'salonSays', 'toySays'];
+const CUSTOMER = ['woof', 'thanks', 'bo', 'client', 'shopper'];
 
 export const VENDOR = {corner: 'Corner Market', barn: 'Bulk Barn'};
 export const GREET = ['Hi Arianna!', 'Hello there!', 'Ooh, cupcakes!', 'Yum, it smells so good!', 'Hi! Hi Baxter!'];
@@ -34,6 +35,7 @@ export const S = {
     bake: "Let's bake! Follow each step to make the yummiest cupcakes.",
     fund: 'This is the building fund jar! Save money in it, and Builder Bo will build a new shop.',
     salon: 'Welcome to your hair salon! Book each client on the clock, then snip their hair at the ruler.',
+    toy: 'Welcome to your toy shop! Fill the shelves with boxes of ten, then count the money customers bring.',
   },
   day: n => `Day ${n}!`,
   event: {
@@ -122,6 +124,18 @@ export const S = {
   salonDone: 'Salon day done!',
   noBookings: 'No bookings yet! Open the cupcake shop today, and more people will book.',
   salonEarned: n => `You earned ${n} dollars at the salon!`,
+  // the toy shop (toys.js)
+  shopper: {hi: 'Hi Arianna! Look how much money I saved!', ...Object.fromEntries(Object.entries(TOYS).map(([id, t]) => [id, `Can I have a ${t.one}, please?`])), yay: 'Yay! I love it!'},
+  toySays: {welcome: 'New toys are here!', full: 'The shelf is full!', counted: 'Let me count it!'},
+  shelfNeeds: n => `This shelf needs ${n} toys.`,
+  tensAndOnes: n => `${n} is ${Math.floor(n / 10)} ${Math.floor(n / 10) === 1 ? 'ten' : 'tens'} and ${n % 10} ${n % 10 === 1 ? 'one' : 'ones'}.`,
+  boxOfTen: 'Each box has 10 toys. Loose toys are ones.',
+  countMoney: 'How much money is it? Count it up!',
+  moneyHint: 'Count the dollars first. Then count on with the quarters, the dimes, the nickels and the pennies.',
+  coinNames: 'A quarter is 25 cents. A dime is 10 cents. A nickel is 5 cents. A penny is 1 cent.',
+  thatsMoney: a => `That's ${amountPhrase(a)}!`,
+  hundredCents: 'One hundred cents make one dollar!',
+  toyDone: 'Toy shop day done!',
   nudge: {
     salon: n => (n === 1 ? 'One appointment is booked at the salon!' : `${n} appointments are booked at the salon!`),
     toy: n => (n === 1 ? 'One customer is waiting at the toy shop!' : `${n} customers are waiting at the toy shop!`),
@@ -155,6 +169,8 @@ export function linesBy() {
   for (const t of allTimes()) add(S.setClock(timePhrase(t)));
   for (const c of allCuts()) { add(S.makeIt(c.from, c.to)); add(S.cutOff(c.from, c.off)); add(S.takeAway(c.from, c.off, c.to)); add(S.findOn(c.to)); }
   for (let n = 1; n <= 60; n++) add(S.salonEarned(n));
+  for (let n = 11; n <= 99; n++) if (n % 10) { add(S.shelfNeeds(n)); add(S.tensAndOnes(n)); }
+  for (const a of allAmounts()) add(S.thatsMoney(a));
   for (const id in INGREDIENTS) add(S.newIngredient(id));
   for (const u of Object.values(UPGRADES)) add(S.bought(u.name));
   for (const d of Object.values(DECOR)) add(S.bought(d.name));
