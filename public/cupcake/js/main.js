@@ -2,7 +2,7 @@
 import * as L from './logic.js';
 import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN, T} from './town.js';
 import * as D from './draw.js';
-import {loadArt, drawPose, poseWidth, image, CUSTOMER_ART} from './art.js';
+import {loadArt, allArt, drawPose, poseWidth, image, CUSTOMER_ART} from './art.js';
 import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice, preloadCustomer, loadMusic, music, musicOn, pauseMusic} from './audio.js';
 import {S, GREET} from './say.js';
 
@@ -50,12 +50,12 @@ function toast(msg, ms = 2200) {
   app.append(el);
   setTimeout(() => el.remove(), ms);
 }
-function portrait(who, pose = 'stand', size = 108) {
+function portrait(who, pose = 'stand', size = 108, face = null) {
   const c = h('canvas', {width: size, height: size});
   const g = c.getContext('2d');
   if (who === 'arianna') { if (!drawPose(g, 'arianna', pose, size / 2, size * 3.2, size * 3.25)) D.person(g, 'arianna', size / 2, size * 1.9, size * 2.1); }
   else if (who === 'baxter') { if (!drawPose(g, 'baxter', 'sit', size / 2, size * 2.05, size * 2.1)) D.person(g, 'baxter', size / 2, size * 1.9, size * 2.1); }
-  else if (image(CUSTOMER_ART[who])) drawCustomer(g, who, size / 2, size * 2.05, size * 2.05 / (ART_SCALE[who] || 1), {});
+  else if (image(CUSTOMER_ART[who])) drawCustomer(g, who, size / 2, size * 2.05, size * 2.05 / (ART_SCALE[who] || 1) / (face && FEELING_SCALE[`${CUSTOMER_ART[who]}-happy`] || 1), {face});
   else drawCustomer(g, who, size / 2, size * 2.1, size * 2.3, {});
   return c;
 }
@@ -115,6 +115,23 @@ function confettiBurst(x, y, n = 40) {
 function coinsTo(x, y, n) {
   const target = cashPoint();
   for (let i = 0; i < Math.min(n, 14); i++) parts.push({x, y, vx: (Math.random() - 0.5) * 260, vy: -Math.random() * 260 - 80, a: 0, va: 0, s: 10, coin: true, life: 1.6, delay: i * 0.05, target, home: 0});
+}
+// Coins fly from the money counter to what she bought. They're page elements so they show above the panels.
+function coinsOut(target, n) {
+  const from = document.getElementById('cash')?.getBoundingClientRect(), to = target.getBoundingClientRect(), a = app.getBoundingClientRect();
+  if (!from || calm.matches || !image('u1-coin')) return;
+  for (let i = 0; i < Math.min(n, 8); i++) {
+    const c = h('img', {class: 'flycoin', src: `${BASE}art/u1-coin.webp`, alt: ''});
+    c.style.left = `${from.left - a.left + 4}px`; c.style.top = `${from.top - a.top + 6}px`;
+    app.append(c);
+    const dx = to.left + to.width / 2 - from.left - 15, dy = to.top + to.height / 2 - from.top - 17;
+    c.animate([{transform: 'translate(0, 0)'}, {transform: `translate(${dx * 0.45 + (i - n / 2) * 7}px, ${dy * 0.25 - 30}px) scale(1.15)`, offset: 0.4}, {transform: `translate(${dx}px, ${dy}px) scale(.55)`, opacity: 0.3}],
+      {duration: 600, delay: i * 55, easing: 'ease-in', fill: 'forwards'}).finished.then(() => c.remove(), () => c.remove());
+  }
+}
+// A shower of gold stars for a perfect batch.
+function starBurst(x, y, n = 14) {
+  for (let i = 0; i < n; i++) parts.push({x, y, vx: (Math.random() - 0.5) * 380, vy: -Math.random() * 380 - 160, a: Math.random() * 6, va: (Math.random() - 0.5) * 6, s: 12 + Math.random() * 10, star: true, life: 2});
 }
 function updateParts(dt) {
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -301,6 +318,8 @@ const DayStart = {
     mount(h('div', {class: 'back', style: 'align-items:start;padding-top:calc(env(safe-area-inset-top,0px) + 70px)'}, h('div', {class: 'card daycard'},
       h('div', {class: 'muted'}, save.day > L.SEASON_DAYS ? 'Free play' : `Day ${save.day} of ${L.SEASON_DAYS}`),
       h('div', {class: 'num'}, `Day ${save.day}`),
+      save.day <= L.SEASON_DAYS ? h('div', {class: 'season', 'aria-label': `Day ${save.day} of ${L.SEASON_DAYS}`},
+        h('i', {style: `width:${Math.round(100 * save.day / L.SEASON_DAYS)}%`}), image('u3-trophy-gold') ? h('img', {src: `${BASE}art/u3-trophy-gold.webp`, alt: ''}) : null) : null,
       day.event ? h('div', {class: 'event'}, lines[day.event]) : null,
       first ? h('p', null, 'Buy cake, frosting and toppings at the market. Then bake, sell, and deliver around town with Baxter!') : null,
       h('div', {class: 'actions'}, btn('Go to the market →', () => go(Market), 'pink big')))));
@@ -357,6 +376,7 @@ const Market = {
       return;
     }
     day.spent += deal.price;
+    coinsOut(el, deal.price);
     sfx.coin(); cashChanged();
     const scroll = this.list.scrollTop;
     this.render();
@@ -532,6 +552,7 @@ const Bake = {
     this.stars = L.bakeStars(this.points);
     day.quality[this.slot] = this.stars;
     sfx.unlock(); confettiBurst(W / 2, H * 0.3, 30 + this.stars * 10);
+    if (this.stars === 3) starBurst(W / 2, H * 0.32);
     speak([S.stars(this.stars), this.stars === 3 ? S.fancy : null]);
     this.head.querySelector('.steps')?.replaceChildren(...STEPS.map(([, label]) => h('span', {class: 'done'}, label)));
     this.panel.replaceChildren(h('div', {class: 'status'}, h('div', {class: 'grow', style: 'font-size:24px'}, '⭐'.repeat(this.stars) + '☆'.repeat(3 - this.stars)), h('div', null, S.stars(this.stars))),
@@ -1397,7 +1418,7 @@ function openStickers() {
   const grid = h('div', {class: 'stickers'});
   const have = save?.stickers || {};
   for (const [type, c] of Object.entries(L.CUSTOMERS)) {
-    const cnv = portrait(type, 'stand', 150);
+    const cnv = portrait(type, 'stand', 150, have[type] ? 'wow' : null); // collected stickers show them delighted
     grid.append(h('div', {class: 'sticker' + (have[type] ? '' : ' locked')}, cnv, have[type] ? c.name : '???'));
   }
   const close = modal(h('h2', null, 'Sticker book'), h('p', {class: 'center muted'}, `Serve a customer to get their sticker. ${Object.keys(have).length} of ${Object.keys(L.CUSTOMERS).length}`), grid, h('div', {class: 'actions'}, btn('Close', () => close(), 'pink')));
@@ -1464,7 +1485,10 @@ window.__cupcake = {get save() { return save; }, get day() { return day; }, scen
 
 resize();
 const loadbar = document.getElementById('loadbar');
-await Promise.all([loadArt(BASE, k => { if (loadbar) loadbar.style.width = `${Math.round(k * 100)}%`; }), loadVoice(BASE), loadMusic(BASE), document.fonts?.ready]);
+// The opening screens' pictures load first; the rest arrive in the background while she taps Start.
+const FIRST_ART = ['s1-title', 'b8-run', 'bg8-morning', 'a2-wave', 'arianna-front', 'baxter-front', 'b9-party', 'u1-coin', 'p1-card', 'p2-banner', 'p3-bubble'];
+await Promise.all([loadArt(BASE, k => { if (loadbar) loadbar.style.width = `${Math.round(k * 100)}%`; }, FIRST_ART), loadVoice(BASE), loadMusic(BASE), document.fonts?.ready]);
+allArt.then(() => { townImg = null; }); // redraw the town map with every tile picture
 document.documentElement.classList.toggle('framed', ['p1-card', 'p2-banner', 'p3-bubble'].every(image));
 go(Title);
 requestAnimationFrame(frame);

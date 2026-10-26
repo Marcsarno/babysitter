@@ -31,21 +31,25 @@ const CROPS = {
 export const CUSTOMER_ART = {grandma: 'c1-grandma', builder: 'c2-builder', boy: 'c3-boy', bunny: 'c4-bunny', cat: 'c5-cat', bear: 'c6-bear', mail: 'c7-mail', duck: 'c8-duck', girl: 'c9-girl', dad: 'c10-dad', pug: 'c11-pug', poodle: 'c12-poodle', spot: 'c13-spot'};
 
 const images = {};
-// onProgress(fraction) is called as pictures arrive, for the loading screen.
-export async function loadArt(base, onProgress = () => {}) {
+// Loads the pictures in `first` (those the opening screens need) and resolves once they are in; the
+// rest keep arriving after that, and allArt resolves when every picture has loaded or failed.
+// onProgress(fraction) follows the first pictures, for the loading screen.
+export let allArt = Promise.resolve();
+export async function loadArt(base, onProgress = () => {}, first = null) {
   try {
     const res = await fetch(`${base}art/manifest.json`, {cache: 'no-cache'});
     if (res.ok) Object.assign(FILES, await res.json());
   } catch {}
-  const names = Object.keys(FILES);
-  let loaded = 0;
-  await Promise.all(names.map(name => new Promise(done => {
+  const load = name => new Promise(done => {
     const img = new Image();
-    const finish = () => { onProgress(++loaded / names.length); done(); };
-    img.onload = () => { images[name] = img; finish(); };
-    img.onerror = finish;
+    img.onload = () => { images[name] = img; done(); };
+    img.onerror = done;
     img.src = `${base}art/${name}.webp`;
-  })));
+  });
+  const names = Object.keys(FILES), now = first ? names.filter(n => first.includes(n)) : names;
+  let loaded = 0;
+  await Promise.all(now.map(n => load(n).then(() => onProgress(++loaded / now.length))));
+  allArt = Promise.all(names.filter(n => !now.includes(n)).map(load));
 }
 export const image = name => images[name] || null;
 export const hasArt = name => !!images[name];
