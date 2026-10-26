@@ -14,11 +14,12 @@ export const POSES = {
     stand: ['arianna-front'], wave: ['a2-wave', 'arianna-front'], box: ['a3-box', 'arianna-front'],
     think: ['a4-think', 'arianna-3q'], cheer: ['a5-cheer', 'arianna-front'], drive: ['a6-drive', 'arianna-side'],
     oops: ['a7-oops', 'arianna-3q'], walk: ['a8-walk', 'arianna-side'], back: ['arianna-back'], serve: ['a9-serve', 'arianna-front'],
+    stylist: ['a10-stylist', 'arianna-front'],
   },
   baxter: {
     sit: ['baxter-front'], stand: ['baxter-3q'], excited: ['b2-excited', 'baxter-3q'], sniff: ['b3-sniff', 'baxter-side'],
     ride: ['b4-ride', 'baxter-side'], sleep: ['b5-sleep', 'baxter-back'], tilt: ['b6-tilt', 'baxter-front'], walk: ['b7-walk', 'baxter-side'],
-    run: ['b8-run', 'baxter-side'], party: ['b9-party', 'baxter-front'],
+    run: ['b8-run', 'baxter-side'], party: ['b9-party', 'baxter-front'], bow: ['b10-bow', 'baxter-front'],
   },
 };
 // Part of a stand-in picture to use for a pose (x0, y0, x1, y1 as fractions).

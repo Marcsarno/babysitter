@@ -782,9 +782,18 @@ export function shopIcon(ctx, id, x, y, s) {
 // part each time she taps: 1 the base, 2 the frame, 3 the walls, 4 the roof, 5 the window, door and
 // awning, 6 the sign. A red ribbon hangs across the door until she cuts it.
 export const BUILD_STAGES = 6;
+const FRONT_ART = {salon: 'r8-salon-front'};
 export function shopFront(ctx, id, x, y, w, stage, {ribbon = false, t = 0} = {}) {
   const shop = SHOPS[id], lw = Math.max(2, w * 0.012);
   const wallH = w * 0.6, left = x - w / 2, top = y - wallH;
+  // the finished shop's own picture (R8 for the salon), once the last part is on
+  const front = stage >= BUILD_STAGES && image(FRONT_ART[id]);
+  if (front) {
+    const fw = w * 1.12, fh = fw * front.height / front.width;
+    ctx.drawImage(front, x - fw / 2, y - fh, fw, fh);
+    if (ribbon) { const ry = y - fh * 0.22, sway = Math.sin(t * 2) * w * 0.006; ctx.beginPath(); ctx.moveTo(left - w * 0.02, ry); ctx.quadraticCurveTo(x, ry + w * 0.05 + sway, left + w * 1.02, ry); paint(ctx, null, w * 0.025, '#e8506a'); circle(ctx, x, ry + w * 0.035, w * 0.03, '#c23a52', lw * 0.8); }
+    return;
+  }
   if (stage < 1) {
     // the fenced lot
     for (let i = 0; i <= 8; i++) { rr(ctx, left + i * w / 8 - w * 0.025, y - w * 0.2, w * 0.05, w * 0.2, w * 0.01); paint(ctx, C.wood, lw); }
@@ -843,6 +852,8 @@ export function siteScene(ctx, W, H, gy, t = 0) {
 // ---------- the hair salon (stand-ins until its pictures are made) ----------
 // The salon inside: striped wallpaper, a big mirror, a salon chair and a checkered floor. gy is the floor line.
 export function salonRoom(ctx, W, H, gy, t = 0) {
+  const f = fitArt('bg12-salon', W, H, [0, 0.15, 1, 0.85], 0, H, true);
+  if (f) { paintArt(ctx, f, H); return f; }
   ctx.fillStyle = '#f1e8fb'; ctx.fillRect(0, 0, W, gy);
   for (let x = 0; x < W; x += 36) { ctx.fillStyle = 'rgba(195,166,236,.28)'; ctx.fillRect(x, 0, 18, gy); }
   // a strip of little lights along the top
@@ -864,10 +875,26 @@ export function salonRoom(ctx, W, H, gy, t = 0) {
   const tile = Math.max(24, W / 12);
   for (let y = gy; y < H; y += tile) for (let x = 0; x < W; x += tile) { ctx.fillStyle = ((x + y) / tile) % 2 < 1 ? '#fff8ee' : '#e8dcf5'; ctx.fillRect(x, y, tile, tile); }
   ctx.fillStyle = 'rgba(91,58,41,.12)'; ctx.fillRect(0, gy, W, 4);
-  return {mirror: {x: mx, y: my, w: mw, h: mh}};
+  return null;
+}
+// A salon picture (R1-R8) standing on (x, y) at height s, if it has been made.
+function salonArt(ctx, name, x, y, s) {
+  const img = image(name);
+  if (!img) return false;
+  const w = s * img.width / img.height;
+  ctx.drawImage(img, x - w / 2, y - s, w, s);
+  return true;
+}
+// The front desk Arianna books appointments at: x its middle, y the floor, s its height.
+export function salonDesk(ctx, x, y, s) {
+  if (salonArt(ctx, 'r3-desk', x, y, s)) return;
+  rr(ctx, x - s * 0.8, y - s * 0.85, s * 1.6, s * 0.85, s * 0.06); paint(ctx, '#d9c8f5', 3);
+  rr(ctx, x - s * 0.9, y - s, s * 1.8, s * 0.18, s * 0.06); paint(ctx, C.pink, 3);
+  rr(ctx, x - s * 0.35, y - s * 1.08, s * 0.7, s * 0.1, s * 0.02); paint(ctx, '#fff', 2);
 }
 // The salon chair: x its middle, y the floor, s its height.
 export function salonChair(ctx, x, y, s) {
+  if (salonArt(ctx, 'r1-chair', x, y, s)) return;
   rr(ctx, x - s * 0.04, y - s * 0.32, s * 0.08, s * 0.3, 3); paint(ctx, '#c9c9d6', 2.5);
   ellipse(ctx, x, y - s * 0.02, s * 0.22, s * 0.05, '#a7a9b7', 2.5);
   rr(ctx, x - s * 0.3, y - s * 0.5, s * 0.6, s * 0.18, s * 0.06); paint(ctx, '#f27aa9', 3);
@@ -878,11 +905,11 @@ export function salonChair(ctx, x, y, s) {
 // A clock to set: hands at {h, m}. A hand left as null isn't drawn. `active` lights up the hand being set,
 // `ghost` shows where the hands should go, faintly.
 export function clockFace(ctx, x, y, r, time, {active = null, ghost = null} = {}) {
-  const lw = Math.max(2.5, r * 0.035);
-  circle(ctx, x, y + r * 0.04, r * 1.08, 'rgba(91,58,41,.18)');
-  circle(ctx, x, y, r * 1.08, '#c3a6ec', lw);
-  circle(ctx, x, y, r * 0.94, '#fff', lw);
-  for (let i = 0; i < 60; i++) {
+  const lw = Math.max(2.5, r * 0.035), art = image('r2-clock');
+  // the painted clock (R2) has its rim and tick marks; the numbers and hands are always drawn here
+  if (art) { const s = r * 2.25 / Math.max(art.width, art.height); ctx.drawImage(art, x - art.width * s / 2, y - art.height * s / 2, art.width * s, art.height * s); }
+  else { circle(ctx, x, y + r * 0.04, r * 1.08, 'rgba(91,58,41,.18)'); circle(ctx, x, y, r * 1.08, '#c3a6ec', lw); circle(ctx, x, y, r * 0.94, '#fff', lw); }
+  for (let i = 0; i < 60 && !art; i++) {
     const a = i / 60 * Math.PI * 2, big = i % 5 === 0, r0 = r * (big ? 0.8 : 0.86);
     ctx.beginPath(); ctx.moveTo(x + Math.sin(a) * r0, y - Math.cos(a) * r0); ctx.lineTo(x + Math.sin(a) * r * 0.9, y - Math.cos(a) * r * 0.9);
     paint(ctx, null, big ? lw : lw * 0.45, big ? C.ink : 'rgba(91,58,41,.45)');
@@ -963,6 +990,12 @@ export function measureBoard(ctx, x, y, w, inches, hair, {color = '#8b5a3c', cut
 }
 // Snipping scissors, drawn open or closed.
 export function scissors(ctx, x, y, s, open = 0.4) {
+  const img = image('r4-scissors');
+  if (img) {
+    const k = s * 1.3 / Math.max(img.width, img.height);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.5 + open * 0.4); ctx.drawImage(img, -img.width * k / 2, -img.height * k / 2, img.width * k, img.height * k); ctx.restore();
+    return;
+  }
   for (const k of [-1, 1]) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(k * open * 0.5);
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 0.06, -s * 0.55); ctx.lineTo(s * 0.06, -s * 0.5); ctx.closePath(); paint(ctx, '#e8eef5', Math.max(1.5, s * 0.03));
@@ -971,8 +1004,14 @@ export function scissors(ctx, x, y, s, open = 0.4) {
   }
 }
 // A finishing touch on a client's head: a bow, sparkles or a flower. x, y is the top of the head.
+const STYLE_ART = {bow: 'r5-bow', sparkles: 'r6-sparkles', flower: 'r7-flower'};
 export function styleTouch(ctx, id, x, y, s, t = 0) {
-  const lw = Math.max(1.5, s * 0.06);
+  const lw = Math.max(1.5, s * 0.06), img = image(STYLE_ART[id]);
+  if (img) {
+    const k = s * 1.7 / Math.max(img.width, img.height), bob = Math.sin(t * 3) * s * 0.05;
+    ctx.drawImage(img, x - img.width * k / 2, y - img.height * k / 2 + bob, img.width * k, img.height * k);
+    return;
+  }
   if (id === 'bow') {
     for (const k of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + k * s * 0.6, y - s * 0.45, x + k * s * 0.55, y + s * 0.3); ctx.closePath(); paint(ctx, C.pink, lw); }
     circle(ctx, x, y, s * 0.14, '#e8508a', lw);

@@ -1691,6 +1691,8 @@ const Salon = {
       const cx = c.phase === 'arrive' ? W * (1.15 - 0.4 * (1 - (1 - k) ** 2)) : W * 0.75;
       drawCustomer(ctx, c.type, cx, gy + room * 0.15, ch * 0.9, {t: now, walking: c.phase === 'arrive' && k < 1});
       arianna('wave', W * 0.24, gy + room * 0.15, ch);
+      D.salonDesk(ctx, W * 0.24, gy + room * 0.17, ch * 0.42);
+      baxter('bow', W * 0.5, gy + room * 0.16, ch * 0.36);
       if (c.phase !== 'arrive') {
         const r = Math.min(W * 0.33, room * 0.26), x = W / 2, y = top + r * 1.25 + 34;
         this.clockAt = {x, y, r};
@@ -1716,9 +1718,10 @@ const Salon = {
     if (c.style) D.styleTouch(ctx, c.style, cx - ch * 0.12, headY + ch * 0.06, ch * 0.13, now);
     if (c.phase === 'pay') feeling(this, 'heart', cx + ch * 0.2, headY - 4, ch * 0.2);
     const ax = W * 0.76, ay = gy + room * 0.15;
-    arianna(c.phase === 'pay' ? 'cheer' : 'stand', ax, ay, ch);
+    const stylist = image('a10-stylist');   // her stylist picture already holds the scissors
+    arianna(c.phase === 'pay' ? 'cheer' : stylist ? 'stylist' : 'stand', ax, ay, ch);
     if (c.phase === 'cut' || c.phase === 'snipped') {
-      D.scissors(ctx, ax - ch * 0.2, ay - ch * 0.48, ch * 0.22, c.phase === 'snipped' ? Math.abs(Math.sin(now * 14)) * 0.6 : 0.5);
+      if (!stylist) D.scissors(ctx, ax - ch * 0.2, ay - ch * 0.48, ch * 0.22, c.phase === 'snipped' ? Math.abs(Math.sin(now * 14)) * 0.6 : 0.5);
       const fall = c.phase === 'snipped' ? Math.min(1, (now - c.t0) / 0.9) : 0;
       this.board = D.measureBoard(ctx, 12, top + 8, W - 24, SA.RULER, c.cut.from, {color: HAIR[c.type], cut: c.snipAt ?? null, fall, mark: c.mark, counting: c.counting, t: now});
     }
@@ -1825,7 +1828,7 @@ const SCENE_MUSIC = new Map([
   [Find, () => ['m5-drive', 'm2-shop']], [Drive, () => ['m5-drive', 'm2-shop']], [Doorstep, () => ['m5-drive', 'm2-shop']],
   [Results, () => ['m6-evening', 'm2-shop']], [Upgrades, () => ['m6-evening', 'm2-shop']],
   [SeasonEnd, () => ['m7-season-end', 'm1-title']],
-  [Build, () => ['m1-title']], [ShopDay, () => ['m2-shop']], [Salon, () => ['m10-salon', 'm2-shop']],
+  [Build, () => ['m1-title']], [ShopDay, () => ['m2-shop']], [Salon, () => ['m2-shop']],
 ]);
 
 // For automated checks: read-only peek at the game.
