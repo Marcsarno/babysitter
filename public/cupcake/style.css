@@ -214,7 +214,7 @@ button { font-family: inherit; color: inherit; touch-action: manipulation; }
 .toast { pointer-events: none; position: absolute; left: 50%; bottom: 40%; z-index: 30; transform: translateX(-50%); background: #fff; border: 3px solid var(--ink); border-radius: 16px; padding: 10px 16px; font-weight: 600; font-size: 17px; box-shadow: 0 4px 0 var(--ink); animation: pop .2s; text-align: center; width: max-content; max-width: 90%; }
 .loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 22px; font-weight: 600; background: var(--cream); }
 .loading p { margin: 0; }
-.loading img { width: 150px; height: auto; animation: trot .42s ease-in-out infinite alternate; }
+.loading img { width: 190px; height: auto; animation: trot .42s ease-in-out infinite alternate; }
 .loading .bar { width: min(260px, 70%); height: 16px; border: 3px solid var(--ink); border-radius: 999px; background: #fff; overflow: hidden; }
 .loading .bar i { display: block; height: 100%; width: 4%; background: var(--pink); border-radius: 999px; transition: width .2s; }
 @keyframes trot { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-10px) rotate(2deg); } }
@@ -236,3 +236,8 @@ button { font-family: inherit; color: inherit; touch-action: manipulation; }
 /* painted coin beside the money, and the season prize */
 .chip.cash::before { content: ''; width: 20px; height: 20px; background: url(art/u1-coin.webp) center / contain no-repeat; }
 .prize { display: block; width: 120px; height: auto; margin: 0 auto 4px; }
+/* painted frames (P1-P3), switched on from main.js once their pictures have loaded */
+.framed .card { background: none; border-style: solid; border-color: transparent; border-width: 20px; border-image: url(art/p1-card.webp) 56 fill round; border-radius: 0; box-shadow: none; filter: drop-shadow(0 5px 0 rgba(91, 58, 41, .35)); padding: 6px 6px 8px; }
+.framed .card h2 { width: fit-content; max-width: 100%; margin: 0 auto 10px; padding: 7px 4px 12px; border-style: solid; border-color: transparent; border-width: 0 34px; border-image: url(art/p2-banner.webp) 0 150 fill stretch; color: #fff; -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; font-size: 24px; }
+.framed .bubble { background: none; border-style: solid; border-color: transparent; border-width: 16px 16px 30px 14px; border-image: url(art/p3-bubble.webp) 80 80 150 240 fill stretch; border-image-width: 16px 16px 30px 48px; border-radius: 0; box-shadow: none; filter: drop-shadow(0 4px 0 rgba(91, 58, 41, .2)); padding: 0 4px 0 6px; }
+
