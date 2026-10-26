@@ -258,4 +258,10 @@ Each phase goes live so Arianna can play it and steer.
   - Live for everyone, so the `?shops` preview switch is gone. `?shops` now only adds the grown-up "Build the next shop now" shortcut in Settings.
   - The toy shop is marked `soon` in shops.js, so the jar won't save for it until it's playable.
   - Round 5 art (building lot, Bo's hammer, both roofs) is in. Round 6 (the salon's own pictures) is in `docs/round6-art-prompts.txt`.
+- Step 4 toy shop prototype done (drawn stand-ins). It's still marked `soon`, so only grown-ups can build it, through the `?shops` shortcut.
+  - **Stocking:** three shelves each need a number of toys. She adds boxes of ten and loose ones. The numbers go 11-29, then 21-59, then 31-99, by toy days played.
+  - **Selling:** each customer brings dollar bills and coins, and she types the total on the register. The coins come in steps: dimes, then nickels, then quarters, then pennies (five at a time). Labels show what each coin is worth for the first two levels. They buy the toy they want, or the best toy their money pays for.
+  - **Prices:** ball $2.50, car $4.25, teddy $5.50, robot $7.75.
+  - **Coin jar:** the game's cash stays in whole dollars. The cents go into a coin jar, and every 100 cents become $1 at closing.
+  - Next: Arianna tries it. Then its art, and then `soon` comes off.
 

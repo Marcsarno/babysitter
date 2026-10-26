@@ -1,0 +1,26 @@
+Round 7 art for the same kids' game: the toy shop. Same style as the attached character sheets and all the earlier pictures. Please generate each image below as a SEPARATE image, one at a time, in order, without asking me to confirm between images. After each one, tell me its file name.
+
+STYLE FOR EVERY IMAGE: children's picture-book cartoon illustration, clean bold dark-brown outlines, soft simple shading, rounded friendly shapes, bright pastel palette of sky blue, buttercream yellow, strawberry pink, mint green, lavender and chocolate brown, matching the attached character sheets.
+RULES FOR EVERY IMAGE: no text, letters, numbers, words, logos or writing anywhere (signs, boxes, bills and coins stay blank). Nothing cropped.
+SCENES (BG): tall 9:16 (1080x1920), full background, and NO people and NO animals in them (the game adds the characters).
+EVERYTHING ELSE: square 1024x1024, one subject centered, plain pure white background, no shadow on the ground. Baxter is the only exception: always on a solid bright blue background.
+
+THE TOY SHOP
+BG13-toyshop: Inside a cheerful little toy shop, seen straight from the front. Sky-blue wallpaper with little yellow stars, a row of colorful paper bunting along the top, a warm wooden floor across the bottom fifth. Keep the back wall plain and empty in the middle (the game adds the shelves and the toys).
+Y1-box: A closed cardboard toy box seen from the front, light brown with a pastel blue stripe, blank on the front.
+Y2-teddy: A small brown teddy bear sitting, facing the viewer, with a pink bow.
+Y3-ball: A bouncy ball, strawberry pink with a buttercream-yellow stripe around the middle.
+Y4-car: A small sky-blue toy car seen from the side, facing right, with black wheels.
+Y5-robot: A small friendly toy robot standing, facing the viewer: a gray boxy head with an antenna and round blue eyes, a mint-green body with a yellow button.
+Y6-dollar: A cartoon green dollar bill seen flat from the front, with a darker green border and a plain empty oval in the middle. No writing and no faces.
+Y7-quarter: A cartoon silver coin, big, with a ridged edge and a simple eagle shape on it. No writing.
+Y8-dime: A cartoon silver coin, small and thin, with a ridged edge and a simple torch shape on it. No writing.
+Y9-nickel: A cartoon silver coin, medium-sized, with a smooth edge and a simple little house shape on it. No writing.
+Y10-penny: A cartoon copper-brown coin, small, with a smooth edge and a simple little building shape on it. No writing.
+Y11-toy-front: The finished toy shop building seen straight from the front: a sky-blue shop with a pointed roof, a round pale sign at the top showing a little brown teddy bear face, a blank sign board across the front, a big window full of toys under a yellow-and-white striped awning on the left, and a yellow door on the right. The whole building, standing on the ground.
+
+ARIANNA AND BAXTER AT THE TOY SHOP (keep them exactly like the character sheets)
+A11-toys: Arianna standing, full body, facing the viewer, holding a teddy bear up happily in both hands, big smile.
+B11-ball: Baxter sitting and smiling with a pink bouncy ball held in his mouth. Solid bright blue background.
+
+That's 14 images.

@@ -782,9 +782,23 @@ export function shopIcon(ctx, id, x, y, s) {
 // part each time she taps: 1 the base, 2 the frame, 3 the walls, 4 the roof, 5 the window, door and
 // awning, 6 the sign. A red ribbon hangs across the door until she cuts it.
 export const BUILD_STAGES = 6;
+const FRONT_ART = {salon: 'r8-salon-front', toy: 'y11-toy-front'};
+// where the blank sign board is on each shop front picture: middle x, middle y and width, as fractions
+const SIGN_AT = {salon: [0.5, 0.423, 0.5], toy: [0.5, 0.42, 0.5]};
 export function shopFront(ctx, id, x, y, w, stage, {ribbon = false, t = 0} = {}) {
   const shop = SHOPS[id], lw = Math.max(2, w * 0.012);
   const wallH = w * 0.6, left = x - w / 2, top = y - wallH;
+  // the finished shop's own picture (R8 for the salon), once the last part is on
+  const front = stage >= BUILD_STAGES && image(FRONT_ART[id]);
+  if (front) {
+    const fw = w * 1.12, fh = fw * front.height / front.width;
+    ctx.drawImage(front, x - fw / 2, y - fh, fw, fh);
+    // the shop's name on its blank sign board
+    const sign = SIGN_AT[id], size = fitSize(ctx, shop.name, fw * 0.065, fw * sign[2], 700);
+    text(ctx, shop.name, x + fw * (sign[0] - 0.5), y - fh + fh * sign[1], size, {weight: 700, color: '#c2457a'});
+    if (ribbon) { const ry = y - fh * 0.22, sway = Math.sin(t * 2) * w * 0.006; ctx.beginPath(); ctx.moveTo(left - w * 0.02, ry); ctx.quadraticCurveTo(x, ry + w * 0.05 + sway, left + w * 1.02, ry); paint(ctx, null, w * 0.025, '#e8506a'); circle(ctx, x, ry + w * 0.035, w * 0.03, '#c23a52', lw * 0.8); }
+    return;
+  }
   if (stage < 1) {
     // the fenced lot
     for (let i = 0; i <= 8; i++) { rr(ctx, left + i * w / 8 - w * 0.025, y - w * 0.2, w * 0.05, w * 0.2, w * 0.01); paint(ctx, C.wood, lw); }
@@ -843,6 +857,8 @@ export function siteScene(ctx, W, H, gy, t = 0) {
 // ---------- the hair salon (stand-ins until its pictures are made) ----------
 // The salon inside: striped wallpaper, a big mirror, a salon chair and a checkered floor. gy is the floor line.
 export function salonRoom(ctx, W, H, gy, t = 0) {
+  const f = fitArt('bg12-salon', W, H, [0, 0.15, 1, 0.85], 0, H, true);
+  if (f) { paintArt(ctx, f, H); return f; }
   ctx.fillStyle = '#f1e8fb'; ctx.fillRect(0, 0, W, gy);
   for (let x = 0; x < W; x += 36) { ctx.fillStyle = 'rgba(195,166,236,.28)'; ctx.fillRect(x, 0, 18, gy); }
   // a strip of little lights along the top
@@ -864,10 +880,26 @@ export function salonRoom(ctx, W, H, gy, t = 0) {
   const tile = Math.max(24, W / 12);
   for (let y = gy; y < H; y += tile) for (let x = 0; x < W; x += tile) { ctx.fillStyle = ((x + y) / tile) % 2 < 1 ? '#fff8ee' : '#e8dcf5'; ctx.fillRect(x, y, tile, tile); }
   ctx.fillStyle = 'rgba(91,58,41,.12)'; ctx.fillRect(0, gy, W, 4);
-  return {mirror: {x: mx, y: my, w: mw, h: mh}};
+  return null;
+}
+// A salon picture (R1-R8) standing on (x, y) at height s, if it has been made.
+function salonArt(ctx, name, x, y, s) {
+  const img = image(name);
+  if (!img) return false;
+  const w = s * img.width / img.height;
+  ctx.drawImage(img, x - w / 2, y - s, w, s);
+  return true;
+}
+// The front desk Arianna books appointments at: x its middle, y the floor, s its height.
+export function salonDesk(ctx, x, y, s) {
+  if (salonArt(ctx, 'r3-desk', x, y, s)) return;
+  rr(ctx, x - s * 0.8, y - s * 0.85, s * 1.6, s * 0.85, s * 0.06); paint(ctx, '#d9c8f5', 3);
+  rr(ctx, x - s * 0.9, y - s, s * 1.8, s * 0.18, s * 0.06); paint(ctx, C.pink, 3);
+  rr(ctx, x - s * 0.35, y - s * 1.08, s * 0.7, s * 0.1, s * 0.02); paint(ctx, '#fff', 2);
 }
 // The salon chair: x its middle, y the floor, s its height.
 export function salonChair(ctx, x, y, s) {
+  if (salonArt(ctx, 'r1-chair', x, y, s)) return;
   rr(ctx, x - s * 0.04, y - s * 0.32, s * 0.08, s * 0.3, 3); paint(ctx, '#c9c9d6', 2.5);
   ellipse(ctx, x, y - s * 0.02, s * 0.22, s * 0.05, '#a7a9b7', 2.5);
   rr(ctx, x - s * 0.3, y - s * 0.5, s * 0.6, s * 0.18, s * 0.06); paint(ctx, '#f27aa9', 3);
@@ -878,11 +910,11 @@ export function salonChair(ctx, x, y, s) {
 // A clock to set: hands at {h, m}. A hand left as null isn't drawn. `active` lights up the hand being set,
 // `ghost` shows where the hands should go, faintly.
 export function clockFace(ctx, x, y, r, time, {active = null, ghost = null} = {}) {
-  const lw = Math.max(2.5, r * 0.035);
-  circle(ctx, x, y + r * 0.04, r * 1.08, 'rgba(91,58,41,.18)');
-  circle(ctx, x, y, r * 1.08, '#c3a6ec', lw);
-  circle(ctx, x, y, r * 0.94, '#fff', lw);
-  for (let i = 0; i < 60; i++) {
+  const lw = Math.max(2.5, r * 0.035), art = image('r2-clock');
+  // the painted clock (R2) has its rim and tick marks; the numbers and hands are always drawn here
+  if (art) { const s = r * 2.25 / Math.max(art.width, art.height); ctx.drawImage(art, x - art.width * s / 2, y - art.height * s / 2, art.width * s, art.height * s); }
+  else { circle(ctx, x, y + r * 0.04, r * 1.08, 'rgba(91,58,41,.18)'); circle(ctx, x, y, r * 1.08, '#c3a6ec', lw); circle(ctx, x, y, r * 0.94, '#fff', lw); }
+  for (let i = 0; i < 60 && !art; i++) {
     const a = i / 60 * Math.PI * 2, big = i % 5 === 0, r0 = r * (big ? 0.8 : 0.86);
     ctx.beginPath(); ctx.moveTo(x + Math.sin(a) * r0, y - Math.cos(a) * r0); ctx.lineTo(x + Math.sin(a) * r * 0.9, y - Math.cos(a) * r * 0.9);
     paint(ctx, null, big ? lw : lw * 0.45, big ? C.ink : 'rgba(91,58,41,.45)');
@@ -963,6 +995,12 @@ export function measureBoard(ctx, x, y, w, inches, hair, {color = '#8b5a3c', cut
 }
 // Snipping scissors, drawn open or closed.
 export function scissors(ctx, x, y, s, open = 0.4) {
+  const img = image('r4-scissors');
+  if (img) {
+    const k = s * 1.3 / Math.max(img.width, img.height);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.5 + open * 0.4); ctx.drawImage(img, -img.width * k / 2, -img.height * k / 2, img.width * k, img.height * k); ctx.restore();
+    return;
+  }
   for (const k of [-1, 1]) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(k * open * 0.5);
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 0.06, -s * 0.55); ctx.lineTo(s * 0.06, -s * 0.5); ctx.closePath(); paint(ctx, '#e8eef5', Math.max(1.5, s * 0.03));
@@ -971,8 +1009,14 @@ export function scissors(ctx, x, y, s, open = 0.4) {
   }
 }
 // A finishing touch on a client's head: a bow, sparkles or a flower. x, y is the top of the head.
+const STYLE_ART = {bow: 'r5-bow', sparkles: 'r6-sparkles', flower: 'r7-flower'};
 export function styleTouch(ctx, id, x, y, s, t = 0) {
-  const lw = Math.max(1.5, s * 0.06);
+  const lw = Math.max(1.5, s * 0.06), img = image(STYLE_ART[id]);
+  if (img) {
+    const k = s * 1.7 / Math.max(img.width, img.height), bob = Math.sin(t * 3) * s * 0.05;
+    ctx.drawImage(img, x - img.width * k / 2, y - img.height * k / 2 + bob, img.width * k, img.height * k);
+    return;
+  }
   if (id === 'bow') {
     for (const k of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + k * s * 0.6, y - s * 0.45, x + k * s * 0.55, y + s * 0.3); ctx.closePath(); paint(ctx, C.pink, lw); }
     circle(ctx, x, y, s * 0.14, '#e8508a', lw);
@@ -985,6 +1029,95 @@ export function styleTouch(ctx, id, x, y, s, t = 0) {
       starPath(ctx, rx, ry, s * 0.2 * k); paint(ctx, '#ffe08a', lw * 0.8);
     }
   }
+}
+
+// ---------- the toy shop (stand-ins until its pictures are made) ----------
+export function toyRoom(ctx, W, H, gy, t = 0) {
+  const f = fitArt('bg13-toyshop', W, H, [0, 0.1, 1, 0.9], 0, H, true);
+  if (f) { paintArt(ctx, f, H); return; }
+  ctx.fillStyle = '#e3f2ff'; ctx.fillRect(0, 0, W, gy);
+  for (let i = 0; i < 18; i++) { starPath(ctx, (i * 97.3) % W, 30 + (i * 53.7) % (gy * 0.6), 6 + (i % 3) * 2); paint(ctx, ['#ffe08a', '#ffc6dc', '#c3a6ec'][i % 3], 0); }
+  // bunting along the top
+  bunting(ctx, 0, W, H * 0.1, 18, 10);
+  ctx.fillStyle = '#e8c49a'; ctx.fillRect(0, gy, W, H - gy);
+  for (let y = gy; y < H; y += 26) { ctx.fillStyle = 'rgba(193,141,95,.25)'; ctx.fillRect(0, y, W, 2); }
+}
+// A toy, drawn: x, y its middle, s its size.
+const TOY_ART = {teddy: 'y2-teddy', ball: 'y3-ball', car: 'y4-car', robot: 'y5-robot'};
+// A picture centred on (x, y), fitted into a square of side s.
+function artIn(ctx, name, x, y, s) {
+  const img = image(name);
+  if (!img) return false;
+  const k = s / Math.max(img.width, img.height);
+  ctx.drawImage(img, x - img.width * k / 2, y - img.height * k / 2, img.width * k, img.height * k);
+  return true;
+}
+export function toyIcon(ctx, id, x, y, s) {
+  if (artIn(ctx, TOY_ART[id], x, y, s * 1.05)) return;
+  const lw = Math.max(1.2, s * 0.06);
+  if (id === 'teddy') shopIcon(ctx, 'toy', x, y, s * 1.2);
+  else if (id === 'ball') {
+    circle(ctx, x, y, s * 0.42, '#f27aa9', lw);
+    ctx.save(); ctx.beginPath(); ctx.arc(x, y, s * 0.42, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#ffe08a'; ctx.fillRect(x - s, y - s * 0.1, s * 2, s * 0.2); ctx.restore();
+    circle(ctx, x, y, s * 0.42, null, lw);
+  } else if (id === 'car') {
+    rr(ctx, x - s * 0.45, y - s * 0.12, s * 0.9, s * 0.3, s * 0.1); paint(ctx, '#86c3f2', lw);
+    rr(ctx, x - s * 0.22, y - s * 0.34, s * 0.44, s * 0.26, s * 0.08); paint(ctx, '#86c3f2', lw);
+    rr(ctx, x - s * 0.16, y - s * 0.29, s * 0.32, s * 0.15, s * 0.04); paint(ctx, '#e3f2ff', lw * 0.7);
+    circle(ctx, x - s * 0.24, y + s * 0.2, s * 0.11, C.ink); circle(ctx, x + s * 0.24, y + s * 0.2, s * 0.11, C.ink);
+  } else {
+    ctx.beginPath(); ctx.moveTo(x, y - s * 0.32); ctx.lineTo(x, y - s * 0.46); paint(ctx, null, lw, C.ink); circle(ctx, x, y - s * 0.48, s * 0.05, '#f27aa9');
+    rr(ctx, x - s * 0.24, y - s * 0.34, s * 0.48, s * 0.3, s * 0.06); paint(ctx, '#c9c9d6', lw);
+    circle(ctx, x - s * 0.1, y - s * 0.2, s * 0.05, '#8ccaf5'); circle(ctx, x + s * 0.1, y - s * 0.2, s * 0.05, '#8ccaf5');
+    rr(ctx, x - s * 0.3, y - s * 0.02, s * 0.6, s * 0.4, s * 0.06); paint(ctx, '#9fe3c0', lw);
+    circle(ctx, x, y + s * 0.18, s * 0.07, '#ffe08a');
+  }
+}
+// One shelf of a toy: closed boxes of ten on the left, loose toys on the right. Returns its height.
+export function toyShelf(ctx, x, y, w, id, tens, ones, {ghost = null} = {}) {
+  const lw = Math.max(2, w * 0.006), unit = Math.min(w / 10.5, 40);
+  const plank = y;
+  // boxes of ten, two rows if needed
+  for (let i = 0; i < tens; i++) {
+    const bx = x + 6 + (i % 5) * unit * 1.45, by = plank - unit * 1.2 - Math.floor(i / 5) * unit * 1.25;
+    if (!artIn(ctx, 'y1-box', bx + unit * 0.675, by + unit * 0.575, unit * 1.4)) {
+      rr(ctx, bx, by, unit * 1.35, unit * 1.15, 4); paint(ctx, '#e0b083', lw);
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx + 3, by + 3, unit * 1.35 - 6, unit * 0.18);
+    }
+    toyIcon(ctx, id, bx + unit * 0.45, by + unit * 0.62, unit * 0.62);
+    text(ctx, '10', bx + unit * 1.0, by + unit * 0.66, unit * 0.48, {weight: 700});
+  }
+  // loose ones, in a little row of up to nine
+  for (let i = 0; i < ones; i++) toyIcon(ctx, id, x + w * 0.58 + (i % 5) * unit * 0.86, plank - unit * 0.42 - Math.floor(i / 5) * unit * 0.86, unit * 0.8);
+  if (ghost) { ctx.globalAlpha = 0.3; toyShelf(ctx, x, y, w, id, ghost.tens, ghost.ones); ctx.globalAlpha = 1; }
+  rr(ctx, x - 4, plank, w + 8, unit * 0.32, 4); paint(ctx, '#c18d5f', lw);
+}
+// A dollar bill or a coin, x, y its middle, s its size. Labels show what each is worth while she learns.
+const MONEY_ART = {dollar: 'y6-dollar', quarter: 'y7-quarter', dime: 'y8-dime', nickel: 'y9-nickel', penny: 'y10-penny'};
+const MONEY = {quarter: 25, dime: 10, nickel: 5, penny: 1};
+export const MONEY_STYLE = {dollar: ['#bfe6b0', 1.6], quarter: ['#d9dbe3', 0.62], dime: ['#d9dbe3', 0.44], nickel: ['#cfd1da', 0.53], penny: ['#e0a070', 0.47]};
+export function moneyPiece(ctx, kind, x, y, s, label = true) {
+  const [color, k] = MONEY_STYLE[kind], lw = Math.max(1.5, s * 0.04);
+  const art = image(MONEY_ART[kind]);
+  if (art) {
+    const w = kind === 'dollar' ? s * 1.6 : s * k * 2, hh = w * art.height / art.width;
+    ctx.drawImage(art, x - w / 2, y - hh / 2, w, hh);
+    if (kind === 'dollar') text(ctx, '$1', x, y + 1, s * 0.26, {weight: 700, color: '#2f6b2b', stroke: '#e6f5df', sw: 3});
+    else if (label) text(ctx, `${MONEY[kind]}¢`, x, y + 1, s * k * 0.7, {weight: 700, stroke: '#fff', sw: 3});
+    return;
+  }
+  if (kind === 'dollar') {
+    rr(ctx, x - s * 0.8, y - s * 0.36, s * 1.6, s * 0.72, s * 0.06); paint(ctx, color, lw);
+    rr(ctx, x - s * 0.7, y - s * 0.27, s * 1.4, s * 0.54, s * 0.04); paint(ctx, null, lw * 0.6, '#5f9f5a');
+    circle(ctx, x, y, s * 0.2, '#e6f5df', lw * 0.6);
+    text(ctx, '$1', x, y + 1, s * 0.26, {weight: 700, color: '#2f6b2b'});
+    return;
+  }
+  circle(ctx, x, y + s * 0.03, s * k, 'rgba(91,58,41,.2)');
+  circle(ctx, x, y, s * k, color, lw);
+  circle(ctx, x, y, s * k * 0.8, null, lw * 0.5, 'rgba(91,58,41,.35)');
+  if (label) text(ctx, `${{quarter: 25, dime: 10, nickel: 5, penny: 1}[kind]}¢`, x, y + 1, s * k * 0.7, {weight: 700});
 }
 
 // ---------- scenes ----------

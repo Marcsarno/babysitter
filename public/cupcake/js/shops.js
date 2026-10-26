@@ -12,7 +12,7 @@ export const KEEP_CASH = 30;             // always left over for the next trip t
 export const DROPS = [5, 10];
 export const MAX_BOOKED = 5;
 
-export const freshShops = () => ({fund: 0, built: [], building: null, booked: {}, log: []});
+export const freshShops = () => ({fund: 0, built: [], building: null, booked: {}, log: [], cents: 0});
 
 export const fundOpen = save => save.day > FUND_AFTER || save.shops.fund > 0 || save.shops.built.length > 0;
 // what the jar is saving for now, or null while Builder Bo is busy or both shops are built
