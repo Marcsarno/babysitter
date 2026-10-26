@@ -783,8 +783,8 @@ export function shopIcon(ctx, id, x, y, s) {
 // awning, 6 the sign. A red ribbon hangs across the door until she cuts it.
 export const BUILD_STAGES = 6;
 const FRONT_ART = {salon: 'r8-salon-front', toy: 'y11-toy-front'};
-// where the blank sign board is on each shop front picture: middle x, middle y and width, as fractions
-const SIGN_AT = {salon: [0.5, 0.423, 0.5], toy: [0.5, 0.42, 0.5]};
+// where the blank sign board is on each shop front picture (middle x, middle y and width, as fractions), and the lettering colour
+const SIGN_AT = {salon: [0.5, 0.423, 0.5, '#c2457a'], toy: [0.5, 0.34, 0.6, '#2d78b8']};
 export function shopFront(ctx, id, x, y, w, stage, {ribbon = false, t = 0} = {}) {
   const shop = SHOPS[id], lw = Math.max(2, w * 0.012);
   const wallH = w * 0.6, left = x - w / 2, top = y - wallH;
@@ -795,7 +795,7 @@ export function shopFront(ctx, id, x, y, w, stage, {ribbon = false, t = 0} = {})
     ctx.drawImage(front, x - fw / 2, y - fh, fw, fh);
     // the shop's name on its blank sign board
     const sign = SIGN_AT[id], size = fitSize(ctx, shop.name, fw * 0.065, fw * sign[2], 700);
-    text(ctx, shop.name, x + fw * (sign[0] - 0.5), y - fh + fh * sign[1], size, {weight: 700, color: '#c2457a'});
+    text(ctx, shop.name, x + fw * (sign[0] - 0.5), y - fh + fh * sign[1], size, {weight: 700, color: sign[3]});
     if (ribbon) { const ry = y - fh * 0.22, sway = Math.sin(t * 2) * w * 0.006; ctx.beginPath(); ctx.moveTo(left - w * 0.02, ry); ctx.quadraticCurveTo(x, ry + w * 0.05 + sway, left + w * 1.02, ry); paint(ctx, null, w * 0.025, '#e8506a'); circle(ctx, x, ry + w * 0.035, w * 0.03, '#c23a52', lw * 0.8); }
     return;
   }
@@ -1103,7 +1103,7 @@ export function moneyPiece(ctx, kind, x, y, s, label = true) {
   if (art) {
     const w = kind === 'dollar' ? s * 1.6 : s * k * 2, hh = w * art.height / art.width;
     ctx.drawImage(art, x - w / 2, y - hh / 2, w, hh);
-    if (kind === 'dollar') text(ctx, '$1', x, y + 1, s * 0.26, {weight: 700, color: '#2f6b2b', stroke: '#e6f5df', sw: 3});
+    if (kind === 'dollar') text(ctx, '$1', x, y + 1, s * 0.4, {weight: 700, color: '#2f6b2b', stroke: '#e6f5df', sw: 3});
     else if (label) text(ctx, `${MONEY[kind]}¢`, x, y + 1, s * k * 0.7, {weight: 700, stroke: '#fff', sw: 3});
     return;
   }
