@@ -136,6 +136,11 @@ def main():
         if not m or p.name in SHEETS:
             continue
         name = f'{m.group(1)}-{m.group(2)}'.lower()
+        # pictures already made from this exact source are kept as they are
+        done = OUT / f'{name}.webp'
+        if done.exists() and done.stat().st_mtime >= p.stat().st_mtime and not name.startswith('s2'):
+            made += [name, name + '-tile'] if (OUT / f'{name}-tile.webp').exists() else [name]
+            continue
         img = Image.open(p)
         if name.startswith('s1') or name.startswith('bg'):   # scenes: keep the whole picture
             save(fit(img.convert('RGB'), 1600), name, quality=84)
