@@ -1,5 +1,6 @@
 {
  "a10-stylist": "front",
+ "a11-toys": "front",
  "a2-wave": "front",
  "a3-box": "front",
  "a4-think": "front",
@@ -13,6 +14,7 @@
  "arianna-front": "front",
  "arianna-side": "right",
  "b10-bow": "front",
+ "b11-ball": "front",
  "b2-excited": "front",
  "b3-sniff": "left",
  "b4-ride": "left",
@@ -29,6 +31,7 @@
  "bg10-numberline": "front",
  "bg11-lot": "front",
  "bg12-salon": "front",
+ "bg13-toyshop": "front",
  "bg2-kitchen": "front",
  "bg3-market": "front",
  "bg4-house-pink": "front",
@@ -185,5 +188,16 @@
  "u6-ribbon": "front",
  "u7-star": "front",
  "v1-van-side": "right",
- "v2-van-top": "right"
+ "v2-van-top": "right",
+ "y1-box": "front",
+ "y10-penny": "front",
+ "y11-toy-front": "front",
+ "y2-teddy": "front",
+ "y3-ball": "front",
+ "y4-car": "front",
+ "y5-robot": "front",
+ "y6-dollar": "front",
+ "y7-quarter": "front",
+ "y8-dime": "front",
+ "y9-nickel": "front"
 }
