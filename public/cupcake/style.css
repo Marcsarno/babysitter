@@ -222,3 +222,6 @@ button { font-family: inherit; color: inherit; touch-action: manipulation; }
 .jar { width: 110px; font-size: 15px; }
 .jar img { width: 70px; height: 70px; }
 .jar[disabled] { opacity: .6; }
+/* painted coin beside the money, and the season prize */
+.chip.cash::before { content: ''; width: 20px; height: 20px; background: url(art/u1-coin.webp) center / contain no-repeat; }
+.prize { display: block; width: 120px; height: auto; margin: 0 auto 4px; }

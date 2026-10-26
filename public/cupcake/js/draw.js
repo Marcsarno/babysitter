@@ -92,6 +92,16 @@ const FROST = {white: ['#fffaf2', '#eadbc6'], pink: ['#f8a0c4', '#e27aa6'], choc
 const SPRINKLE = ['#ff6b9d', '#4fb8f0', '#ffd23d', '#6fd16f', '#a77bf0', '#ff9a4d'];
 const SCATTER = [[-.32, -.47], [-.12, -.5], [.1, -.46], [.3, -.49], [-.22, -.6], [.0, -.63], [.2, -.6], [-.1, -.73], [.12, -.74], [-.38, -.52], [.38, -.45], [-.02, -.55], [.24, -.69], [-.25, -.68]];
 const TOP_ITEMS = ['cherry', 'gummy', 'heart', 'star', 'bone'];
+// Painted cupcake parts (I1-I18). A finished cupcake is built from a cake, a frosting swirl and its toppings.
+const CAKE_ART = {vanilla: 'i1-cake-vanilla', chocolate: 'i2-cake-chocolate', strawberry: 'i3-cake-strawberry', lemon: 'i4-cake-lemon', redvelvet: 'i5-cake-redvelvet'};
+const FROST_ART = {white: 'i6-frosting-vanilla', pink: 'i7-frosting-strawberry', choc: 'i8-frosting-chocolate', mint: 'i9-frosting-mint', blue: 'i10-frosting-blueberry', lavender: 'i11-frosting-lavender'};
+const TOP_ART = {cherry: 'i12-cherry', gummy: 'i13-gummy', heart: 'i14-heart', star: 'i15-star', bone: 'i16-bone', sprinkles: 'i17-jar-sprinkles', chips: 'i18-jar-chips'};
+const TOP_HEIGHT = {cherry: 0.22, gummy: 0.2, heart: 0.16, star: 0.17, bone: 0.1};
+// draw a picture with its bottom centre at (x, y), hgt tall
+function placeArt(ctx, img, x, y, hgt, tilt = 0) {
+  const w = hgt * img.width / img.height;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); ctx.drawImage(img, -w / 2, -hgt, w, hgt); ctx.restore();
+}
 
 function topping(ctx, id, x, y, s, lw, tilt = 0) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
@@ -134,6 +144,8 @@ export function mix(a, b, k) {
 // {fill: batter 0..1.3} before baking, then {bake: 0..1.2, frost: 0..1.3, tops: [topping ids so far]}.
 export function cupcake(ctx, d, x, y, s, t = 0, bare = false, stage = null) {
   const lw = Math.max(1, s * 0.022);
+  // the painted cake already has its baked dome, so batter and the oven stay drawn in code
+  if ((!stage || stage.frost > 0) && paintedCupcake(ctx, d, x, y, s, t, bare, stage, lw)) return;
   const liner = LINER[d.cake] || C.pinkL, [cake, cakeD] = CAKE[d.cake] || CAKE.vanilla, [fr, frD] = FROST[d.frosting] || FROST.white;
   ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   ellipse(ctx, 0, s * 0.01, s * 0.32, s * 0.035, 'rgba(91,58,41,.16)');
@@ -223,16 +235,72 @@ export function cupcake(ctx, d, x, y, s, t = 0, bare = false, stage = null) {
   ctx.restore();
 }
 
+function paintedCupcake(ctx, d, x, y, s, t, bare, stage, lw) {
+  const base = image(CAKE_ART[d.cake] || CAKE_ART.vanilla), cream = image(FROST_ART[d.frosting] || FROST_ART.white);
+  if (!base || (!bare && !cream)) return false;
+  s *= 0.92; // the painted swirl is taller than the drawn one; keep the same overall height
+  ctx.save(); ctx.translate(x, y);
+  ellipse(ctx, 0, s * 0.01, s * 0.32, s * 0.035, 'rgba(91,58,41,.16)');
+  const bw = s * 0.74, bh = bw * base.height / base.width;
+  ctx.drawImage(base, -bw / 2, -bh, bw, bh);
+  if (bare) { ctx.restore(); return true; }
+  // the swirl sits on the dome and sways a little
+  const sway = Math.sin(t * 2.4) * s * 0.01, fw = s * 0.62, fh = fw * cream.height / cream.width, fb = -s * 0.44, top = fb - fh;
+  ctx.translate(sway, 0);
+  if (stage) { ctx.save(); ctx.beginPath(); ctx.rect(-s, fb - Math.min(1, stage.frost) * fh, s * 2, s * 2); ctx.clip(); }
+  ctx.drawImage(cream, -fw / 2, top, fw, fh);
+  if (stage) {
+    ctx.restore();
+    if (stage.frost > 1.04) {
+      // piped too tall: the peak keeps going up in a wobbly point
+      const extra = Math.min(0.3, stage.frost - 1), fr = (FROST[d.frosting] || FROST.white)[0];
+      ctx.beginPath(); ctx.moveTo(-s * 0.07, top + s * 0.06); ctx.quadraticCurveTo(-s * 0.04, top, s * 0.01 + Math.sin(t * 6) * s * 0.02, top - extra * s * 0.9);
+      ctx.quadraticCurveTo(s * 0.06, top, s * 0.08, top + s * 0.06); ctx.closePath(); paint(ctx, fr, lw);
+    }
+  }
+  const tops = stage ? stage.tops || [] : d.toppings || [];
+  let placed = 0;
+  tops.forEach((id, k) => {
+    if (id === 'sprinkles' || id === 'chips') {
+      SCATTER.forEach(([u, v], i) => {
+        if ((i + k) % (tops.length > 1 ? 2 : 1)) return;
+        // spread over the swirl, narrower towards its top
+        const vy = fb + (v + 0.42) * 1.6 * s, up = (fb - vy) / fh, sx = u * s * 0.85 * (1 - up * 0.7), sy = vy;
+        if (id === 'sprinkles') {
+          const a = (i * 1.7) % Math.PI;
+          ctx.beginPath(); ctx.moveTo(sx - Math.cos(a) * s * 0.025, sy - Math.sin(a) * s * 0.025); ctx.lineTo(sx + Math.cos(a) * s * 0.025, sy + Math.sin(a) * s * 0.025);
+          paint(ctx, null, s * 0.022, SPRINKLE[i % SPRINKLE.length]);
+        } else {
+          ctx.beginPath(); ctx.moveTo(sx, sy - s * 0.03); ctx.quadraticCurveTo(sx + s * 0.025, sy + s * 0.01, sx, sy + s * 0.012); ctx.quadraticCurveTo(sx - s * 0.025, sy + s * 0.01, sx, sy - s * 0.03);
+          paint(ctx, '#5a3420', lw * 0.6);
+        }
+      });
+    } else if (TOP_ITEMS.includes(id)) {
+      const img = image(TOP_ART[id]), hgt = s * TOP_HEIGHT[id];
+      const [tx, ty, tilt] = placed === 0 ? [-s * 0.015, top + s * 0.07, 0] : [s * 0.2, fb - fh * 0.42, 0.35];
+      if (img) placeArt(ctx, img, tx, ty, hgt * (placed ? 0.85 : 1), tilt);
+      else topping(ctx, id, tx, ty - s * 0.05, s, lw, tilt);
+      placed++;
+    }
+  });
+  ctx.restore();
+  return true;
+}
+
 // Small square pictures of single ingredients, for buttons.
 const iconCache = new Map();
 export function ingredientIcon(id, kind, size = 96) {
-  const key = id + size;
+  const art = image((kind === 'cake' ? CAKE_ART : kind === 'frosting' ? FROST_ART : TOP_ART)[id]);
+  const key = id + size + (art ? '+art' : '');
   if (iconCache.has(key)) return iconCache.get(key);
   const cv = document.createElement('canvas');
   cv.width = cv.height = size;
   const ctx = cv.getContext('2d');
   const s = size * 0.92;
-  if (kind === 'cake') {
+  if (art) {
+    const k = size * 0.88 / Math.max(art.width, art.height), w = art.width * k, hh = art.height * k;
+    ctx.drawImage(art, (size - w) / 2, (size - hh) / 2, w, hh);
+  } else if (kind === 'cake') {
     cupcake(ctx, {cake: id, toppings: []}, size / 2, size * 0.92, s * 1.45, 0, true);
   } else if (kind === 'frosting') {
     const [fr, frD] = FROST[id];
@@ -367,7 +435,57 @@ export function person(ctx, who, x, y, h, {t = 0, walking = false, face = 'happy
 
 // ---------- the van ----------
 // Side view, wheels on (x, y), L pixels long, facing right. drawPeople(ctx, windowBox) paints the cab.
+// The van pictures are pink with a mint stripe; other paints are made by recolouring them once.
+const vanCache = new Map();
+function hsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  if (!d) return [0, 0, l];
+  const s = d / (1 - Math.abs(2 * l - 1));
+  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+function rgb(h, s, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+const hex = c => hsl(...[1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
+function vanArt(name, paintId) {
+  const img = image(name);
+  if (!img || paintId === 'pink' || !PAINTS[paintId]) return img;
+  const key = name + paintId;
+  if (vanCache.has(key)) return vanCache.get(key);
+  const cv = document.createElement('canvas');
+  cv.width = img.width; cv.height = img.height;
+  const g = cv.getContext('2d');
+  g.drawImage(img, 0, 0);
+  const data = g.getImageData(0, 0, cv.width, cv.height), px = data.data;
+  const swaps = [[hex(PAINTS.pink.body), hex(PAINTS[paintId].body), h => h > 312 && h < 352], [hex(PAINTS.pink.stripe), hex(PAINTS[paintId].stripe), h => h > 95 && h < 170]];
+  for (let i = 0; i < px.length; i += 4) {
+    if (px[i + 3] < 8) continue;
+    const [h, sat, l] = hsl(px[i], px[i + 1], px[i + 2]);
+    if (sat < 0.22) continue;
+    for (const [from, to, near] of swaps) if (near(h)) {
+      const out = rgb(to[0], Math.min(1, to[1] * sat / from[1]), Math.max(0, Math.min(1, l + to[2] - from[2])));
+      px[i] = out[0]; px[i + 1] = out[1]; px[i + 2] = out[2];
+      break;
+    }
+  }
+  g.putImageData(data, 0, 0);
+  vanCache.set(key, cv);
+  return cv;
+}
+
 export function vanSide(ctx, x, y, L, paintId, {t = 0, roll = 0, drawPeople = null, name = ''} = {}) {
+  const art = vanArt('v1-van-side', paintId);
+  if (art) {
+    const hgt = L * art.height / art.width;
+    ellipse(ctx, x, y, L * 0.48, L * 0.03, 'rgba(91,58,41,.2)');
+    ctx.drawImage(art, x - L / 2, y - hgt, L, hgt);
+    if (name) text(ctx, name, x - L * 0.19, y - hgt * 0.535, fitSize(ctx, name, L * 0.05, L * 0.42, 700), {color: '#fff', stroke: C.ink, sw: L * 0.012, weight: 700});
+    return;
+  }
   const p = PAINTS[paintId] || PAINTS.pink, lw = Math.max(1.5, L * 0.012);
   ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round';
   ellipse(ctx, 0, 0, L * 0.5, L * 0.03, 'rgba(91,58,41,.2)');
@@ -416,6 +534,12 @@ export function vanSide(ctx, x, y, L, paintId, {t = 0, roll = 0, drawPeople = nu
 export function vanTop(ctx, x, y, angle, tile, paintId, {t = 0, moving = false} = {}) {
   const p = PAINTS[paintId] || PAINTS.pink, lw = Math.max(1.5, tile * 0.028), u = tile;
   ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.lineJoin = 'round';
+  const art = vanArt('v2-van-top', paintId);
+  if (art) {
+    const len = u * 1.04, wid = len * art.height / art.width;
+    rr(ctx, -len / 2 + u * 0.04, -wid / 2 + u * 0.05, len, wid, u * 0.14); ctx.fillStyle = 'rgba(40,30,40,.2)'; ctx.fill();
+    ctx.drawImage(art, -len / 2, -wid / 2, len, wid);
+  } else {
   rr(ctx, -u * 0.47, -u * 0.25, u * 1.0, u * 0.56, u * 0.14); ctx.fillStyle = 'rgba(40,30,40,.2)'; ctx.fill();
   for (const [wx, wy] of [[-0.3, -0.27], [-0.3, 0.27], [0.28, -0.27], [0.28, 0.27]]) { rr(ctx, wx * u - u * 0.08, wy * u - u * 0.045, u * 0.16, u * 0.09, u * 0.03); paint(ctx, '#4a3c3a'); }
   rr(ctx, -u * 0.5, -u * 0.27, u * 1.0, u * 0.54, u * 0.14); paint(ctx, p.body, lw);
@@ -427,6 +551,7 @@ export function vanTop(ctx, x, y, angle, tile, paintId, {t = 0, moving = false} 
   // headlights and the roof heart
   circle(ctx, u * 0.47, -u * 0.17, u * 0.035, '#fff6b0', lw * 0.5); circle(ctx, u * 0.47, u * 0.17, u * 0.035, '#fff6b0', lw * 0.5);
   ctx.save(); ctx.translate(-u * 0.16, 0); ctx.rotate(Math.PI / 2); heartPath(ctx, 0, u * 0.02, u * 0.17); paint(ctx, '#fff', lw * 0.8); heartPath(ctx, 0, u * 0.02, u * 0.1); paint(ctx, '#ff7eb6'); ctx.restore();
+  }
   // Baxter, ears flapping in the wind
   const flap = moving ? Math.sin(t * 22) * 0.45 : 0;
   ctx.save(); ctx.translate(u * 0.04, u * 0.31);
@@ -449,6 +574,8 @@ function tree(ctx, cx, cy, s, lw, v) {
   if (v % 3 === 0) for (let i = 0; i < 3; i++) circle(ctx, cx + Math.cos(i * 2.1) * s * 0.16, cy + Math.sin(i * 2.1) * s * 0.16, s * 0.04, '#ff7a8a');
 }
 
+// Painted map tiles (T1-T12); the -tile copies are square and untrimmed so they line up with the grid.
+const HOUSE_TILES = ['t1-house-pink-tile', 't2-house-blue-tile', 't3-house-yellow-tile', 't4-house-lavender-tile', 't5-house-mint-tile', 't6-house-peach-tile'];
 export function renderTown(town, S) {
   const cv = document.createElement('canvas');
   cv.width = town.w * S; cv.height = town.h * S;
@@ -475,6 +602,18 @@ export function renderTown(town, S) {
       if (h && !vv) { ctx.fillRect(px + S * 0.1, py + S * 0.47, S * 0.3, S * 0.06); ctx.fillRect(px + S * 0.6, py + S * 0.47, S * 0.3, S * 0.06); }
       if (vv && !h) { ctx.fillRect(px + S * 0.47, py + S * 0.1, S * 0.06, S * 0.3); ctx.fillRect(px + S * 0.47, py + S * 0.6, S * 0.06, S * 0.3); }
       if (h && vv) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.arc(px + S / 2, py + S / 2, S * 0.28, 0, Math.PI * 2); ctx.fill(); }
+    } else if (t === T.HOUSE && image(HOUSE_TILES[v % 6])) {
+      ctx.drawImage(image(HOUSE_TILES[v % 6]), px, py, S, S);
+    } else if (t === T.TREE && image(v % 3 === 0 ? 't8-tree-blossom-tile' : 't7-tree-tile')) {
+      ctx.drawImage(image(v % 3 === 0 ? 't8-tree-blossom-tile' : 't7-tree-tile'), px + S * 0.04, py + S * 0.04, S * 0.92, S * 0.92);
+    } else if (t === T.FLOWER && image('t10-flowers-tile')) {
+      ctx.drawImage(image('t10-flowers-tile'), px + S * 0.08, py + S * 0.08, S * 0.84, S * 0.84);
+    } else if (t === T.POND && image('t9-pond-tile')) {
+      ctx.fillStyle = '#cdeeb4'; ctx.fillRect(px, py, S, S);
+      ctx.drawImage(image('t9-pond-tile'), px, py, S, S);
+    } else if (t === T.SHOP && v === 1 && image('t11-shop-roof')) {
+      const roof = image('t11-shop-roof'), k = Math.min(S * 1.9 / roof.width, S * 0.94 / roof.height), w = roof.width * k, hh = roof.height * k;
+      ctx.drawImage(roof, px - S + (S * 2 - w) / 2, py + (S - hh) / 2, w, hh);
     } else if (t === T.HOUSE) {
       const roof = ROOF[v % ROOF.length];
       ctx.fillStyle = 'rgba(91,58,41,.18)'; ctx.fillRect(px + S * 0.16, py + S * 0.18, S * 0.76, S * 0.74);
@@ -523,7 +662,8 @@ export function renderTown(town, S) {
   }
   for (const b of Object.values(lots)) {
     const x0 = b.x0 * S + S * 0.12, y0 = b.y0 * S + S * 0.12, w = (b.x1 - b.x0 + 1) * S - S * 0.24, h = (b.y1 - b.y0 + 1) * S - S * 0.24;
-    ctx.setLineDash([S * 0.12, S * 0.08]); rr(ctx, x0, y0, w, h, S * 0.08); paint(ctx, null, lw * 1.2, '#c18d5f'); ctx.setLineDash([]);
+    if (image('t12-lot')) ctx.drawImage(image('t12-lot'), x0 - S * 0.06, y0 - S * 0.06, w + S * 0.12, h + S * 0.12);
+    else { ctx.setLineDash([S * 0.12, S * 0.08]); rr(ctx, x0, y0, w, h, S * 0.08); paint(ctx, null, lw * 1.2, '#c18d5f'); ctx.setLineDash([]); }
     const cx = x0 + w / 2, cy = y0 + h / 2;
     rr(ctx, cx - S * 0.5, cy - S * 0.35, S, S * 0.6, S * 0.1); paint(ctx, '#fff8ee', lw);
     text(ctx, '?', cx, cy - S * 0.05, S * 0.45, {color: C.pink, weight: 700});
@@ -626,19 +766,33 @@ function paintedStreet(ctx, W, H, f, o) {
   const [wx0, wy0] = f.at(0.105, 0.385), [wx1, wy1] = f.at(0.675, 0.536);
   const [dx0, dy0] = f.at(0.73, 0.38), [dx1, dy1] = f.at(0.93, 0.68);
   const shop = {painted: true, win: {x: wx0, y: wy0, w: wx1 - wx0, h: wy1 - wy0}, counterY: wy1, door: {x: dx0, y: dy0, w: dx1 - dx0, h: dy1 - dy0}, groundY: f.sy(0.7)};
+  // the cash register sits at the right end of the counter, so the cupcakes use the rest of it
+  if (image('u2-register')) { shop.register = {x: f.sx(0.615), y: wy1 + f.h * 0.004, h: f.h * 0.06}; shop.shelfW = f.sx(0.56) - wx0; }
   // the shop name on the blank sign
   const [sx, sy] = f.at(0.5, 0.162);
   text(ctx, shopName, sx, sy, fitSize(ctx, shopName, f.h * 0.04, f.w * 0.42, 700), {color: C.pink, weight: 700, stroke: '#fff', sw: 4});
   const signLevel = save?.upg.sign || 0;
   for (let i = 0; i < signLevel * 2; i++) circle(ctx, f.sx(0.27 + i * 0.46 / Math.max(1, signLevel * 2 - 1)), f.sy(0.212), f.w * 0.011, ['#ffd23d', '#ff9fc4', '#9fe3c0'][i % 3], 1.2);
-  if (save?.deco.includes('bunting') || event === 'birthday') bunting(ctx, f.sx(0.02), f.sx(0.98), f.sy(0.222), f.h * 0.024, 12);
-  if (save?.deco.includes('lights')) for (let i = 0; i < 16; i++) circle(ctx, f.sx(0.03 + i * 0.94 / 15), f.sy(0.365) + Math.sin(i) * 2, f.w * 0.009, `hsl(${(i * 47 + t * 60) % 360} 90% 72%)`, 1);
-  if (save?.deco.includes('flowers')) for (const fx of [0.13, 0.55]) {
+  // decorations from the upgrades shop (D1-D4), with drawn ones until a picture exists
+  const deco = id => save?.deco.includes(id);
+  // a string of flags or lights, repeated so each flag or bulb stays small
+  const strip = (name, y, copies) => {
+    const img = image(name);
+    if (!img) return false;
+    const w = f.w * 0.98 / copies, hgt = w * img.height / img.width;
+    for (let i = 0; i < copies; i++) ctx.drawImage(img, f.sx(0.01) + i * w, f.sy(y) - hgt * 0.4, w, hgt);
+    return true;
+  };
+  if ((deco('bunting') || event === 'birthday') && !strip('d3-bunting', 0.222, 2)) bunting(ctx, f.sx(0.02), f.sx(0.98), f.sy(0.222), f.h * 0.024, 12);
+  if (deco('lights') && !strip('d4-lights', 0.362, 2)) for (let i = 0; i < 16; i++) circle(ctx, f.sx(0.03 + i * 0.94 / 15), f.sy(0.365) + Math.sin(i) * 2, f.w * 0.009, `hsl(${(i * 47 + t * 60) % 360} 90% 72%)`, 1);
+  if (deco('flowers')) for (const fx of [0.13, 0.55]) {
     const [bx, by] = f.at(fx, 0.715), bw = f.w * 0.09;
+    if (image('d2-flowerbox')) { placeArt(ctx, image('d2-flowerbox'), bx + bw / 2, by, f.w * 0.1); continue; }
     rr(ctx, bx, by - f.h * 0.022, bw, f.h * 0.022, 4); paint(ctx, C.wood, 1.5);
     for (let k = 0; k < 5; k++) circle(ctx, bx + bw * (0.12 + k * 0.19), by - f.h * 0.026, bw * 0.12, ['#ff7a8a', '#ffd23d', '#c3a6ec'][k % 3], 1);
   }
-  if (save?.deco.includes('balloons')) {
+  if (deco('balloons') && image('d1-balloons')) placeArt(ctx, image('d1-balloons'), f.sx(0.93), f.sy(0.52) + Math.sin(t * 2) * 3, f.h * 0.22, Math.sin(t * 1.3) * 0.04);
+  else if (deco('balloons')) {
     const [kx, ky] = f.at(0.955, 0.5);
     for (const [ox, oy, c] of [[-0.03, 0.30, '#ff7a8a'], [0.005, 0.27, '#ffd23d'], [0.03, 0.31, '#7fc8f5']]) {
       const bx = f.sx(0.955 + ox), by = f.sy(oy) + Math.sin(t * 2 + ox * 90) * 4;
@@ -652,7 +806,8 @@ function paintedStreet(ctx, W, H, f, o) {
 // Cupcakes on the counter, with how many are left.
 export function shelfDisplay(ctx, shop, menu, shelf, t, H) {
   const w = shop.win, items = menu.map((d, i) => ({d, n: shelf[i] || 0, i})).filter(x => x.d);
-  const slotW = w.w / Math.max(items.length, 1);
+  const slotW = (shop.shelfW || w.w) / Math.max(items.length, 1);
+  if (shop.register) placeArt(ctx, image('u2-register'), shop.register.x, shop.register.y, shop.register.h);
   items.forEach(({d, n, i}, k) => {
     const cx = w.x + slotW * (k + 0.5), base = shop.counterY - 4, s = Math.min(slotW * 0.42, H * 0.075);
     const show = Math.min(n, 3);
@@ -774,6 +929,14 @@ export function doorstep(ctx, W, H, o = {}) {
   return {gy, door: {x: dx + dw / 2, y: gy}};
 }
 
+// The morning street (BG8) behind the day card, and the cozy room (BG7) at the end of the day.
+// Each returns the fitted picture, or null when it falls back to drawing.
+export function morning(ctx, W, H, o = {}) {
+  const f = fitArt('bg8-morning', W, H, [0, 0.3, 1, 1], 0, H, true);
+  if (f) { paintArt(ctx, f, H); return f; }
+  cozy(ctx, W, H, o);
+  return null;
+}
 export function title(ctx, W, H, o = {}) {
   const {t = 0} = o;
   sky(ctx, W, H, t);
@@ -788,6 +951,11 @@ export function title(ctx, W, H, o = {}) {
 
 export function cozy(ctx, W, H, o = {}) {
   const {t = 0} = o;
+  const f = fitArt('bg7-cozy-room', W, H, [0, 0.3, 1, 1], 0, H, true);
+  if (f) {
+    paintArt(ctx, f, H);
+    return f;
+  }
   ctx.fillStyle = '#fff1f6'; ctx.fillRect(0, 0, W, H);
   for (let x = 0; x < W; x += 28) { ctx.fillStyle = 'rgba(242,122,169,.08)'; ctx.fillRect(x, 0, 14, H * 0.7); }
   for (let i = 0; i < 12; i++) circle(ctx, W * i / 11, H * 0.05 + Math.sin(i * 1.3) * 8, 5, `hsl(${(i * 40 + t * 30) % 360} 85% 75%)`, 1);
@@ -799,7 +967,8 @@ export function cozy(ctx, W, H, o = {}) {
 export function confetti(ctx, parts) {
   for (const p of parts) {
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a);
-    if (p.coin) { circle(ctx, 0, 0, p.s, '#ffd23d', 1.5); text(ctx, '$', 0, 1, p.s * 1.3, {color: '#b78a1a', weight: 700}); }
+    if (p.coin && image('u1-coin')) ctx.drawImage(image('u1-coin'), -p.s * 1.2, -p.s * 1.2, p.s * 2.4, p.s * 2.4);
+    else if (p.coin) { circle(ctx, 0, 0, p.s, '#ffd23d', 1.5); text(ctx, '$', 0, 1, p.s * 1.3, {color: '#b78a1a', weight: 700}); }
     else { ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); }
     ctx.restore();
   }

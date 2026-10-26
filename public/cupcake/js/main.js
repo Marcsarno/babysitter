@@ -127,7 +127,7 @@ function openArea() {
 }
 function arianna(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts}); }
 function baxter(pose, x, y, hgt, opts = {}) { if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts}); }
-const ART_SCALE = {boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1, pug: 0.82, poodle: 0.9, spot: 0.9};   // kids and little animals stand a bit shorter, the bear taller
+const ART_SCALE = {girl: 0.8, boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1, pug: 0.82, poodle: 0.9, spot: 0.9};   // kids and little animals stand a bit shorter, the bear taller
 function drawCustomer(g, type, x, y, hgt, opts) {
   const img = image(CUSTOMER_ART[type]);
   if (img) {
@@ -229,7 +229,7 @@ const DayStart = {
     speak([S.day(save.day), day.event ? lines[day.event] : first ? S.firstDay : S.openShop]);
   },
   draw() {
-    D.cozy(ctx, W, H, {t: now});
+    D.morning(ctx, W, H, {t: now});
     arianna('wave', W * 0.34, H * 0.86, H * 0.36);
     baxter(day?.event === 'birthday' ? 'excited' : 'sit', W * 0.72, H * 0.87, H * 0.15);
   },
@@ -492,8 +492,26 @@ const Bake = {
   },
   drawCupcake(cx, base, s, d) {
     const wy = -s * 0.4;
+    let ovenWin = null; // set while the painted oven shows the cupcake inside it
     if (this.name === 'bake' || (this.name === 'frost' && this.t < 0.4)) {
       // inside the oven, glowing as it bakes
+      const oven = image('k3-oven');
+      if (oven) {
+        // the painted oven (K3): glow in its window, the cupcake on the rack
+        const oh = s * 1.3, ow = oh * oven.width / oven.height, ox = cx - ow / 2, oy = base - oh * 0.6;
+        const win = [ox + ow * 0.12, oy + oh * 0.33, ow * 0.76, oh * 0.51];
+        ctx.drawImage(oven, ox, oy, ow, oh);
+        const heat = Math.min(1, (this.st.bake || 0) * 1.4);
+        ctx.save(); ctx.beginPath(); ctx.rect(...win); ctx.clip();
+        const glow = ctx.createRadialGradient(cx, base - s * 0.2, 10, cx, base - s * 0.2, ow * 0.6);
+        glow.addColorStop(0, `rgba(255,${220 - heat * 60},${150 - heat * 90},${0.35 + heat * 0.4})`); glow.addColorStop(1, 'rgba(120,60,30,.35)');
+        ctx.fillStyle = glow; ctx.fillRect(...win);
+        // a smaller cupcake on the rack, so it fits the oven window
+        D.cupcake(ctx, d, cx, oy + oh * 0.66, s * 0.6, now, false, this.st);
+        ctx.restore();
+        ovenWin = win;
+        this.meter(Math.min(ox + ow + 18, W - 22), oy, oh);
+      } else {
       const ow = s * 1.25, oh = s * 1.2, ox = cx - ow / 2, oy = base - oh + s * 0.08;
       D.rr(ctx, ox - 14, oy - 14, ow + 28, oh + 28, 22); ctx.fillStyle = '#f6f1fb'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
       const glow = ctx.createRadialGradient(cx, base - s * 0.3, 10, cx, base - s * 0.3, ow * 0.8);
@@ -502,10 +520,11 @@ const Bake = {
       D.rr(ctx, ox, oy, ow, oh, 14); ctx.fillStyle = glow; ctx.fill(); ctx.stroke();
       for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(ox + 12, base + 2 - i * 6); ctx.lineTo(ox + ow - 12, base + 2 - i * 6); ctx.strokeStyle = `rgba(255,${120 + i * 40},60,${0.4 + heat * 0.5})`; ctx.lineWidth = 3; ctx.stroke(); }
       this.meter(cx + ow / 2 + 26, oy, oh);
+      }
     }
     const stage = this.name === 'done' ? null : this.st;
     const bounce = this.name === 'done' ? -Math.abs(Math.sin(now * 4)) * s * 0.04 : 0;
-    D.cupcake(ctx, d, cx, base + bounce, s, now, false, stage);
+    if (!ovenWin) D.cupcake(ctx, d, cx, base + bounce, s, now, false, stage);
     if (this.name === 'pour') {
       // fill line
       const ly = base + wy * 0.82;
@@ -513,12 +532,21 @@ const Bake = {
       ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(cx - s * 0.52, ly); ctx.lineTo(cx + s * 0.52, ly); ctx.lineWidth = 3; ctx.strokeStyle = '#3f9e6e'; ctx.stroke(); ctx.setLineDash([]);
       D.text(ctx, 'fill line', cx + s * 0.58, ly, 14, {align: 'left', color: '#3f9e6e', weight: 700, stroke: '#fff', sw: 4});
       // the mixing bowl, tipping while she pours
+      const bowl = image('k1-bowl');
+      if (bowl) {
+        // the painted bowl (K1), flipped so its spout faces the cupcake, tipping about the spout
+        const bh = s * 0.6, bw = bh * bowl.width / bowl.height;
+        ctx.save(); ctx.translate(cx + s * 0.06, base - s * 1.0); ctx.rotate(this.holding ? -0.55 : -0.1); ctx.scale(-1, 1);
+        ctx.drawImage(bowl, -bw * 0.98, -bh * 0.55, bw, bh);
+        ctx.restore();
+      } else {
       const tip = this.holding ? -0.75 : -0.2;
       ctx.save(); ctx.translate(cx + s * 0.3, base - s * 1.05); ctx.rotate(tip);
       ctx.beginPath(); ctx.ellipse(0, 0, s * 0.36, s * 0.08, 0, 0, Math.PI * 2); ctx.fillStyle = D.batterColor(d.cake); ctx.fill();
       ctx.beginPath(); ctx.moveTo(-s * 0.36, 0); ctx.quadraticCurveTo(0, s * 0.5, s * 0.36, 0); ctx.closePath(); ctx.fillStyle = '#8fc8f2'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
       ctx.beginPath(); ctx.ellipse(0, 0, s * 0.36, s * 0.08, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
+      }
       if (this.holding) {
         const top = base + wy * Math.min(1.1, this.st.fill);
         ctx.beginPath(); ctx.moveTo(cx + s * 0.02, base - s * 1.0); ctx.quadraticCurveTo(cx - s * 0.02 + Math.sin(now * 20) * 3, (top + base - s) / 2, cx, top);
@@ -531,18 +559,26 @@ const Bake = {
       D.text(ctx, 'top line', cx + s * 0.46, topY, 14, {align: 'left', color: '#3f9e6e', weight: 700, stroke: '#fff', sw: 4});
       // the piping bag, circling as the swirl builds
       const ny = base - s * 0.385 - Math.min(1.3, this.st.frost) * s * 0.53 - s * 0.03, nx = cx + (this.holding ? Math.sin(now * 9) * s * 0.18 : 0);
+      const bag = image('k2-piping-bag');
+      if (bag) { const bh = s * 0.62, bw = bh * bag.width / bag.height; ctx.save(); ctx.translate(nx, ny); ctx.rotate(0.15); ctx.drawImage(bag, -bw / 2, -bh, bw, bh); ctx.restore(); }
+      else {
       ctx.save(); ctx.translate(nx, ny); ctx.rotate(0.15);
       ctx.beginPath(); ctx.moveTo(-s * 0.03, 0); ctx.lineTo(s * 0.03, 0); ctx.lineTo(s * 0.2, -s * 0.5); ctx.quadraticCurveTo(0, -s * 0.6, -s * 0.2, -s * 0.5); ctx.closePath();
       ctx.fillStyle = '#f9d7e6'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
       D.rr(ctx, -s * 0.035, -s * 0.03, s * 0.07, s * 0.06, 4); ctx.fillStyle = '#d9d9e3'; ctx.fill(); ctx.stroke();
       ctx.restore();
+      }
     }
     for (const drop of this.drops) if (drop.t < 0.6) {
       const k = Math.min(1, drop.t / 0.55), y = base - s * 1.6 + k * k * s * 0.75;
       if (drop.id === 'sprinkles' || drop.id === 'chips') for (let i = 0; i < 10; i++) D.text(ctx, drop.id === 'chips' ? '•' : '▮', cx + Math.sin(i * 2.3) * s * 0.25, y + (i % 4) * 8, 12, {color: drop.id === 'chips' ? '#5a3420' : ['#ff6b9d', '#4fb8f0', '#ffd23d', '#6fd16f'][i % 4]});
       else { const img = dropImage(drop.id); if (img.complete) ctx.drawImage(img, cx - s * 0.15, y - s * 0.15, s * 0.3, s * 0.3); }
     }
-    if (this.name === 'done') D.text(ctx, '⭐'.repeat(this.stars), cx, base - s * 1.08, s * 0.18);
+    if (this.name === 'done') {
+      const star = image('u7-star'), sz = s * 0.2;
+      if (star) for (let i = 0; i < this.stars; i++) ctx.drawImage(star, cx + (i - (this.stars - 1) / 2) * sz * 1.1 - sz / 2, base - s * 1.42 - (i === 1 ? sz * 0.15 : 0), sz, sz);
+      else D.text(ctx, '⭐'.repeat(this.stars), cx, base - s * 1.08, s * 0.18);
+    }
     if (this.flash && now - this.flash.t < 1.2) {
       const k = (now - this.flash.t) / 1.2;
       D.text(ctx, this.flash.text, cx, base - s * 1.15 - k * 20, s * 0.17 * (1 + Math.sin(Math.min(1, k * 4) * Math.PI) * 0.15), {color: this.flash.text === 'Oops!' ? '#e8506a' : D.C.pink, weight: 700, stroke: '#fff', sw: 6});
@@ -779,7 +815,7 @@ const Street = {
     ctx.restore();
     D.shelfDisplay(ctx, shop, save.menu, day.shelf, now, H);
     if (day.event === 'birthday' && !shop.painted) for (let i = 0; i < 7; i++) { ctx.fillStyle = ['#ffd23d', '#9fe3c0', '#c3a6ec', '#ff9fc4'][i % 4]; ctx.beginPath(); const bx = W * 0.08 + i * W * 0.12; ctx.moveTo(bx, H * 0.27); ctx.lineTo(bx + W * 0.1, H * 0.27); ctx.lineTo(bx + W * 0.05, H * 0.3); ctx.fill(); }
-    D.vanSide(ctx, W * 0.02, g.road, Math.min(W * 0.5, H * 0.3), save.paint, {t: now, name: SHOP_NAME});
+    D.vanSide(ctx, W * 0.02, g.road, Math.min(W * 0.5, H * 0.3), save.paint, {t: now, name: D.streetArt(W, H) ? '' : SHOP_NAME});
     baxter(this.walker?.state === 'order' ? 'excited' : 'sit', W * 0.88, g.feet - H * 0.005, Math.min(H * 0.11, W * 0.24));
     const w = this.walker;
     if (w) drawCustomer(ctx, w.type, w.x, g.feet, g.ch, {t: now + w.t, walking: w.state === 'in' || w.state === 'out', face: w.face, dir: -1});
@@ -1024,7 +1060,8 @@ const Drive = {
     if (this.van.moving) { ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; for (let i = 0; i < 4; i++) { const ly = y + hh * (0.2 + i * 0.15), lx = x + w - ((now * 300 + i * 60) % w); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 22, ly); ctx.stroke(); } }
     ctx.fillStyle = '#f7d9c4'; ctx.fillRect(x, y + hh * 0.78, w, hh * 0.22);
     arianna('drive', x + w * 0.3, y + hh * 1.02, hh * 0.98, {face: 'right'});
-    ctx.beginPath(); ctx.arc(x + w * 0.46, y + hh * 0.72, hh * 0.2, -Math.PI * 0.9, Math.PI * 0.1); ctx.lineWidth = 5; ctx.strokeStyle = '#5b3a29'; ctx.stroke();
+    // the A6 picture has its own steering wheel and seat
+    if (!image('a6-drive')) { ctx.beginPath(); ctx.arc(x + w * 0.46, y + hh * 0.72, hh * 0.2, -Math.PI * 0.9, Math.PI * 0.1); ctx.lineWidth = 5; ctx.strokeStyle = '#5b3a29'; ctx.stroke(); }
     if (this.sniffT > 0) baxter('sniff', x + w * 0.78, y + hh * 0.98, hh * 0.5, {face: 'right'});
     else baxter('ride', x + w * 0.79, y + hh * 1.02, hh * (image('b4-ride') ? 0.66 : 0.78), {face: 'right'});
     ctx.restore();
@@ -1107,8 +1144,9 @@ const Results = {
   },
   next() { go(this.entry.day === L.SEASON_DAYS ? SeasonEnd : DayStart); },
   draw() {
-    D.cozy(ctx, W, H, {t: now});
-    baxter('sleep', W * 0.5, H * 0.87, H * 0.13);
+    const f = D.cozy(ctx, W, H, {t: now});
+    // asleep on the rug
+    baxter('sleep', f ? f.sx(0.5) : W * 0.5, f ? f.sy(0.85) : H * 0.87, H * 0.13);
     if (!image('b5-sleep')) for (let i = 0; i < 3; i++) { const k = (now * 0.5 + i / 3) % 1; D.text(ctx, 'z', W * 0.58 + k * 30, H * 0.76 - k * 50, 14 + i * 4, {weight: 700, color: `rgba(91,58,41,${1 - k})`}); }
   },
 };
@@ -1188,9 +1226,10 @@ const SeasonEnd = {
     const totals = {};
     for (const hd of save.history) for (const s of hd.sold) totals[s.name] = (totals[s.name] || 0) + s.count;
     const fav = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
-    const label = {gold: '🏆', silver: '🥈', bronze: '🥉', ribbon: '🎀'}[trophy] + ' ' + S.trophy[trophy];
+    const art = {gold: 'u3-trophy-gold', silver: 'u4-trophy-silver', bronze: 'u5-trophy-bronze', ribbon: 'u6-ribbon'}[trophy];
+    const prize = image(art) ? h('img', {class: 'prize', src: `${BASE}art/${art}.webp`, alt: ''}) : `${{gold: '🏆', silver: '🥈', bronze: '🥉', ribbon: '🎀'}[trophy]} `;
     mount(h('div', {class: 'back'}, h('div', {class: 'card center'},
-      h('h2', null, 'Season complete!'), h('div', {style: 'font-size:30px;font-weight:700;margin:8px 0'}, label),
+      h('h2', null, 'Season complete!'), h('div', {style: 'font-size:30px;font-weight:700;margin:8px 0'}, prize, h('div', null, S.trophy[trophy])),
       h('p', null, `Season profit: $${profit}`), h('p', null, `Best day: day ${best.day} ($${best.profit})`), fav ? h('p', null, `Best seller: ${fav[0]} (${fav[1]} sold)`) : null,
       h('p', null, `Stickers collected: ${Object.keys(save.stickers).length} of ${Object.keys(L.CUSTOMERS).length}`),
       h('div', {class: 'actions'}, btn('Keep baking (free play)', () => go(DayStart), 'pink')))));

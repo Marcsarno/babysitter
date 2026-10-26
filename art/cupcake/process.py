@@ -31,6 +31,7 @@ SHEETS = {
 FACING = {
     'arianna-3q': 'right', 'arianna-side': 'right', 'baxter-3q': 'left', 'baxter-side': 'right',
     'a6-drive': 'left', 'b3-sniff': 'left', 'b4-ride': 'left',
+    'a8-walk': 'right', 'b7-walk': 'right', 'v1-van-side': 'right', 'v2-van-top': 'right',
 }
 # Target height by code prefix: characters, cupcake parts (I), baking tools (K), van (V), town map pieces (T),
 # decorations (D) and icons (U). Background scenes (BG, S1) are kept whole, not cut out.
