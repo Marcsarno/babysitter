@@ -1896,7 +1896,8 @@ const ToyShop = {
       if (c.counting) D.text(ctx, TY.dollars(running[i]).replace('$0.', '') + (running[i] < 100 ? '¢' : ''), x, y - s * 0.5, 13, {weight: 700, color: D.C.pink, stroke: '#fff', sw: 4});
     });
     const fy = gy + room * 0.14;
-    arianna('wave', W * 0.22, fy, ch);
+    arianna(c.phase === 'buy' && image('a11-toys') ? 'toys' : 'wave', W * 0.22, fy, ch);
+    baxter('ball', W * 0.47, fy + 2, ch * 0.34);
     drawCustomer(ctx, c.type, W * 0.76, fy, ch * 0.9, {t: now, face: c.phase === 'buy' && c.toy ? 'wow' : null});
     if (c.phase === 'buy' && c.toy) D.toyIcon(ctx, c.toy, W * 0.6, fy - ch * 0.45, ch * 0.22);
   },

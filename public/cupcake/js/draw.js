@@ -782,7 +782,7 @@ export function shopIcon(ctx, id, x, y, s) {
 // part each time she taps: 1 the base, 2 the frame, 3 the walls, 4 the roof, 5 the window, door and
 // awning, 6 the sign. A red ribbon hangs across the door until she cuts it.
 export const BUILD_STAGES = 6;
-const FRONT_ART = {salon: 'r8-salon-front'};
+const FRONT_ART = {salon: 'r8-salon-front', toy: 'y11-toy-front'};
 export function shopFront(ctx, id, x, y, w, stage, {ribbon = false, t = 0} = {}) {
   const shop = SHOPS[id], lw = Math.max(2, w * 0.012);
   const wallH = w * 0.6, left = x - w / 2, top = y - wallH;
@@ -1028,6 +1028,8 @@ export function styleTouch(ctx, id, x, y, s, t = 0) {
 
 // ---------- the toy shop (stand-ins until its pictures are made) ----------
 export function toyRoom(ctx, W, H, gy, t = 0) {
+  const f = fitArt('bg13-toyshop', W, H, [0, 0.1, 1, 0.9], 0, H, true);
+  if (f) { paintArt(ctx, f, H); return; }
   ctx.fillStyle = '#e3f2ff'; ctx.fillRect(0, 0, W, gy);
   for (let i = 0; i < 18; i++) { starPath(ctx, (i * 97.3) % W, 30 + (i * 53.7) % (gy * 0.6), 6 + (i % 3) * 2); paint(ctx, ['#ffe08a', '#ffc6dc', '#c3a6ec'][i % 3], 0); }
   // bunting along the top
@@ -1036,7 +1038,17 @@ export function toyRoom(ctx, W, H, gy, t = 0) {
   for (let y = gy; y < H; y += 26) { ctx.fillStyle = 'rgba(193,141,95,.25)'; ctx.fillRect(0, y, W, 2); }
 }
 // A toy, drawn: x, y its middle, s its size.
+const TOY_ART = {teddy: 'y2-teddy', ball: 'y3-ball', car: 'y4-car', robot: 'y5-robot'};
+// A picture centred on (x, y), fitted into a square of side s.
+function artIn(ctx, name, x, y, s) {
+  const img = image(name);
+  if (!img) return false;
+  const k = s / Math.max(img.width, img.height);
+  ctx.drawImage(img, x - img.width * k / 2, y - img.height * k / 2, img.width * k, img.height * k);
+  return true;
+}
 export function toyIcon(ctx, id, x, y, s) {
+  if (artIn(ctx, TOY_ART[id], x, y, s * 1.05)) return;
   const lw = Math.max(1.2, s * 0.06);
   if (id === 'teddy') shopIcon(ctx, 'toy', x, y, s * 1.2);
   else if (id === 'ball') {
@@ -1064,8 +1076,10 @@ export function toyShelf(ctx, x, y, w, id, tens, ones, {ghost = null} = {}) {
   // boxes of ten, two rows if needed
   for (let i = 0; i < tens; i++) {
     const bx = x + 6 + (i % 5) * unit * 1.45, by = plank - unit * 1.2 - Math.floor(i / 5) * unit * 1.25;
-    rr(ctx, bx, by, unit * 1.35, unit * 1.15, 4); paint(ctx, '#e0b083', lw);
-    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx + 3, by + 3, unit * 1.35 - 6, unit * 0.18);
+    if (!artIn(ctx, 'y1-box', bx + unit * 0.675, by + unit * 0.575, unit * 1.4)) {
+      rr(ctx, bx, by, unit * 1.35, unit * 1.15, 4); paint(ctx, '#e0b083', lw);
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx + 3, by + 3, unit * 1.35 - 6, unit * 0.18);
+    }
     toyIcon(ctx, id, bx + unit * 0.45, by + unit * 0.62, unit * 0.62);
     text(ctx, '10', bx + unit * 1.0, by + unit * 0.66, unit * 0.48, {weight: 700});
   }
@@ -1075,9 +1089,19 @@ export function toyShelf(ctx, x, y, w, id, tens, ones, {ghost = null} = {}) {
   rr(ctx, x - 4, plank, w + 8, unit * 0.32, 4); paint(ctx, '#c18d5f', lw);
 }
 // A dollar bill or a coin, x, y its middle, s its size. Labels show what each is worth while she learns.
+const MONEY_ART = {dollar: 'y6-dollar', quarter: 'y7-quarter', dime: 'y8-dime', nickel: 'y9-nickel', penny: 'y10-penny'};
+const MONEY = {quarter: 25, dime: 10, nickel: 5, penny: 1};
 export const MONEY_STYLE = {dollar: ['#bfe6b0', 1.6], quarter: ['#d9dbe3', 0.62], dime: ['#d9dbe3', 0.44], nickel: ['#cfd1da', 0.53], penny: ['#e0a070', 0.47]};
 export function moneyPiece(ctx, kind, x, y, s, label = true) {
   const [color, k] = MONEY_STYLE[kind], lw = Math.max(1.5, s * 0.04);
+  const art = image(MONEY_ART[kind]);
+  if (art) {
+    const w = kind === 'dollar' ? s * 1.6 : s * k * 2, hh = w * art.height / art.width;
+    ctx.drawImage(art, x - w / 2, y - hh / 2, w, hh);
+    if (kind === 'dollar') text(ctx, '$1', x, y + 1, s * 0.26, {weight: 700, color: '#2f6b2b', stroke: '#e6f5df', sw: 3});
+    else if (label) text(ctx, `${MONEY[kind]}¢`, x, y + 1, s * k * 0.7, {weight: 700, stroke: '#fff', sw: 3});
+    return;
+  }
   if (kind === 'dollar') {
     rr(ctx, x - s * 0.8, y - s * 0.36, s * 1.6, s * 0.72, s * 0.06); paint(ctx, color, lw);
     rr(ctx, x - s * 0.7, y - s * 0.27, s * 1.4, s * 0.54, s * 0.04); paint(ctx, null, lw * 0.6, '#5f9f5a');
