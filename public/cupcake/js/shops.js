@@ -4,9 +4,9 @@
 
 export const SHOPS = {
   salon: {name: "Arianna's Hair Salon", short: 'Hair salon', icon: '✂️', cost: 100, lot: 1, color: '#c3a6ec', trim: '#f7a8c8'},
-  toy:   {name: "Arianna's Toy Shop", short: 'Toy shop', icon: '🧸', cost: 220, lot: 0, color: '#86c3f2', trim: '#ffd66b'},
+  toy:   {name: "Arianna's Toy Shop", short: 'Toy shop', icon: '🧸', cost: 220, lot: 0, color: '#86c3f2', trim: '#ffd66b', soon: true},
 };
-export const ORDER = ['salon', 'toy'];   // the jar saves for these in turn
+export const ORDER = ['salon', 'toy'];   // the jar saves for these in turn (skipping any marked soon: not playable yet)
 export const FUND_AFTER = 4;             // the jar shows up once day 4 is done
 export const KEEP_CASH = 30;             // always left over for the next trip to the market
 export const DROPS = [5, 10];
@@ -16,7 +16,7 @@ export const freshShops = () => ({fund: 0, built: [], building: null, booked: {}
 
 export const fundOpen = save => save.day > FUND_AFTER || save.shops.fund > 0 || save.shops.built.length > 0;
 // what the jar is saving for now, or null while Builder Bo is busy or both shops are built
-export const fundFor = save => (save.shops.building ? null : ORDER.find(id => !save.shops.built.includes(id)) || null);
+export const fundFor = save => (save.shops.building ? null : ORDER.find(id => !SHOPS[id].soon && !save.shops.built.includes(id)) || null);
 
 // Drop money into the jar. Never takes more than the shop still needs, or the money kept for the market.
 export function drop(save, amount) {

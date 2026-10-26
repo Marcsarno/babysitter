@@ -255,5 +255,7 @@ Each phase goes live so Arianna can play it and steer.
   - **Each client:** set the clock, snip at the ruler, then pick a bow, sparkles or a flower. Each client pays $7.
   - **Clock difficulty, by salon days played:** o'clock first, then half past, then quarter past and to, then any 5 minutes. The digital time shows for the first 3 salon days.
   - **Cutting:** "make it 6" for the first 2 salon days, then "cut off 3" as well.
-  - Next: Arianna tries it.
+  - Live for everyone, so the `?shops` preview switch is gone. `?shops` now only adds the grown-up "Build the next shop now" shortcut in Settings.
+  - The toy shop is marked `soon` in shops.js, so the jar won't save for it until it's playable.
+  - Round 5 art (building lot, Bo's hammer, both roofs) is in. Round 6 (the salon's own pictures) is in `docs/round6-art-prompts.txt`.
 
