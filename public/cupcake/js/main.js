@@ -1020,7 +1020,7 @@ const Find = {
         if (n === 0) { D.rr(ctx, x - lay.step * 0.48, lay.y - hh * 1.2, lay.step * 0.96, hh * 1.2, 4); ctx.fillStyle = '#fff4f8'; ctx.fill(); ctx.stroke(); for (let k = 0; k < 4; k++) { ctx.fillStyle = k % 2 ? '#fff' : D.C.pink; ctx.fillRect(x - lay.step * 0.48 + k * lay.step * 0.24, lay.y - hh * 1.2, lay.step * 0.24, hh * 0.25); } D.cupcake(ctx, {cake: 'vanilla', frosting: 'pink', toppings: ['cherry']}, x, lay.y - 2, lay.step * 0.6); }
         else if (fronts.every(Boolean)) {
           // the painted house fronts (H1-H6), standing on the line
-          const img = fronts[n % 6], fw = lay.step * 0.94, fh = fw * img.height / img.width;
+          const img = fronts[n % 6], fw = lay.step * 1.08, fh = fw * img.height / img.width; // neighbours just touch, like a real street
           ctx.drawImage(img, x - fw / 2, lay.y + bounce - fh, fw, fh);
         } else {
           ctx.save(); ctx.translate(0, bounce);
