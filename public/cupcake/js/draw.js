@@ -1059,7 +1059,9 @@ export function emote(ctx, kind, x, y, s, age) {
 export function confetti(ctx, parts) {
   for (const p of parts) {
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a);
-    if (p.coin && image('u1-coin')) ctx.drawImage(image('u1-coin'), -p.s * 1.2, -p.s * 1.2, p.s * 2.4, p.s * 2.4);
+    if (p.star && image('u7-star')) ctx.drawImage(image('u7-star'), -p.s, -p.s, p.s * 2, p.s * 2);
+    else if (p.star) text(ctx, '⭐', 0, 0, p.s * 2);
+    else if (p.coin && image('u1-coin')) ctx.drawImage(image('u1-coin'), -p.s * 1.2, -p.s * 1.2, p.s * 2.4, p.s * 2.4);
     else if (p.coin) { circle(ctx, 0, 0, p.s, '#ffd23d', 1.5); text(ctx, '$', 0, 1, p.s * 1.3, {color: '#b78a1a', weight: 700}); }
     else { ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); }
     ctx.restore();
