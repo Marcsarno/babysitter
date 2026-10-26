@@ -738,10 +738,12 @@ export function renderTown(town, S, taken = {}) {
   return cv;
 }
 
+const ROOF_ART = {salon: 't19-roof-salon', toy: 't20-roof-toy'};
 // A new shop seen from above on the map: a paved yard, a striped roof and the shop's sign in the middle.
 function shopRoof(ctx, id, x, y, w, h, S, lw) {
-  const shop = SHOPS[id];
+  const shop = SHOPS[id], art = image(ROOF_ART[id]);
   ctx.fillStyle = '#f3e7d3'; ctx.fillRect(x, y, w, h);
+  if (art) { const k = Math.min(w, h) * 0.86 / Math.max(art.width, art.height); ctx.drawImage(art, x + (w - art.width * k) / 2, y + (h - art.height * k) / 2, art.width * k, art.height * k); return; }
   const rx = x + S * 0.3, ry = y + S * 0.3, rw = w - S * 0.6, rh = h - S * 0.75;
   ctx.fillStyle = 'rgba(91,58,41,.18)'; ctx.fillRect(rx + S * 0.08, ry + S * 0.1, rw, rh);
   rr(ctx, rx, ry, rw, rh, S * 0.14); paint(ctx, shop.color, lw);

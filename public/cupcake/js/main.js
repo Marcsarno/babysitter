@@ -1513,8 +1513,16 @@ const Build = {
     this.site = {x: W / 2, y: gy - w * 0.1};
     // everyone stands on the sidewalk in front, below the door and the ribbon
     const ch = Math.min(room * 0.31, W * 0.5), bx = W * 0.17;
-    drawCustomer(ctx, 'builder', bx, front, ch, {t: now, face: hit < 0.5 || this.cut ? 'wow' : null});
-    if (!this.cut) hammerIn(bx + ch * 0.17, front - ch * 0.4, ch * 0.24, hit < 0.2 ? -0.9 + hit * 6 : 0.3);
+    const withHammer = !this.cut && image('c2-builder-hammer');
+    if (withHammer) {
+      // his hammer picture hops a little on each tap
+      const hh = ch * ART_SCALE.builder * 1.05, bw = hh * withHammer.width / withHammer.height, hop = hit < 0.2 ? Math.sin(hit / 0.2 * Math.PI) * ch * 0.05 : 0;
+      shadow(ctx, bx, front, bw);
+      ctx.drawImage(withHammer, bx - bw / 2, front - hh - hop, bw, hh);
+    } else {
+      drawCustomer(ctx, 'builder', bx, front, ch, {t: now, face: hit < 0.5 || this.cut ? 'wow' : null});
+      if (!this.cut) hammerIn(bx + ch * 0.17, front - ch * 0.4, ch * 0.24, hit < 0.2 ? -0.9 + hit * 6 : 0.3);
+    }
     arianna(this.cut ? 'cheer' : 'stand', W * 0.82, front + 2, ch * 1.08);
     baxter(this.cut ? 'excited' : 'sit', W * 0.52, front + 2, ch * 0.42, {face: 'right'});
   },

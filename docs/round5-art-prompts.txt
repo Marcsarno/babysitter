@@ -1,0 +1,14 @@
+Round 5 art for the same kids' game, in the same style as the attached character sheets and all the earlier pictures. Please generate each image below as a SEPARATE image, one at a time, in order, without asking me to confirm between images. After each one, tell me its file name.
+
+STYLE FOR EVERY IMAGE: children's picture-book cartoon illustration, clean bold dark-brown outlines, soft simple shading, rounded friendly shapes, bright pastel palette of strawberry pink, mint green, buttercream yellow, sky blue, lavender and chocolate brown, matching the attached character sheets.
+RULES FOR EVERY IMAGE: no text, letters, numbers, words, logos or writing anywhere (signs stay blank). Nothing cropped.
+SCENES (BG): tall 9:16 (1080x1920), full background, and NO people and NO animals in them (the game adds the characters).
+EVERYTHING ELSE: square 1024x1024, one subject centered, plain pure white background, no shadow on the ground.
+
+NEW SHOPS: THE BUILDING SITE (shared by the hair salon and the toy shop)
+BG11-lot: A sunny town street seen from the front. In the middle of the picture, an empty dirt building lot with a short wooden fence along the front, a small pile of bricks and a wheelbarrow at one side. Pastel shop fronts on both sides of the lot, a blue sky with soft clouds, and a clear sidewalk across the bottom third for characters to stand on. The lot itself stays mostly empty: the game builds the new shop there.
+C2-builder-hammer: Builder Bo (orange safety vest, yellow hard hat, blue jeans, brown work boots, exactly like his earlier picture) standing, full body, facing the viewer, holding a wooden hammer up in one hand, big cheerful grin.
+T19-roof-salon: A small shop seen from directly above, top-down like a map, matching the earlier T pieces: a lavender striped roof with a round pale sign in the middle showing a pair of pink scissors, and a pink striped awning along the bottom edge. Square footprint.
+T20-roof-toy: The same kind of shop seen from directly above: a sky-blue striped roof with a round pale sign in the middle showing a little brown teddy bear face, and a buttercream-yellow striped awning along the bottom edge. Square footprint.
+
+That's 4 images.
