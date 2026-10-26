@@ -23,12 +23,12 @@ test('an old saved game keeps everything and gains an empty building fund', () =
   assert.deepEqual(L.migrate(JSON.parse(JSON.stringify(save))).shops, save.shops);
 });
 
-test('the jar shows up after day 4 and saves for the salon, then the toy shop', () => {
+test('the jar shows up after day 2 and saves for the salon, then the toy shop', () => {
   SH.SHOPS.toy.soon = false;   // as it will be once the toy shop is playable
   const save = L.newGame(1);
-  save.day = 4;
+  save.day = 2;
   assert.equal(SH.fundOpen(save), false);
-  save.day = 5;
+  save.day = 3;
   assert.equal(SH.fundOpen(save), true);
   assert.equal(SH.fundFor(save), 'salon');
   save.cash = 1000;
@@ -68,7 +68,7 @@ test('customers book visits on cupcake days, up to a limit', () => {
   assert.equal(SH.booked(save, 'salon'), SH.MAX_BOOKED);
 });
 
-test('pacing: saving part of a typical day opens the salon around day 12 and the toy shop around day 25', () => {
+test('pacing: saving part of a typical day opens the salon in the first week or so and the toy shop around day 20', () => {
   SH.SHOPS.toy.soon = false;
   // a typical day's profit grows as the shop does; she saves a bit over a third of it
   const save = L.newGame(1);
@@ -78,8 +78,8 @@ test('pacing: saving part of a typical day opens the salon around day 12 and the
     if (SH.fundOpen(save) && SH.fundFor(save)) SH.drop(save, Math.round((20 + d * 1.5) * 0.38));
     if (save.shops.building) { SH.finishBuilding(save); save.shops[`${save.shops.built.at(-1)}Day`] = save.day; }
   }
-  assert.ok(Math.abs(save.shops.salonDay - 12) <= 2, `salon on day ${save.shops.salonDay}`);
-  assert.ok(Math.abs(save.shops.toyDay - 25) <= 3, `toy shop on day ${save.shops.toyDay}`);
+  assert.ok(save.shops.salonDay >= 6 && save.shops.salonDay <= 9, `salon on day ${save.shops.salonDay}`);
+  assert.ok(Math.abs(save.shops.toyDay - 20) <= 3, `toy shop on day ${save.shops.toyDay}`);
 });
 
 test('each shop has an empty lot of its own on the map', () => {
@@ -97,4 +97,15 @@ test('the jar never saves for a shop that is not playable yet', () => {
   save.day = 6; save.shops.built = ['salon'];
   assert.equal(SH.fundFor(save), null);
   assert.equal(SH.drop(save, 5), 'none');
+});
+
+test('a jar already past a lowered price gets built, with the extra given back', () => {
+  const save = L.newGame(1);
+  save.day = 9; save.cash = 40; save.shops.fund = SH.SHOPS.salon.cost + 15;
+  SH.settle(save);
+  assert.equal(save.shops.building, 'salon');
+  assert.equal(save.shops.fund, 0);
+  assert.equal(save.cash, 55);
+  SH.settle(save);
+  assert.equal(save.cash, 55, 'only once');
 });

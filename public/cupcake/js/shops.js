@@ -3,12 +3,12 @@
 // change the cupcake shop: a shop day doesn't use up a day of the cupcake season.
 
 export const SHOPS = {
-  salon: {name: "Arianna's Hair Salon", short: 'Hair salon', icon: '✂️', cost: 100, lot: 1, color: '#c3a6ec', trim: '#f7a8c8'},
+  salon: {name: "Arianna's Hair Salon", short: 'Hair salon', icon: '✂️', cost: 60, lot: 1, color: '#c3a6ec', trim: '#f7a8c8'},
   toy:   {name: "Arianna's Toy Shop", short: 'Toy shop', icon: '🧸', cost: 220, lot: 0, color: '#86c3f2', trim: '#ffd66b', soon: true},
 };
 export const ORDER = ['salon', 'toy'];   // the jar saves for these in turn (skipping any marked soon: not playable yet)
-export const FUND_AFTER = 4;             // the jar shows up once day 4 is done
-export const KEEP_CASH = 30;             // always left over for the next trip to the market
+export const FUND_AFTER = 2;             // the jar shows up once day 2 is done
+export const KEEP_CASH = 25;             // always left over for the next trip to the market
 export const DROPS = [5, 10];
 export const MAX_BOOKED = 5;
 
@@ -35,6 +35,16 @@ export const canDrop = (save, amount) => {
   const id = fundFor(save);
   return !!id && save.cash - Math.min(amount, SHOPS[id].cost - save.shops.fund) >= KEEP_CASH;
 };
+
+// If a shop's price came down after she started saving, a jar that's already full gets built, and
+// anything over the price goes back into her cash.
+export function settle(save) {
+  const id = fundFor(save);
+  if (!id || save.shops.fund < SHOPS[id].cost) return;
+  save.cash += save.shops.fund - SHOPS[id].cost;
+  save.shops.fund = 0;
+  save.shops.building = id;
+}
 
 export function finishBuilding(save) {
   const id = save.shops.building;

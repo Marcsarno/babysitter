@@ -31,6 +31,7 @@ let save = L.migrate(readJSON(L.SAVE_KEY));
 // A copy of her saved game from before the new shops, kept just in case.
 try { const raw = localStorage.getItem(L.SAVE_KEY); if (raw && !localStorage.getItem(L.SAVE_KEY + '.before-shops')) localStorage.setItem(L.SAVE_KEY + '.before-shops', raw); } catch {}
 const shopsOn = () => !!save;
+if (save) SH.settle(save);
 // Progress is saved between days; leaving mid-day comes back to the start of that day.
 const persist = () => writeJSON(L.SAVE_KEY, save);
 
@@ -1355,14 +1356,17 @@ const Results = {
     if (leftovers) notes.push(`${leftovers} leftover cupcake${leftovers > 1 ? 's' : ''} went to the neighbors.`);
     for (const [i, n] of Object.entries(day.cheap)) if (n >= 2) notes.push(`💡 ${n} customers would have happily paid more for ${save.menu[i].name}.`);
     for (const [i, n] of Object.entries(day.pricey)) notes.push(`💡 ${n} customer${n > 1 ? 's' : ''} thought ${save.menu[i].name} cost too much.`);
-    const saving = shopsOn() && SH.fundOpen(save) && SH.fundFor(save);
-    if (saving) notes.push(`🫙 Building fund: $${save.shops.fund} of $${SH.SHOPS[saving].cost} for the ${SH.SHOPS[saving].short.toLowerCase()}. Tap Upgrades to save.`);
+    const fundSpot = h('div', {class: 'fundspot'});
+    const showFund = () => fundSpot.replaceChildren(...[fundCard(showFund)].filter(Boolean));
+    showFund();
     const mb = L.moneyBar(save);
     const card = h('div', {class: 'card results'},
       h('h2', null, `Day ${entry.day} done!`),
       h('div', {class: 'big3'}, h('div', null, h('small', null, 'Earned'), countUp(entry.earned)), h('div', null, h('small', null, 'Spent'), countUp(entry.spent)),
         h('div', {class: 'profit ' + (entry.profit >= 0 ? 'gain' : 'loss')}, h('small', null, 'Profit'), countUp(entry.profit, 300))),
       h('div', {class: 'muted center', style: 'margin-top:4px'}, `Cupcakes $${entry.sales} + tips $${entry.tips}`),
+      // the building fund jar, up top where she'll see it
+      fundSpot,
       h('h3', null, 'Cupcakes sold'), bars,
       save.history.length >= 3 ? [h('h3', null, 'Profit each day'), line] : null,
       ...notes.map(n => h('div', {class: 'note'}, n)),
@@ -1431,6 +1435,35 @@ function drawLine(c, history) {
   pts.forEach((p, i) => { g.beginPath(); g.arc(X(i), Y(p.profit), 5, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = D.C.ink; g.stroke(); D.text(g, String(p.day), X(i), hh - 10, 11); });
 }
 
+// ---------- the building fund jar ----------
+// The jar with its + $5 and + $10 buttons, on the end-of-day card and in Upgrades. Null when there's
+// nothing to save for. changed() redraws whatever it's on after a drop.
+function fundCard(changed) {
+  if (!shopsOn() || !SH.fundOpen(save)) return null;
+  if (save.shops.building) {
+    const shop = SH.SHOPS[save.shops.building];
+    return h('div', {class: 'fund'}, h('div', {class: 'jar full', 'aria-hidden': 'true'}, h('i', {style: 'height:100%'})),
+      h('div', {class: 'grow'}, h('div', {class: 'name'}, `${shop.icon} The jar is full!`), h('div', {class: 'muted'}, `Builder Bo builds the ${shop.short.toLowerCase()} tomorrow morning.`)));
+  }
+  const id = SH.fundFor(save);
+  if (!id) return null;
+  const shop = SH.SHOPS[id], jar = h('div', {class: 'jar', 'aria-hidden': 'true'}, h('i', {style: `height:${Math.round(100 * save.shops.fund / shop.cost)}%`}));
+  const drop = amount => {
+    const res = SH.drop(save, amount);
+    if (res === 'keep') { sfx.gentle(); toast(S.keepCash); speak(S.keepCash); return; }
+    if (res === 'none') return;
+    cashChanged();
+    coinsOut(jar, Math.ceil(amount / 2));
+    if (res === 'full') { sfx.unlock(); confettiBurst(W / 2, H * 0.25, 50); speak(S.fundFull[save.shops.building]); }
+    else { sfx.coin(); speak(S.intoJar); }
+    persist();
+    changed();
+  };
+  return h('div', {class: 'fund'}, jar,
+    h('div', {class: 'grow'}, h('div', {class: 'name'}, `${shop.icon} Save for the ${shop.short.toLowerCase()}!`), h('div', {class: 'muted'}, `$${save.shops.fund} of $${shop.cost} in the jar`),
+      h('div', {class: 'drops'}, ...SH.DROPS.map(a => btn(`+ $${a}`, () => drop(a), SH.canDrop(save, a) ? 'mint small' : 'ghost small')))));
+}
+
 // ---------- upgrades ----------
 const Upgrades = {
   enter() {
@@ -1456,28 +1489,7 @@ const Upgrades = {
       h('div', {class: 'row-end'}, h('div', {style: 'flex:1'}), btn(Results.entry?.day === L.SEASON_DAYS ? 'Finish the season →' : 'Next day →', () => { persist(); Results.next(); }, 'pink big')));
   },
   // the building fund jar, saving for the next new shop
-  fund() {
-    const id = SH.fundFor(save);
-    if (save.shops.building) return [h('div', {class: 'section'}, 'Building fund'), h('div', {class: 'up'}, h('div', null, h('div', {class: 'name'}, `${SH.SHOPS[save.shops.building].icon} The jar is full!`), h('div', {class: 'muted'}, `Builder Bo builds the ${SH.SHOPS[save.shops.building].short.toLowerCase()} tonight.`)), h('b', null, '🎉'))];
-    if (!id) return [];
-    const shop = SH.SHOPS[id], k = save.shops.fund / shop.cost;
-    this.jar = h('div', {class: 'jar', 'aria-hidden': 'true'}, h('i', {style: `height:${Math.round(k * 100)}%`}));
-    return [h('div', {class: 'section'}, 'Building fund'),
-      h('div', {class: 'fund'}, this.jar,
-        h('div', {class: 'grow'}, h('div', {class: 'name'}, `${shop.icon} ${shop.short}`), h('div', {class: 'muted'}, `$${save.shops.fund} of $${shop.cost} saved`),
-          h('div', {class: 'drops'}, ...SH.DROPS.map(a => btn(`+ $${a}`, () => this.drop(a), SH.canDrop(save, a) ? 'mint small' : 'ghost small')))))];
-  },
-  drop(amount) {
-    const res = SH.drop(save, amount);
-    if (res === 'keep') { sfx.gentle(); toast(S.keepCash); speak(S.keepCash); return; }
-    if (res === 'none') return;
-    cashChanged();
-    if (this.jar) coinsOut(this.jar, Math.ceil(amount / 2));
-    if (res === 'full') { sfx.unlock(); confettiBurst(W / 2, H * 0.25, 50); speak(S.fundFull[save.shops.building]); }
-    else { sfx.coin(); speak(S.intoJar); }
-    persist();
-    this.render();
-  },
+  fund() { const card = fundCard(() => this.render()); return card ? [h('div', {class: 'section'}, 'Building fund'), card] : []; },
   buy(fn, name) {
     const res = fn();
     if (res === 'broke') { sfx.gentle(); toast(S.keepSaving); speak(S.keepSaving); return; }
