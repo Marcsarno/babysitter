@@ -2,6 +2,7 @@
 // The look matches the character sheets: dark-brown outlines, soft pastel fills, one shadow tone.
 import {T} from './town.js';
 import {PAINTS} from './logic.js';
+import {SHOPS} from './shops.js';
 import {image, hasArt} from './art.js';
 
 export const C = {
@@ -635,7 +636,7 @@ function tree(ctx, cx, cy, s, lw, v) {
 // Painted map tiles (T1-T12); the -tile copies are square and untrimmed so they line up with the grid.
 const PARK_ART = ['t17-playground', 't18-fountain', 't16-bench'];
 const HOUSE_TILES = ['t1-house-pink-tile', 't2-house-blue-tile', 't3-house-yellow-tile', 't4-house-lavender-tile', 't5-house-mint-tile', 't6-house-peach-tile'];
-export function renderTown(town, S) {
+export function renderTown(town, S, taken = {}) {
   const cv = document.createElement('canvas');
   cv.width = town.w * S; cv.height = town.h * S;
   const ctx = cv.getContext('2d');
@@ -724,8 +725,9 @@ export function renderTown(town, S) {
     const b = lots[v] || (lots[v] = {x0: x, y0: y, x1: x, y1: y});
     b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y);
   }
-  for (const b of Object.values(lots)) {
+  for (const [v, b] of Object.entries(lots)) {
     const x0 = b.x0 * S + S * 0.12, y0 = b.y0 * S + S * 0.12, w = (b.x1 - b.x0 + 1) * S - S * 0.24, h = (b.y1 - b.y0 + 1) * S - S * 0.24;
+    if (taken[v]) { shopRoof(ctx, taken[v], b.x0 * S, b.y0 * S, (b.x1 - b.x0 + 1) * S, (b.y1 - b.y0 + 1) * S, S, lw); continue; }
     if (image('t12-lot')) ctx.drawImage(image('t12-lot'), x0 - S * 0.06, y0 - S * 0.06, w + S * 0.12, h + S * 0.12);
     else { ctx.setLineDash([S * 0.12, S * 0.08]); rr(ctx, x0, y0, w, h, S * 0.08); paint(ctx, null, lw * 1.2, '#c18d5f'); ctx.setLineDash([]); }
     const cx = x0 + w / 2, cy = y0 + h / 2;
@@ -734,6 +736,255 @@ export function renderTown(town, S) {
     ctx.beginPath(); ctx.moveTo(cx, cy + S * 0.25); ctx.lineTo(cx, cy + S * 0.55); paint(ctx, null, lw * 1.5, '#a8784a');
   }
   return cv;
+}
+
+const ROOF_ART = {salon: 't19-roof-salon', toy: 't20-roof-toy'};
+// A new shop seen from above on the map: a paved yard, a striped roof and the shop's sign in the middle.
+function shopRoof(ctx, id, x, y, w, h, S, lw) {
+  const shop = SHOPS[id], art = image(ROOF_ART[id]);
+  ctx.fillStyle = '#f3e7d3'; ctx.fillRect(x, y, w, h);
+  if (art) { const k = Math.min(w, h) * 0.86 / Math.max(art.width, art.height); ctx.drawImage(art, x + (w - art.width * k) / 2, y + (h - art.height * k) / 2, art.width * k, art.height * k); return; }
+  const rx = x + S * 0.3, ry = y + S * 0.3, rw = w - S * 0.6, rh = h - S * 0.75;
+  ctx.fillStyle = 'rgba(91,58,41,.18)'; ctx.fillRect(rx + S * 0.08, ry + S * 0.1, rw, rh);
+  rr(ctx, rx, ry, rw, rh, S * 0.14); paint(ctx, shop.color, lw);
+  ctx.save(); rr(ctx, rx, ry, rw, rh, S * 0.14); ctx.clip();
+  for (let i = 0; i < 12; i += 2) { ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(rx + i * rw / 12, ry, rw / 12, rh); }
+  ctx.restore();
+  rr(ctx, rx, ry, rw, rh, S * 0.14); paint(ctx, null, lw);
+  circle(ctx, rx + rw / 2, ry + rh / 2, S * 0.5, '#fff8ee', lw);
+  shopIcon(ctx, id, rx + rw / 2, ry + rh / 2, S * 0.62);
+  // the awning along the front, facing the street below
+  rr(ctx, rx + rw * 0.2, ry + rh - S * 0.05, rw * 0.6, S * 0.28, S * 0.06); paint(ctx, shop.trim, lw);
+}
+
+// Each new shop's sign: scissors for the salon, a teddy bear for the toy shop. x, y is the middle.
+export function shopIcon(ctx, id, x, y, s) {
+  const lw = Math.max(1.5, s * 0.06);
+  ctx.save(); ctx.translate(x, y);
+  if (id === 'salon') {
+    for (const k of [-1, 1]) {
+      ctx.beginPath(); ctx.moveTo(k * s * 0.12, s * 0.12); ctx.lineTo(-k * s * 0.18, -s * 0.42); ctx.lineTo(-k * s * 0.05, -s * 0.4); ctx.closePath(); paint(ctx, '#e8eef5', lw);
+      circle(ctx, k * s * 0.2, s * 0.26, s * 0.14, C.pink, lw);
+      circle(ctx, k * s * 0.2, s * 0.26, s * 0.06, '#fff8ee', lw * 0.7);
+    }
+    circle(ctx, 0, -s * 0.04, s * 0.04, C.ink);
+  } else {
+    for (const k of [-1, 1]) { circle(ctx, k * s * 0.26, -s * 0.24, s * 0.13, '#c9915f', lw); circle(ctx, k * s * 0.26, -s * 0.24, s * 0.06, '#f2c9a0'); }
+    circle(ctx, 0, 0, s * 0.33, '#c9915f', lw);
+    ellipse(ctx, 0, s * 0.1, s * 0.15, s * 0.11, '#f2c9a0', lw * 0.7);
+    circle(ctx, 0, s * 0.05, s * 0.04, C.ink);
+    for (const k of [-1, 1]) circle(ctx, k * s * 0.12, -s * 0.07, s * 0.035, C.ink);
+  }
+  ctx.restore();
+}
+
+// A new shop going up, seen from the front: x is its middle, y the ground, w its width. Builder Bo adds a
+// part each time she taps: 1 the base, 2 the frame, 3 the walls, 4 the roof, 5 the window, door and
+// awning, 6 the sign. A red ribbon hangs across the door until she cuts it.
+export const BUILD_STAGES = 6;
+export function shopFront(ctx, id, x, y, w, stage, {ribbon = false, t = 0} = {}) {
+  const shop = SHOPS[id], lw = Math.max(2, w * 0.012);
+  const wallH = w * 0.6, left = x - w / 2, top = y - wallH;
+  if (stage < 1) {
+    // the fenced lot
+    for (let i = 0; i <= 8; i++) { rr(ctx, left + i * w / 8 - w * 0.025, y - w * 0.2, w * 0.05, w * 0.2, w * 0.01); paint(ctx, C.wood, lw); }
+    rr(ctx, left - w * 0.03, y - w * 0.15, w * 1.06, w * 0.04, w * 0.01); paint(ctx, C.woodD, lw);
+    return;
+  }
+  rr(ctx, left - w * 0.04, y - w * 0.05, w * 1.08, w * 0.06, w * 0.01); paint(ctx, '#d9cfc3', lw);
+  if (stage === 2) {
+    for (let i = 0; i <= 4; i++) { rr(ctx, left + i * w / 4 - w * 0.02, top, w * 0.04, wallH - w * 0.05, 0); paint(ctx, C.wood, lw); }
+    rr(ctx, left - w * 0.02, top - w * 0.02, w * 1.04, w * 0.05, 0); paint(ctx, C.woodD, lw);
+    return;
+  }
+  if (stage >= 3) {
+    rr(ctx, left, top, w, wallH - w * 0.05, w * 0.02); paint(ctx, mix(shop.color, '#ffffff', 0.45), lw);
+    for (let i = 1; i < 6; i++) { ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(left + i * w / 6 - w * 0.008, top + w * 0.02, w * 0.016, wallH - w * 0.1); }
+  }
+  if (stage >= 4) {
+    ctx.beginPath(); ctx.moveTo(left - w * 0.08, top + w * 0.02); ctx.lineTo(x, top - w * 0.3); ctx.lineTo(left + w * 1.08, top + w * 0.02); ctx.closePath(); paint(ctx, shop.color, lw);
+    circle(ctx, x, top - w * 0.13, w * 0.08, '#fff8ee', lw);
+  }
+  if (stage >= 5) {
+    // big window on the left, door on the right, striped awning over the window
+    rr(ctx, left + w * 0.08, top + w * 0.2, w * 0.46, w * 0.26, w * 0.02); paint(ctx, '#d6efff', lw);
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(left + w * 0.12, top + w * 0.23, w * 0.06, w * 0.18);
+    rr(ctx, left + w * 0.64, top + w * 0.18, w * 0.26, wallH - w * 0.23, w * 0.03); paint(ctx, shop.trim, lw);
+    circle(ctx, left + w * 0.69, top + w * 0.36, w * 0.015, C.ink);
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath(); ctx.rect(left + w * 0.05 + i * w * 0.087, top + w * 0.1, w * 0.087, w * 0.08); paint(ctx, i % 2 ? '#fff' : shop.trim, lw * 0.8);
+      ctx.beginPath(); ctx.arc(left + w * 0.05 + (i + 0.5) * w * 0.087, top + w * 0.18, w * 0.0435, 0, Math.PI); paint(ctx, i % 2 ? '#fff' : shop.trim, lw * 0.8);
+    }
+  }
+  if (stage >= 6) {
+    shopIcon(ctx, id, x, top - w * 0.13, w * 0.12);
+    rr(ctx, left + w * 0.12, top - w * 0.02, w * 0.76, w * 0.1, w * 0.03); paint(ctx, '#fff8ee', lw);
+    const size = fitSize(ctx, shop.name, w * 0.06, w * 0.7, 700);
+    text(ctx, shop.name, x, top + w * 0.03, size, {weight: 700});
+  }
+  if (ribbon) {
+    const ry = top + w * 0.38, sway = Math.sin(t * 2) * w * 0.006;
+    ctx.beginPath(); ctx.moveTo(left - w * 0.02, ry); ctx.quadraticCurveTo(x, ry + w * 0.05 + sway, left + w * 1.02, ry); paint(ctx, null, w * 0.025, '#e8506a');
+    for (const k of [-1, 1]) { ellipse(ctx, x + k * w * 0.05, ry + w * 0.03, w * 0.05, w * 0.03, '#e8506a', lw * 0.8); }
+    circle(ctx, x, ry + w * 0.035, w * 0.022, '#c23a52', lw * 0.8);
+  }
+}
+
+// The street in front of the building site: sky, hills, a lawn and the sidewalk. Returns the ground line.
+export function siteScene(ctx, W, H, gy, t = 0) {
+  sky(ctx, W, H, t);
+  hills(ctx, W, gy - H * 0.08, '#cdeccf', H * 0.03, 0.8);
+  hills(ctx, W, gy - H * 0.03, C.grass, H * 0.02, 2.2);
+  ctx.fillStyle = '#ecd3a3'; ctx.fillRect(0, gy - H * 0.01, W, H * 0.03);
+  ctx.fillStyle = '#efe6dc'; ctx.fillRect(0, gy + H * 0.02, W, H * 0.06);
+  ctx.fillStyle = C.road; ctx.fillRect(0, gy + H * 0.08, W, H);
+}
+
+// ---------- the hair salon (stand-ins until its pictures are made) ----------
+// The salon inside: striped wallpaper, a big mirror, a salon chair and a checkered floor. gy is the floor line.
+export function salonRoom(ctx, W, H, gy, t = 0) {
+  ctx.fillStyle = '#f1e8fb'; ctx.fillRect(0, 0, W, gy);
+  for (let x = 0; x < W; x += 36) { ctx.fillStyle = 'rgba(195,166,236,.28)'; ctx.fillRect(x, 0, 18, gy); }
+  // a strip of little lights along the top
+  for (let i = 0; i < 9; i++) circle(ctx, W * (i + 0.5) / 9, H * 0.12 + Math.sin(i * 1.7) * 4, 5, `hsl(${(i * 47 + t * 25) % 360} 80% 78%)`, 1.5);
+  // the mirror and the shelf of bottles
+  const mx = W * 0.08, my = gy - H * 0.42, mw = W * 0.46, mh = H * 0.3;
+  rr(ctx, mx - 8, my - 8, mw + 16, mh + 16, 40); paint(ctx, '#f7a8c8', 3);
+  rr(ctx, mx, my, mw, mh, 34); paint(ctx, '#dff3ff', 3);
+  ctx.save(); rr(ctx, mx, my, mw, mh, 34); ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.moveTo(mx + mw * 0.15, my); ctx.lineTo(mx + mw * 0.35, my); ctx.lineTo(mx + mw * 0.05, my + mh); ctx.lineTo(mx - mw * 0.15, my + mh); ctx.fill();
+  ctx.restore();
+  rr(ctx, W * 0.62, gy - H * 0.36, W * 0.32, H * 0.02, 4); paint(ctx, C.wood, 2.5);
+  [['#9fe3c0', 0.66], ['#f27aa9', 0.74], ['#ffe08a', 0.82], ['#8ccaf5', 0.89]].forEach(([c, k], i) => {
+    const bx = W * k, bh = H * (0.05 + (i % 2) * 0.015);
+    rr(ctx, bx - 8, gy - H * 0.36 - bh, 16, bh, 5); paint(ctx, c, 2.5);
+    rr(ctx, bx - 4, gy - H * 0.36 - bh - 8, 8, 9, 2); paint(ctx, '#fff', 2);
+  });
+  // floor
+  const tile = Math.max(24, W / 12);
+  for (let y = gy; y < H; y += tile) for (let x = 0; x < W; x += tile) { ctx.fillStyle = ((x + y) / tile) % 2 < 1 ? '#fff8ee' : '#e8dcf5'; ctx.fillRect(x, y, tile, tile); }
+  ctx.fillStyle = 'rgba(91,58,41,.12)'; ctx.fillRect(0, gy, W, 4);
+  return {mirror: {x: mx, y: my, w: mw, h: mh}};
+}
+// The salon chair: x its middle, y the floor, s its height.
+export function salonChair(ctx, x, y, s) {
+  rr(ctx, x - s * 0.04, y - s * 0.32, s * 0.08, s * 0.3, 3); paint(ctx, '#c9c9d6', 2.5);
+  ellipse(ctx, x, y - s * 0.02, s * 0.22, s * 0.05, '#a7a9b7', 2.5);
+  rr(ctx, x - s * 0.3, y - s * 0.5, s * 0.6, s * 0.18, s * 0.06); paint(ctx, '#f27aa9', 3);
+  rr(ctx, x - s * 0.26, y - s, s * 0.52, s * 0.55, s * 0.12); paint(ctx, '#f27aa9', 3);
+  rr(ctx, x - s * 0.2, y - s * 0.92, s * 0.4, s * 0.38, s * 0.08); paint(ctx, '#ff9fc4', 0);
+}
+
+// A clock to set: hands at {h, m}. A hand left as null isn't drawn. `active` lights up the hand being set,
+// `ghost` shows where the hands should go, faintly.
+export function clockFace(ctx, x, y, r, time, {active = null, ghost = null} = {}) {
+  const lw = Math.max(2.5, r * 0.035);
+  circle(ctx, x, y + r * 0.04, r * 1.08, 'rgba(91,58,41,.18)');
+  circle(ctx, x, y, r * 1.08, '#c3a6ec', lw);
+  circle(ctx, x, y, r * 0.94, '#fff', lw);
+  for (let i = 0; i < 60; i++) {
+    const a = i / 60 * Math.PI * 2, big = i % 5 === 0, r0 = r * (big ? 0.8 : 0.86);
+    ctx.beginPath(); ctx.moveTo(x + Math.sin(a) * r0, y - Math.cos(a) * r0); ctx.lineTo(x + Math.sin(a) * r * 0.9, y - Math.cos(a) * r * 0.9);
+    paint(ctx, null, big ? lw : lw * 0.45, big ? C.ink : 'rgba(91,58,41,.45)');
+  }
+  for (let n = 1; n <= 12; n++) {
+    const a = n / 12 * Math.PI * 2;
+    text(ctx, String(n), x + Math.sin(a) * r * 0.64, y - Math.cos(a) * r * 0.64, r * 0.19, {weight: 700});
+  }
+  const hand = (turn, len, width, color, glow) => {
+    const a = turn * Math.PI * 2, ex = x + Math.sin(a) * len, ey = y - Math.cos(a) * len;
+    ctx.lineCap = 'round';
+    if (glow) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); paint(ctx, null, width + r * 0.08, 'rgba(255,224,138,.9)'); }
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); paint(ctx, null, width + lw * 1.4, C.ink);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); paint(ctx, null, width, color);
+    ctx.lineCap = 'butt';
+  };
+  const hourTurn = t => ((t.h % 12) + (t.m || 0) / 60) / 12;
+  if (ghost) {
+    ctx.globalAlpha = 0.35;
+    hand(hourTurn(ghost), r * 0.45, r * 0.09, C.pink); hand(ghost.m / 60, r * 0.72, r * 0.05, C.skyD);
+    ctx.globalAlpha = 1;
+  }
+  if (time.h != null) hand(hourTurn(time), r * 0.45, r * 0.09, C.pink, active === 'hour');
+  if (time.m != null) hand(time.m / 60, r * 0.72, r * 0.05, C.skyD, active === 'minute');
+  circle(ctx, x, y, r * 0.07, C.ink);
+}
+// Which number on the clock (1-12) a tap at (px, py) is nearest, or null if it's not on the face.
+export function clockNumberAt(x, y, r, px, py) {
+  const dx = px - x, dy = py - y, d = Math.hypot(dx, dy);
+  if (d < r * 0.2 || d > r * 1.2) return null;
+  const n = Math.round(Math.atan2(dx, -dy) / (Math.PI * 2) * 12);
+  return ((n + 12) % 12) || 12;
+}
+
+// The measuring board: a ruler from 0 to `inches`, with a lock of hair lying along it from 0 to `hair`.
+// Returns where each inch mark is so taps can be matched to them. `cut` is the snip so far (the cut-off
+// end slides away as `fall` goes from 0 to 1); `mark` bounces a mark to show where to cut.
+export function measureBoard(ctx, x, y, w, inches, hair, {color = '#8b5a3c', cut = null, fall = 0, mark = null, counting = null, t = 0} = {}) {
+  const lw = Math.max(2, w * 0.006), pad = w * 0.06, step = (w - pad * 2) / inches, x0 = x + pad;
+  const boardH = w * 0.36;
+  rr(ctx, x, y, w, boardH, w * 0.04); paint(ctx, '#fff8ee', lw * 1.3);
+  // the hair: a wavy lock from 0 to its length, cut at `cut`
+  const hy = y + boardH * 0.3, hh = boardH * 0.2;
+  const lock = (from, to, dx, dy, alpha) => {
+    if (to <= from) return;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(dx, dy);
+    ctx.beginPath();
+    const a = x0 + from * step, b = x0 + to * step;
+    ctx.moveTo(a, hy - hh / 2);
+    for (let px = a; px <= b; px += 4) ctx.lineTo(px, hy - hh / 2 + Math.sin(px * 0.08) * hh * 0.18);
+    ctx.lineTo(b + hh * 0.3, hy);
+    for (let px = b; px >= a; px -= 4) ctx.lineTo(px, hy + hh / 2 + Math.sin(px * 0.08 + 1) * hh * 0.18);
+    ctx.closePath(); paint(ctx, color, lw);
+    ctx.beginPath();
+    for (let px = a + 6; px < b - 6; px += 14) { ctx.moveTo(px, hy - hh * 0.15); ctx.quadraticCurveTo(px + 6, hy, px + 12, hy + hh * 0.12); }
+    paint(ctx, null, lw * 0.6, 'rgba(255,255,255,.4)');
+    ctx.restore();
+  };
+  if (cut == null) lock(0, hair, 0, 0, 1);
+  else { lock(0, cut, 0, 0, 1); lock(cut, hair, fall * step * 1.5, fall * boardH * 0.9, 1 - fall); }
+  // the ruler
+  const ry = y + boardH * 0.52, rh = boardH * 0.4;
+  rr(ctx, x0 - step * 0.3, ry, step * (inches + 0.6), rh, rh * 0.15); paint(ctx, '#ffe08a', lw);
+  const marks = [];
+  for (let i = 0; i <= inches; i++) {
+    const mx = x0 + i * step;
+    marks.push(mx);
+    if (counting && i <= counting.from && i >= counting.to) { circle(ctx, mx, ry + rh * 0.72, step * 0.36, i === counting.to ? 'rgba(242,122,169,.55)' : 'rgba(159,227,192,.6)'); }
+    ctx.beginPath(); ctx.moveTo(mx, ry); ctx.lineTo(mx, ry + rh * 0.42); paint(ctx, null, lw, C.ink);
+    if (i < inches) { ctx.beginPath(); ctx.moveTo(mx + step / 2, ry); ctx.lineTo(mx + step / 2, ry + rh * 0.22); paint(ctx, null, lw * 0.6, C.ink); }
+    text(ctx, String(i), mx, ry + rh * 0.72, Math.min(step * 0.6, rh * 0.42), {weight: 700});
+  }
+  if (mark != null) {
+    const mx = x0 + mark * step, bob = Math.abs(Math.sin(t * 6)) * step * 0.25;
+    ctx.beginPath(); ctx.moveTo(mx, ry - 4 - bob); ctx.lineTo(mx - step * 0.25, ry - step * 0.45 - bob); ctx.lineTo(mx + step * 0.25, ry - step * 0.45 - bob); ctx.closePath(); paint(ctx, C.pink, lw);
+  }
+  return {marks, top: y, bottom: y + boardH, hy, step};
+}
+// Snipping scissors, drawn open or closed.
+export function scissors(ctx, x, y, s, open = 0.4) {
+  for (const k of [-1, 1]) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(k * open * 0.5);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 0.06, -s * 0.55); ctx.lineTo(s * 0.06, -s * 0.5); ctx.closePath(); paint(ctx, '#e8eef5', Math.max(1.5, s * 0.03));
+    circle(ctx, k * s * 0.08, s * 0.22, s * 0.11, C.pink, Math.max(1.5, s * 0.03));
+    ctx.restore();
+  }
+}
+// A finishing touch on a client's head: a bow, sparkles or a flower. x, y is the top of the head.
+export function styleTouch(ctx, id, x, y, s, t = 0) {
+  const lw = Math.max(1.5, s * 0.06);
+  if (id === 'bow') {
+    for (const k of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + k * s * 0.6, y - s * 0.45, x + k * s * 0.55, y + s * 0.3); ctx.closePath(); paint(ctx, C.pink, lw); }
+    circle(ctx, x, y, s * 0.14, '#e8508a', lw);
+  } else if (id === 'flower') {
+    for (let i = 0; i < 5; i++) circle(ctx, x + Math.cos(i * 1.257) * s * 0.22, y + Math.sin(i * 1.257) * s * 0.22, s * 0.18, '#fff1a8', lw);
+    circle(ctx, x, y, s * 0.13, '#ffb38a', lw);
+  } else {
+    for (let i = 0; i < 4; i++) {
+      const a = i * 1.7 + t * 0.6, rx = x + Math.cos(a) * s * 0.7, ry = y - s * 0.2 + Math.sin(a) * s * 0.45, k = 0.7 + 0.3 * Math.sin(t * 5 + i);
+      starPath(ctx, rx, ry, s * 0.2 * k); paint(ctx, '#ffe08a', lw * 0.8);
+    }
+  }
 }
 
 // ---------- scenes ----------

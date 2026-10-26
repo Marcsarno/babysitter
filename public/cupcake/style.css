@@ -245,3 +245,27 @@ button { font-family: inherit; color: inherit; touch-action: manipulation; }
 .season { position: relative; height: 14px; margin: 10px 30px 4px 4px; border: 2.5px solid var(--ink); border-radius: 99px; background: #fff; }
 .season i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--pinkL), var(--pink)); }
 .season img { position: absolute; right: -30px; top: 50%; width: 32px; transform: translateY(-58%); }
+
+/* the new shops: the morning picker and the building fund jar */
+.picker { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; text-align: left; }
+.picker .muted.small { font-size: 13px; text-align: center; }
+.shoppick { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font-size: 19px; background: #fff; border: 3px solid var(--ink); border-radius: 18px; padding: 8px 12px; min-height: 64px; box-shadow: 0 4px 0 var(--ink); cursor: pointer; transition: transform .08s, box-shadow .08s; }
+.shoppick:active { transform: translateY(3px) scale(.98); box-shadow: 0 1px 0 var(--ink); }
+.shoppick .icon { font-size: 30px; }
+.shoppick b { display: block; }
+.shoppick small { display: block; font-size: 14px; opacity: .8; }
+.shoppick.cupcake { background: var(--pinkL); }
+.shoppick.salon { background: #e6dcfa; }
+.shoppick.toy { background: #d4ecfc; }
+.shoppick .grow, .fund .grow { flex: 1; min-width: 0; }
+.fund { display: flex; gap: 12px; align-items: center; background: #fff; border: 2.5px solid var(--ink); border-radius: 16px; padding: 8px 10px; }
+.fund .name { font-weight: 700; font-size: 17px; }
+.fund .drops { display: flex; gap: 8px; margin-top: 6px; }
+.jar { position: relative; flex: none; width: 54px; height: 66px; border: 3px solid var(--ink); border-radius: 12px 12px 16px 16px; background: rgba(214, 239, 255, .6); overflow: hidden; }
+.jar::before { content: ""; position: absolute; z-index: 1; top: -1px; left: 6px; right: 6px; height: 9px; background: var(--wood, #e0b083); border: 2.5px solid var(--ink); border-top: 0; border-radius: 0 0 6px 6px; }
+.jar i { position: absolute; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(0deg, #ffd23d 0 6px, #ffe08a 6px 9px); transition: height .6s; }
+.shoppick.off { opacity: .6; }
+.styles { display: flex; gap: 10px; }
+.styles .btn { flex: 1; min-height: 84px; }
+.styles .icon { display: block; font-size: 34px; }
+.earned { font-size: 24px; color: var(--mintD); }

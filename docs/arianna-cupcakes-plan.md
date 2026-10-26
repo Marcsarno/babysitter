@@ -246,5 +246,14 @@ Each phase goes live so Arianna can play it and steer.
 
 **A shop is done when** a day takes 8 minutes or less, there's no way to fail, every line is voiced, the play-through test covers a full day, her saved game carries over, and she has played it once without getting confused.
 
-**Still to decide:** whether she plays mostly on an iPad or a phone, and whether shops unlock with the building fund jar or as a Season 2.
+**Decided:** she plays on a phone (no tablet layout needed), and the shops unlock with the building fund jar.
+
+**Progress**
+- Step 1 done, behind a preview switch: open the game once with `?shops` (`?shops=0` hides it again; Settings also gets a "Build the next shop now" shortcut for trying it). The jar opens after day 4: the salon costs $100 and the toy shop $220, and $30 always stays out of the jar for the market. Builder Bo's construction moment, the roofs on the map and the morning picker are all in. Her old saved game carries over, and a copy from before the shops is kept under `ariannaCupcakes.save.v1.before-shops`.
+- Step 2 salon prototype done, with drawn stand-ins:
+  - **A day:** one client per booking (3 on opening day, then one more for each cupcake day, up to 5).
+  - **Each client:** set the clock, snip at the ruler, then pick a bow, sparkles or a flower. Each client pays $7.
+  - **Clock difficulty, by salon days played:** o'clock first, then half past, then quarter past and to, then any 5 minutes. The digital time shows for the first 3 salon days.
+  - **Cutting:** "make it 6" for the first 2 salon days, then "cut off 3" as well.
+  - Next: Arianna tries it.
 
