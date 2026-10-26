@@ -1,6 +1,6 @@
 // Arianna's Cupcakes: screens and the flow of a day.
 import * as L from './logic.js';
-import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN} from './town.js';
+import {buildTown, destination, path, createVan, driveStep, reached, timeLimit, gridToTile, MARGIN, T} from './town.js';
 import * as D from './draw.js';
 import {loadArt, drawPose, poseWidth, image, CUSTOMER_ART} from './art.js';
 import {sfx, speak, hush, settings as audio, unlock, engineHum, engineOff, loadVoice, preloadCustomer, loadMusic, music, musicOn, pauseMusic} from './audio.js';
@@ -156,10 +156,14 @@ function feeling(who, kind, x, y, size) {
   if (who.feeling !== kind) { who.feeling = kind; who.feelingAt = now; }
   if (kind) D.emote(ctx, kind, x, y, size, now - who.feelingAt);
 }
+// Feelings pictures where raised arms or a jump take up some of the height stand a little taller.
+const FEELING_SCALE = {'c2-builder-happy': 1.13, 'c3-boy-happy': 1.15, 'c10-dad-happy': 1.08, 'c13-spot-happy': 1.12};
 function drawCustomer(g, type, x, y, hgt, opts) {
-  const img = image(CUSTOMER_ART[type]);
+  // delighted ('wow') and unsure ('hmm') customers use their feelings pictures when they exist
+  const base = CUSTOMER_ART[type], mood = {wow: '-happy', hmm: '-hmm'}[opts.face];
+  const name = mood && image(base + mood) ? base + mood : base, img = image(name);
   if (img) {
-    hgt *= ART_SCALE[type] || 1;
+    hgt *= (ART_SCALE[type] || 1) * (FEELING_SCALE[name] || 1);
     shadow(g, x, y, hgt * img.width / img.height);
     const bob = opts.walking ? -Math.abs(Math.sin((opts.t || 0) * 9)) * hgt * 0.03 : 0;
     const w = hgt * img.width / img.height;
@@ -175,6 +179,42 @@ function boxInHands(x, y, s) {
 
 // ---------- the town picture, drawn once ----------
 const town = buildTown(7);
+// Life on the map: ducks waddle round each pond, and two cars drive round blocks, stopping for the van.
+const HOUSE_FRONTS = ['h1-front-pink', 'h2-front-blue', 'h3-front-yellow', 'h4-front-lavender', 'h5-front-mint', 'h6-front-peach'];
+const ponds = [];
+for (let y = 0; y < town.h; y++) for (let x = 0; x < town.w; x++) if (town.tiles[y * town.w + x] === T.POND) ponds.push([x, y]);
+const cars = [[6, 6, 14, 14, 't13-car-blue'], [18, 14, 26, 22, 't14-car-yellow']].map(([x0, y0, x1, y1, img], i) => ({x0, y0, x1, y1, img, d: i * 9}));
+function carAt(c) {
+  // a lap of the block's streets: along the top, down the right, back along the bottom, up the left
+  const w = c.x1 - c.x0, hh = c.y1 - c.y0, d = ((c.d % (2 * (w + hh))) + 2 * (w + hh)) % (2 * (w + hh));
+  if (d < w) return {x: c.x0 + d, y: c.y0, a: 0};
+  if (d < w + hh) return {x: c.x1, y: c.y0 + d - w, a: Math.PI / 2};
+  if (d < 2 * w + hh) return {x: c.x1 - (d - w - hh), y: c.y1, a: Math.PI};
+  return {x: c.x0, y: c.y1 - (d - 2 * w - hh), a: -Math.PI / 2};
+}
+let lifeT = null;
+function mapLife(van) {
+  const dt = lifeT == null ? 0 : Math.min(0.05, now - lifeT);
+  lifeT = now;
+  const ducks = image('t15-ducks');
+  if (ducks) ponds.forEach(([px, py], i) => {
+    const a = now * 0.35 + i * 2, r = TS * 0.62, len = TS * 0.95;
+    ctx.save(); ctx.translate((px + 0.5) * TS + Math.cos(a) * r, (py + 0.5) * TS + Math.sin(a) * r); ctx.rotate(a + Math.PI / 2);
+    ctx.drawImage(ducks, -len / 2, -len * ducks.height / ducks.width / 2, len, len * ducks.height / ducks.width);
+    ctx.restore();
+  });
+  for (const c of cars) {
+    const img = image(c.img);
+    if (!img) continue;
+    const p = carAt(c), near = Math.hypot(p.x + 0.5 - van.x, p.y + 0.5 - van.y) < 1.6;
+    if (!near) c.d += dt * 1.3; // tiles per second; waits while the van is close
+    const len = TS * 0.6, wid = len * img.height / img.width, side = TS * 0.2;
+    ctx.save(); ctx.translate((p.x + 0.5) * TS - Math.sin(p.a) * side, (p.y + 0.5) * TS + Math.cos(p.a) * side); ctx.rotate(p.a);
+    ctx.fillStyle = 'rgba(40,30,40,.18)'; ctx.fillRect(-len / 2 + 3, -wid / 2 + 4, len, wid);
+    ctx.drawImage(img, -len / 2, -wid / 2, len, wid);
+    ctx.restore();
+  }
+}
 let townImg = null;
 const townCanvas = () => townImg || (townImg = D.renderTown(town, TS));
 
@@ -269,7 +309,7 @@ const DayStart = {
   draw() {
     D.morning(ctx, W, H, {t: now});
     arianna('wave', W * 0.34, H * 0.86, H * 0.36);
-    baxter(day?.event === 'birthday' ? 'excited' : 'sit', W * 0.72, H * 0.87, H * 0.15);
+    baxter(day?.event === 'birthday' ? 'party' : 'sit', W * 0.72, H * 0.87, H * 0.15);
   },
 };
 
@@ -529,7 +569,7 @@ const Bake = {
     ctx.fillStyle = '#f6d7c0'; ctx.fillRect(0, base + H * 0.036, W, H);
   },
   drawCupcake(cx, base, s, d) {
-    const wy = -s * 0.4;
+    const wy = D.linerTop(d, s);
     let ovenWin = null; // set while the painted oven shows the cupcake inside it
     if (this.name === 'bake' || (this.name === 'frost' && this.t < 0.4)) {
       // inside the oven, glowing as it bakes
@@ -839,6 +879,7 @@ const Street = {
     sfx.chaChing(); cashChanged(); speak(S.comingUp);
     const g = this.geom();
     coinsTo(g.spot, g.feet - g.ch * 0.6, Math.min(12, order.answer * 2));
+    this.servedAt = now;
     const ticket = h('div', {class: 'ticket'}, 'Order ticket', h('br'), h('b', null, `${order.answer} × ${d.name}`), h('br'), `${order.answer} × $${d.price} = $${total}`, newSticker ? h('div', {style: 'margin-top:6px;color:#f27aa9'}, '⭐ New sticker!') : null);
     ui.append(ticket);
     const msg = `${S.thanks} ${L.addressText(address)}`;
@@ -857,12 +898,15 @@ const Street = {
     const shop = D.street(ctx, W, H, {t: now, save, groundY: g.groundY, shopName: SHOP_NAME, event: day.event});
     // Arianna behind the counter, seen through the window
     ctx.save(); D.rr(ctx, shop.win.x, shop.win.y, shop.win.w, shop.win.h, 6); ctx.clip();
-    arianna(now - (this.oopsAt ?? -9) < 2.5 ? 'oops' : this.walker?.state === 'order' ? 'think' : this.closing ? 'cheer' : 'stand', shop.win.x + shop.win.w * 0.72, shop.win.y + shop.win.h * 1.35, shop.win.h * 1.45);
+    if (now - (this.servedAt ?? -9) < 1.7 && image('a9-serve')) {
+      // handing the box across the counter (A9 is drawn from the waist up)
+      drawPose(ctx, 'arianna', 'serve', shop.win.x + shop.win.w * 0.68, shop.counterY + shop.win.h * 0.06, shop.win.h * 1.02, {t: now});
+    } else arianna(now - (this.oopsAt ?? -9) < 2.5 ? 'oops' : this.walker?.state === 'order' ? 'think' : this.closing ? 'cheer' : 'stand', shop.win.x + shop.win.w * 0.72, shop.win.y + shop.win.h * 1.35, shop.win.h * 1.45);
     ctx.restore();
     D.shelfDisplay(ctx, shop, save.menu, day.shelf, now, H);
     if (day.event === 'birthday' && !shop.painted) for (let i = 0; i < 7; i++) { ctx.fillStyle = ['#ffd23d', '#9fe3c0', '#c3a6ec', '#ff9fc4'][i % 4]; ctx.beginPath(); const bx = W * 0.08 + i * W * 0.12; ctx.moveTo(bx, H * 0.27); ctx.lineTo(bx + W * 0.1, H * 0.27); ctx.lineTo(bx + W * 0.05, H * 0.3); ctx.fill(); }
     D.vanSide(ctx, W * 0.02, g.road, Math.min(W * 0.5, H * 0.3), save.paint, {t: now, name: D.streetArt(W, H) ? '' : SHOP_NAME});
-    baxter(this.walker?.state === 'order' ? 'excited' : 'sit', W * 0.88, g.feet - H * 0.005, Math.min(H * 0.11, W * 0.24));
+    baxter(this.walker?.state === 'order' ? 'excited' : day.event === 'birthday' ? 'party' : 'sit', W * 0.88, g.feet - H * 0.005, Math.min(H * 0.11, W * 0.24));
     const w = this.walker;
     if (w) {
       drawCustomer(ctx, w.type, w.x, g.feet, g.ch, {t: now + w.t, walking: w.state === 'in' || w.state === 'out', face: w.face, dir: -1});
@@ -952,20 +996,33 @@ const Find = {
   draw() {
     const a = this.job.address, lay = this.layout();
     ctx.fillStyle = '#e9f7ff'; ctx.fillRect(0, 0, W, H);
+    const street = lay.line && image('bg10-numberline');
+    if (street) {
+      // the painted street (BG10), with its sidewalk lined up under the number line
+      const k = Math.max(W / street.width, H / street.height), sw = street.width * k, sh = street.height * k;
+      ctx.drawImage(street, (W - sw) / 2, Math.min(0, Math.max(H - sh, lay.y + 8 - 0.548 * sh)), sw, sh);
+    }
     if (lay.line) {
       const sky = ctx.createLinearGradient(0, 0, 0, lay.y); sky.addColorStop(0, '#9fd8ff'); sky.addColorStop(1, '#e6f6ff');
-      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, lay.y + 8);
+      if (!street) { ctx.fillStyle = sky; ctx.fillRect(0, 0, W, lay.y + 8); }
       D.rr(ctx, W / 2 - 80, lay.y - lay.step * 3.6, 160, 40, 10); ctx.fillStyle = '#8fdcb8'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = D.C.ink; ctx.stroke();
       D.text(ctx, 'Main Street', W / 2, lay.y - lay.step * 3.6 + 20, 20, {color: '#fff', weight: 700, stroke: D.C.ink, sw: 4});
       // Main Street as a number line, our shop at 0
-      ctx.fillStyle = D.C.grass; ctx.fillRect(0, lay.y + 8, W, H * 0.12);
-      ctx.fillStyle = D.C.road; ctx.fillRect(0, lay.y + H * 0.05, W, H * 0.05);
-      ctx.fillStyle = '#fff6c9'; for (let i = 0; i < 12; i++) ctx.fillRect(i * W / 11, lay.y + H * 0.073, W / 22, 3);
+      if (!street) {
+        ctx.fillStyle = D.C.grass; ctx.fillRect(0, lay.y + 8, W, H * 0.12);
+        ctx.fillStyle = D.C.road; ctx.fillRect(0, lay.y + H * 0.05, W, H * 0.05);
+        ctx.fillStyle = '#fff6c9'; for (let i = 0; i < 12; i++) ctx.fillRect(i * W / 11, lay.y + H * 0.073, W / 22, 3);
+      }
+      const fronts = HOUSE_FRONTS.map(image);
       ctx.strokeStyle = D.C.ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lay.left - 10, lay.y + 8); ctx.lineTo(lay.left + lay.step * 10 + 10, lay.y + 8); ctx.stroke();
       for (let n = 0; n <= 10; n++) {
         const x = lay.left + n * lay.step, hh = lay.step * 1.7, bounce = (this.hint >= 2 && n === a.n) || (this.picked === n) ? -Math.abs(Math.sin(now * 6)) * 12 : 0;
         if (n === 0) { D.rr(ctx, x - lay.step * 0.48, lay.y - hh * 1.2, lay.step * 0.96, hh * 1.2, 4); ctx.fillStyle = '#fff4f8'; ctx.fill(); ctx.stroke(); for (let k = 0; k < 4; k++) { ctx.fillStyle = k % 2 ? '#fff' : D.C.pink; ctx.fillRect(x - lay.step * 0.48 + k * lay.step * 0.24, lay.y - hh * 1.2, lay.step * 0.24, hh * 0.25); } D.cupcake(ctx, {cake: 'vanilla', frosting: 'pink', toppings: ['cherry']}, x, lay.y - 2, lay.step * 0.6); }
-        else {
+        else if (fronts.every(Boolean)) {
+          // the painted house fronts (H1-H6), standing on the line
+          const img = fronts[n % 6], fw = lay.step * 0.94, fh = fw * img.height / img.width;
+          ctx.drawImage(img, x - fw / 2, lay.y + bounce - fh, fw, fh);
+        } else {
           ctx.save(); ctx.translate(0, bounce);
           D.rr(ctx, x - lay.step * 0.38, lay.y - hh * 0.75, lay.step * 0.76, hh * 0.75, 3); ctx.fillStyle = ['#fff3e6', '#fff8d9', '#f2f7ff', '#fff0f5'][n % 4]; ctx.fill(); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(x - lay.step * 0.48, lay.y - hh * 0.75); ctx.lineTo(x, lay.y - hh * 1.15); ctx.lineTo(x + lay.step * 0.48, lay.y - hh * 0.75); ctx.closePath(); ctx.fillStyle = ['#f48fb5', '#8fc8f2', '#ffd66b', '#c3a6ec', '#8fdcb8'][n % 5]; ctx.fill(); ctx.stroke();
@@ -1075,6 +1132,7 @@ const Drive = {
     ctx.fillStyle = D.C.grass; ctx.fillRect(0, 0, W, H);
     ctx.save(); ctx.scale(cam.z, cam.z); ctx.translate(-cam.cx, -cam.cy);
     ctx.drawImage(townCanvas(), 0, 0);
+    mapLife(this.van);
     // the house to deliver to
     const hx = (this.dest.house.tx + 0.5) * TS, hy = (this.dest.house.ty + 0.5) * TS;
     ctx.beginPath(); ctx.arc(hx, hy, TS * (0.62 + Math.sin(now * 5) * 0.06), 0, Math.PI * 2); ctx.lineWidth = 6; ctx.strokeStyle = '#ffd23d'; ctx.stroke();
@@ -1158,7 +1216,7 @@ const Doorstep = {
     // the customer opens the door after the bell
     const open = Math.max(0, Math.min(1, (this.t - 1.5) / 0.25));
     ctx.save(); ctx.globalAlpha = open;
-    drawCustomer(ctx, this.job.w.type, s.door.x, s.gy + 4, ch, {t: now, face: this.paid ? 'happy' : 'wow'});
+    drawCustomer(ctx, this.job.w.type, s.door.x, s.gy + 4, ch, {t: now, face: this.paid ? 'wow' : 'happy'});
     ctx.restore();
     if (open >= 1) feeling(this, this.paid ? 'heart' : 'sparkles', s.door.x + ch * 0.22, s.gy - ch * (ART_SCALE[this.job.w.type] || 1) * 0.95, ch * 0.26);
     const k = Math.min(1, this.t / 1.3);
@@ -1312,7 +1370,13 @@ const SeasonEnd = {
     confettiBurst(W / 2, H * 0.3, 80); sfx.unlock();
     speak([S.seasonDone, S.trophy[trophy], S.amazingSeason]);
   },
-  draw() { D.cozy(ctx, W, H, {t: now}); arianna('cheer', W * 0.3, H * 0.95, H * 0.3); baxter('excited', W * 0.75, H * 0.95, H * 0.14); },
+  draw() {
+    // the shop decorated for a party at dusk (BG9), or the cozy room
+    const f = D.fitArt('bg9-celebration', W, H, [0, 0.1, 1, 0.85], 0, H, true);
+    if (f) D.paintArt(ctx, f, H); else D.cozy(ctx, W, H, {t: now});
+    const gy = f ? f.sy(0.8) : H * 0.95;
+    arianna('cheer', W * 0.3, gy, H * 0.3); baxter('party', W * 0.75, gy, H * 0.14);
+  },
 };
 
 // ---------- menus ----------
@@ -1401,6 +1465,7 @@ window.__cupcake = {get save() { return save; }, get day() { return day; }, scen
 resize();
 const loadbar = document.getElementById('loadbar');
 await Promise.all([loadArt(BASE, k => { if (loadbar) loadbar.style.width = `${Math.round(k * 100)}%`; }), loadVoice(BASE), loadMusic(BASE), document.fonts?.ready]);
+document.documentElement.classList.toggle('framed', ['p1-card', 'p2-banner', 'p3-bubble'].every(image));
 go(Title);
 requestAnimationFrame(frame);
 if ('serviceWorker' in navigator && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') navigator.serviceWorker.register(`${BASE}sw.js`, {scope: BASE}).catch(() => {});

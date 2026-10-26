@@ -13,11 +13,12 @@ export const POSES = {
   arianna: {
     stand: ['arianna-front'], wave: ['a2-wave', 'arianna-front'], box: ['a3-box', 'arianna-front'],
     think: ['a4-think', 'arianna-3q'], cheer: ['a5-cheer', 'arianna-front'], drive: ['a6-drive', 'arianna-side'],
-    oops: ['a7-oops', 'arianna-3q'], walk: ['a8-walk', 'arianna-side'], back: ['arianna-back'],
+    oops: ['a7-oops', 'arianna-3q'], walk: ['a8-walk', 'arianna-side'], back: ['arianna-back'], serve: ['a9-serve', 'arianna-front'],
   },
   baxter: {
     sit: ['baxter-front'], stand: ['baxter-3q'], excited: ['b2-excited', 'baxter-3q'], sniff: ['b3-sniff', 'baxter-side'],
     ride: ['b4-ride', 'baxter-side'], sleep: ['b5-sleep', 'baxter-back'], tilt: ['b6-tilt', 'baxter-front'], walk: ['b7-walk', 'baxter-side'],
+    run: ['b8-run', 'baxter-side'], party: ['b9-party', 'baxter-front'],
   },
 };
 // Part of a stand-in picture to use for a pose (x0, y0, x1, y1 as fractions).
@@ -26,6 +27,7 @@ const CROPS = {
   'baxter-side@ride': [0.42, 0, 1, 0.64],
 };
 // Customer pictures, if they have been made.
+// Each customer also has -happy and -hmm pictures (C1-C13 feelings) for when they're delighted or unsure.
 export const CUSTOMER_ART = {grandma: 'c1-grandma', builder: 'c2-builder', boy: 'c3-boy', bunny: 'c4-bunny', cat: 'c5-cat', bear: 'c6-bear', mail: 'c7-mail', duck: 'c8-duck', girl: 'c9-girl', dad: 'c10-dad', pug: 'c11-pug', poodle: 'c12-poodle', spot: 'c13-spot'};
 
 const images = {};

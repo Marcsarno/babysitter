@@ -97,6 +97,24 @@ const CAKE_ART = {vanilla: 'i1-cake-vanilla', chocolate: 'i2-cake-chocolate', st
 const FROST_ART = {white: 'i6-frosting-vanilla', pink: 'i7-frosting-strawberry', choc: 'i8-frosting-chocolate', mint: 'i9-frosting-mint', blue: 'i10-frosting-blueberry', lavender: 'i11-frosting-lavender'};
 const TOP_ART = {cherry: 'i12-cherry', gummy: 'i13-gummy', heart: 'i14-heart', star: 'i15-star', bone: 'i16-bone', sprinkles: 'i17-jar-sprinkles', chips: 'i18-jar-chips'};
 const TOP_HEIGHT = {cherry: 0.22, gummy: 0.2, heart: 0.16, star: 0.17, bone: 0.1};
+// Raw batter in its liner (I19-I23) and the empty liners (I24-I28), for pouring and baking.
+const BATTER_ART = {vanilla: 'i19-batter-vanilla', chocolate: 'i20-batter-chocolate', strawberry: 'i21-batter-strawberry', lemon: 'i22-batter-lemon', redvelvet: 'i23-batter-redvelvet'};
+const LINER_ART = {vanilla: 'i24-liner-pink', chocolate: 'i25-liner-mint', strawberry: 'i26-liner-yellow', lemon: 'i27-liner-blue', redvelvet: 'i28-liner-white'};
+const linerWidth = s => s * 0.92 * 0.74; // the same width as the baked cupcake's liner
+// How high the liner's rim is above the cupcake's base (negative, as a y offset), for the fill line.
+export function linerTop(d, s) {
+  const img = image(BATTER_ART[d.cake]);
+  return img ? -linerWidth(s) * img.height / img.width * 0.95 : -s * 0.4;
+}
+// Draw a picture through a tint, using a scratch canvas so only the picture is coloured.
+const scratch = document.createElement('canvas');
+function tinted(img, w, h, paint) {
+  scratch.width = Math.max(1, Math.ceil(w)); scratch.height = Math.max(1, Math.ceil(h));
+  const g = scratch.getContext('2d');
+  g.drawImage(img, 0, 0, w, h);
+  g.globalCompositeOperation = 'source-atop'; paint(g, w, h); g.globalCompositeOperation = 'source-over';
+  return scratch;
+}
 // draw a picture with its bottom centre at (x, y), hgt tall
 function placeArt(ctx, img, x, y, hgt, tilt = 0) {
   const w = hgt * img.width / img.height;
@@ -144,8 +162,9 @@ export function mix(a, b, k) {
 // {fill: batter 0..1.3} before baking, then {bake: 0..1.2, frost: 0..1.3, tops: [topping ids so far]}.
 export function cupcake(ctx, d, x, y, s, t = 0, bare = false, stage = null) {
   const lw = Math.max(1, s * 0.022);
-  // the painted cake already has its baked dome, so batter and the oven stay drawn in code
   if ((!stage || stage.frost > 0) && paintedCupcake(ctx, d, x, y, s, t, bare, stage, lw)) return;
+  if (stage && stage.bake == null && paintedBatter(ctx, d, x, y, s, stage, lw)) return;
+  if (stage && stage.bake != null && paintedOven(ctx, d, x, y, s, stage)) return;
   const liner = LINER[d.cake] || C.pinkL, [cake, cakeD] = CAKE[d.cake] || CAKE.vanilla, [fr, frD] = FROST[d.frosting] || FROST.white;
   ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   ellipse(ctx, 0, s * 0.01, s * 0.32, s * 0.035, 'rgba(91,58,41,.16)');
@@ -235,6 +254,45 @@ export function cupcake(ctx, d, x, y, s, t = 0, bare = false, stage = null) {
   ctx.restore();
 }
 
+// Pouring: the empty liner with the batter level showing through it, then the full batter picture at the top.
+function paintedBatter(ctx, d, x, y, s, stage, lw) {
+  const liner = image(LINER_ART[d.cake]), batter = image(BATTER_ART[d.cake]);
+  if (!liner || !batter) return false;
+  const w = linerWidth(s), hl = w * liner.height / liner.width, hb = w * batter.height / batter.width, fill = stage.fill || 0;
+  ctx.save(); ctx.translate(x, y);
+  ellipse(ctx, 0, s * 0.01, s * 0.32, s * 0.035, 'rgba(91,58,41,.16)');
+  const level = hl * Math.min(1, fill), color = batterColor(d.cake);
+  ctx.drawImage(tinted(liner, w, hl, (g, ww, hh) => {
+    g.globalAlpha = 0.62; g.fillStyle = color; g.fillRect(0, hh - level, ww, level);
+    g.globalAlpha = 0.9; g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(0, hh - level, ww, Math.min(level, hh * 0.025));
+  }), -w / 2, -hl, w, hl);
+  // almost full: the real batter picture fades in, its top showing at the rim
+  const full = Math.max(0, Math.min(1, (fill - 0.85) / 0.15));
+  if (full > 0) { ctx.globalAlpha = full; ctx.drawImage(batter, -w / 2, -hb, w, hb); ctx.globalAlpha = 1; }
+  if (fill > 1) {
+    // too much batter: it bulges over the top and drips
+    const over = Math.min(0.3, fill - 1);
+    ctx.beginPath(); ctx.ellipse(0, -hb * 0.96, w * 0.5, s * over * 0.6, 0, Math.PI, 0); paint(ctx, color, lw);
+    for (const dx of [-0.42, 0.38]) { rr(ctx, w * dx - s * 0.03, -hb * 0.97, s * 0.06, s * over * 0.7, s * 0.03); paint(ctx, color, lw * 0.7); }
+  }
+  ctx.restore();
+  return true;
+}
+// Baking: the batter turns into the baked cake as it rises, and browns if it stays in too long.
+function paintedOven(ctx, d, x, y, s, stage) {
+  const batter = image(BATTER_ART[d.cake]), cake = image(CAKE_ART[d.cake] || CAKE_ART.vanilla);
+  if (!batter || !cake) return false;
+  const w = linerWidth(s), hb = w * batter.height / batter.width, hc = w * cake.height / cake.width;
+  const k = Math.max(0, Math.min(1, stage.bake / 0.62)), rise = 0.82 + 0.18 * k, burn = Math.max(0, Math.min(0.6, (stage.bake - 0.8) * 1.4));
+  ctx.save(); ctx.translate(x, y);
+  ellipse(ctx, 0, s * 0.01, s * 0.32, s * 0.035, 'rgba(91,58,41,.16)');
+  if (k < 1) { ctx.globalAlpha = 1 - k; ctx.drawImage(batter, -w / 2, -hb, w, hb); }
+  ctx.globalAlpha = k;
+  const baked = burn > 0 ? tinted(cake, w, hc, (g, ww, hh) => { g.globalAlpha = burn; g.fillStyle = '#5a3018'; g.fillRect(0, 0, ww, hh * 0.4); }) : cake;
+  ctx.drawImage(baked, -w / 2, -hc * rise, w, hc * rise);
+  ctx.restore();
+  return true;
+}
 function paintedCupcake(ctx, d, x, y, s, t, bare, stage, lw) {
   const base = image(CAKE_ART[d.cake] || CAKE_ART.vanilla), cream = image(FROST_ART[d.frosting] || FROST_ART.white);
   if (!base || (!bare && !cream)) return false;
@@ -575,6 +633,7 @@ function tree(ctx, cx, cy, s, lw, v) {
 }
 
 // Painted map tiles (T1-T12); the -tile copies are square and untrimmed so they line up with the grid.
+const PARK_ART = ['t17-playground', 't18-fountain', 't16-bench'];
 const HOUSE_TILES = ['t1-house-pink-tile', 't2-house-blue-tile', 't3-house-yellow-tile', 't4-house-lavender-tile', 't5-house-mint-tile', 't6-house-peach-tile'];
 export function renderTown(town, S) {
   const cv = document.createElement('canvas');
@@ -614,6 +673,11 @@ export function renderTown(town, S) {
     } else if (t === T.SHOP && v === 1 && image('t11-shop-roof')) {
       const roof = image('t11-shop-roof'), k = Math.min(S * 1.9 / roof.width, S * 0.94 / roof.height), w = roof.width * k, hh = roof.height * k;
       ctx.drawImage(roof, px - S + (S * 2 - w) / 2, py + (S - hh) / 2, w, hh);
+    } else if (t === T.PARK && image(PARK_ART[v % 3])) {
+      // a playground, a fountain or a bench in each bit of park
+      ctx.fillStyle = '#cdeeb4'; ctx.fillRect(px, py, S, S);
+      const img = image(PARK_ART[v % 3]), k = S * (v % 3 === 2 ? 0.62 : 0.86) / Math.max(img.width, img.height);
+      ctx.drawImage(img, px + (S - img.width * k) / 2, py + (S - img.height * k) / 2, img.width * k, img.height * k);
     } else if (t === T.HOUSE) {
       const roof = ROOF[v % ROOF.length];
       ctx.fillStyle = 'rgba(91,58,41,.18)'; ctx.fillRect(px + S * 0.16, py + S * 0.18, S * 0.76, S * 0.74);
