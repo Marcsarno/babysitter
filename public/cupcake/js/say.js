@@ -1,7 +1,19 @@
-// Everything Arianna's Cupcakes says out loud. Each sentence is recorded ahead of time with the
-// Kokoro "Heart" voice (art/cupcake/voice.mjs); allLines() lists them all for that recording.
+// Everything Arianna's Cupcakes says out loud. Each sentence is recorded ahead of time with Kokoro
+// (art/cupcake/voice.mjs); linesBy() lists them by who says them, for that recording.
 // Lines with numbers are split into short sentences so every combination can be recorded.
 import {INGREDIENTS, UPGRADES, DECOR, PAINTS, dealsFor, compareDeals, orderSentences} from './logic.js';
+
+// Who speaks in which Kokoro voice, as "voice" or "voice@pitch" (pitch shifted without changing speed).
+// Chosen in the voice casting page. Arianna says her own lines, each customer says theirs, and the
+// narrator reads everything else: instructions, math help and praise.
+export const CAST = {
+  narrator: 'am_santa', arianna: 'af_heart@1.1',
+  grandma: 'bf_alice', builder: 'am_michael', boy: 'af_sky@1.1', mail: 'am_puck', girl: 'af_jessica@1.1', dad: 'am_liam',
+  bunny: 'af_nova@1.1', cat: 'bf_emma@1.1', bear: 'am_santa@0.88', duck: 'af_jessica@1.32',
+  pug: 'am_echo@1.2', poodle: 'bf_isabella@1.1', spot: 'am_adam@1.1',
+};
+const ARIANNA = ['firstDay', 'openShop', 'designDone', 'ding', 'closing', 'comingUp', 'hereYouGo'];
+const CUSTOMER = ['woof', 'thanks'];
 
 export const VENDOR = {corner: 'Corner Market', barn: 'Bulk Barn'};
 export const GREET = ['Hi Arianna!', 'Hello there!', 'Ooh, cupcakes!', 'Yum, it smells so good!', 'Hi! Hi Baxter!'];
@@ -38,6 +50,8 @@ export const S = {
   designDone: 'Yum! That looks delicious!',
   priceEach: p => `${p} dollars each.`,
   ding: 'Ding! The cupcakes are ready!',
+  comingUp: 'Coming right up!',
+  hereYouGo: 'Here you go!',
   goal: g => `Let's sell ${g} today!`,
   pricey: p => `Hmm, ${p} dollars is too expensive for me. Maybe next time!`,
   woof: 'Woof woof!',
@@ -81,30 +95,32 @@ export const S = {
 
 export const N_MAX = {day: 99, money: 20, goal: 20, profit: 200, count: 15};
 
-export function allLines() {
-  const out = new Set();
-  const add = v => { if (typeof v === 'string') out.add(v); else if (v && typeof v === 'object') Object.values(v).forEach(add); };
-  for (const [key, v] of Object.entries(S)) if (typeof v !== 'function') add(v);
-  GREET.forEach(add);
+// Every sentence, grouped by who says it: {narrator, arianna, customer}. Every customer has all the customer lines.
+export function linesBy() {
+  const sets = {narrator: new Set(), arianna: new Set(), customer: new Set()};
+  const put = (who, v) => { if (typeof v === 'string') sets[who].add(v); else if (v && typeof v === 'object') Object.values(v).forEach(x => put(who, x)); };
+  const add = v => put('narrator', v), says = v => put('customer', v);
+  for (const [key, v] of Object.entries(S)) if (typeof v !== 'function') put(ARIANNA.includes(key) ? 'arianna' : CUSTOMER.includes(key) ? 'customer' : 'narrator', v);
+  GREET.forEach(says);
   for (let n = 1; n <= N_MAX.day; n++) { add(S.day(n)); add(S.dayDone(n)); }
   for (let n = 1; n <= 30; n++) { add(S.couldSave(n)); add(S.canSave(n)); }
-  for (let p = 1; p <= N_MAX.money; p++) { add(S.priceEach(p)); add(S.pricey(p)); }
-  for (let g = 2; g <= N_MAX.goal; g++) add(S.goal(g));
+  for (let p = 1; p <= N_MAX.money; p++) { add(S.priceEach(p)); says(S.pricey(p)); }
+  for (let g = 2; g <= N_MAX.goal; g++) put('arianna', S.goal(g));
   for (let p = 1; p <= N_MAX.profit; p++) add(S.profit(p));
   for (let n = 1; n <= N_MAX.count; n++) add(S.countIt(n));
   for (let n = 0; n <= 10; n++) { add(S.wrongHouse(n)); add(S.yesHouse(n)); add(S.hereHouse(n)); }
   for (let x = 0; x <= 6; x++) for (let y = 0; y <= 6; y++) {
     add(S.yesPoint(x, y)); add(S.wrongPoint(x, y)); add(S.goOver(x, y)); add(S.herePoint(x, y));
-    add(`Please bring them to ${x}, ${y}!`); add(`That's over ${x}, up ${y}.`);
+    says(`Please bring them to ${x}, ${y}!`); says(`That's over ${x}, up ${y}.`);
   }
-  for (let n = 1; n <= 10; n++) add(`Please bring them to house ${n}!`);
-  for (let t = 1; t <= 6; t++) add(S.tip(t));
+  for (let n = 1; n <= 10; n++) says(`Please bring them to house ${n}!`);
+  for (let t = 1; t <= 6; t++) says(S.tip(t));
   for (let n = 1; n <= 3; n++) add(S.stars(n));
   for (const id in INGREDIENTS) add(S.newIngredient(id));
   for (const u of Object.values(UPGRADES)) add(S.bought(u.name));
   for (const d of Object.values(DECOR)) add(S.bought(d.name));
   for (const p of Object.values(PAINTS)) add(S.bought(p.name));
-  orderSentences().forEach(add);
+  orderSentences().forEach(says);
   // every comparison the market can show
   for (let day = 4; day <= 40; day++) for (const bigKid of [false, true]) for (let seed = 0; seed < 40; seed++) for (const id of ['vanilla', 'redvelvet']) {
     const deals = dealsFor(seededRandom(seed * 97 + day), day, bigKid, id);
@@ -115,8 +131,9 @@ export function allLines() {
       add(S.compare(c.qty)); add(S.costs(a.vendor, c.costA)); add(S.costs(b.vendor, c.costB)); add(S.minus(c.costA, c.costB, c.costA - c.costB));
     }
   }
-  return [...out];
+  return Object.fromEntries(Object.entries(sets).map(([who, set]) => [who, [...set]]));
 }
+export const allLines = () => Object.values(linesBy()).flat();
 
 function seededRandom(seed) {
   let a = seed >>> 0;

@@ -15,7 +15,8 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET') return;
+  // voice lines are byte ranges of a voice pack: let those go straight to the network
+  if (req.method !== 'GET' || req.headers.has('range')) return;
   const url = new URL(req.url);
   const font = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (!font && (url.origin !== location.origin || !url.pathname.startsWith('/cupcake/'))) return;

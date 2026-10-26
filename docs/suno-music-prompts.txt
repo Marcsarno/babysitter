@@ -1,50 +1,52 @@
 MUSIC FOR ARIANNA'S CUPCAKES: Suno prompts
 
-How to make each one:
-1. In Suno, choose Custom mode and turn Instrumental ON (no singing; the game's voices need the space).
-2. Paste the Style text into the style box and the Title into the title box. Leave lyrics empty.
-3. Make two versions of each, keep the one you like best, and download it as MP3.
-4. Name the file with its code, like M2-shop.mp3, and send them over (a zip is perfect).
+For every track:
+1. Custom mode. Turn Instrumental ON. Leave the lyrics empty.
+2. Paste the Style text into "Style of Music".
+3. Open Advanced Options and paste this into Exclude (the same for every track):
+   vocals, singing, choir, humming, rap, spoken word
+4. Paste the Title. Make two versions, keep the better one, download it as MP3.
+5. Name the file with its code, like M2-shop.mp3, and send them over (a zip is perfect).
 
 Full-length songs are fine. I'll cut each one down, make it loop smoothly, and play it quietly under the voices.
-Prefer the version with a steady feel all the way through: no big build-ups, no sudden drops, and no long fade at the start.
+Prefer the version with a steady feel all the way through: no big build-ups, no sudden drops, no long fade at the start.
 
 
 M1-title
 Title: Arianna's Cupcakes
-Style: cheerful children's game theme, bright ukulele, glockenspiel melody, hand claps, light whistling, bouncy bass, playful and catchy, sunny and warm, 112 bpm, major key, instrumental
+Style: whimsical children's pop, cheerful and catchy, bright ukulele, glockenspiel lead melody, hand claps, bouncy upright bass, 112 BPM, instrumental, no vocals
 
 M2-shop
 Title: Open for Business
-Style: gentle cozy café background music for a kids game, soft ukulele strumming, light piano melody, soft shaker, warm and relaxed, simple steady loop, no big changes, 96 bpm, major key, instrumental
+Style: cozy acoustic café, gentle and warm, soft ukulele strumming, felt piano melody, light shaker, steady relaxed groove, 96 BPM, instrumental, no vocals
 
 M3-market
 Title: Morning Market
-Style: bright morning market music, acoustic guitar, light accordion, pizzicato strings, bouncy and curious, friendly small-town feeling, 102 bpm, major key, instrumental
+Style: acoustic folk, bright and curious morning mood, fingerpicked acoustic guitar, light accordion, pizzicato strings, bouncy, 102 BPM, instrumental, no vocals
 
 M4-kitchen
 Title: Baking Time
-Style: playful baking music for kids, marimba, pizzicato strings, soft xylophone, light tick-tock percussion, cheeky and busy but gentle, 108 bpm, major key, instrumental
+Style: playful pizzicato orchestral, cheeky and busy, marimba lead, pizzicato strings, soft xylophone, woodblock tick-tock, 108 BPM, instrumental, no vocals
 
 M5-drive
 Title: Delivery Drive
-Style: upbeat road-trip music for a kids game, bouncy bass, bright electric piano, hand claps, light drums, happy whistled hook, sunny and driving forward, 124 bpm, major key, instrumental
+Style: upbeat funk pop, sunny road-trip energy, bouncy electric bass, bright Rhodes electric piano, hand claps, light drum kit, whistled melody, 124 BPM, instrumental, no vocals
 
 M6-evening
 Title: End of the Day
-Style: cozy evening lullaby, soft music box, warm felt piano, gentle strings, calm and proud, sleepy puppy feeling, 72 bpm, major key, instrumental
+Style: gentle lullaby, calm and cozy, music box melody, warm felt piano, soft string pad, slow and sleepy, 72 BPM, instrumental, no vocals
 
 M7-season-end
 Title: Season Champion
-Style: joyful celebration fanfare for kids, bright brass, marching snare, glockenspiel, cheering party energy, triumphant and happy, 120 bpm, major key, instrumental
+Style: triumphant celebration fanfare, joyful and proud, bright brass section, marching snare, glockenspiel, cymbal swells, 120 BPM, instrumental, no vocals
 
 M8-birthday
 Title: Baxter's Birthday
-Style: silly happy birthday party music, kazoo melody, ukulele, tuba bass, hand claps, bouncy polka feel, goofy and fun, 116 bpm, major key, instrumental
+Style: silly polka party, goofy and fun, kazoo melody, ukulele, tuba bass, hand claps, 116 BPM, instrumental, no vocals
 
 M9-rain
 Title: Rainy Day Bakery
-Style: soft rainy-day café music, mellow felt piano, light jazz brushes, upright bass, cozy and warm, gentle and calm, 84 bpm, major key, instrumental
+Style: mellow jazz café, cozy rainy afternoon, felt piano, brushed snare, warm upright bass, gentle and calm, 84 BPM, instrumental, no vocals
 
 
 Where each one plays:

@@ -72,25 +72,62 @@ export function engineOff() {
 }
 
 // ---------- read-aloud ----------
-// Lines are pre-recorded with the Kokoro "Heart" voice (see say.js). speak() takes one sentence or a
-// list and plays them in order; a sentence without a recording falls back to the device's voice.
-let base = '/cupcake/', clips = null, voiceGain = null, playing = null, token = 0;
-const buffers = new Map();
+// Every line is pre-recorded (see say.js and art/cupcake/voice.mjs), one pack per voice. speak() takes one
+// sentence or a list and plays them in order: Arianna's and the narrator's lines in their own voices, and
+// customer lines in the voice of the customer passed as {customer}. A sentence without a recording falls
+// back to the device's voice.
+let base = '/cupcake/', cast = null, packNames = {}, voiceGain = null, playing = null, token = 0;
+const packs = new Map();   // voice -> Promise of {lines: {text: [start, length]}}, or null
+const whole = new Map();   // voice -> Promise of the whole pack, when the server ignores byte ranges
+const buffers = new Map(); // customer|text -> Promise of a decoded clip, or null
 export async function loadVoice(b) {
   base = b;
-  try { const r = await fetch(`${b}voice/index.json`); if (r.ok) clips = (await r.json()).lines; } catch {}
+  try {
+    const r = await fetch(`${b}voice/index.json`);
+    if (!r.ok) return;
+    ({cast, packs: packNames} = await r.json());
+    await Promise.all([pack(cast.narrator), pack(cast.arianna)]);
+  } catch {}
 }
-export const hasClip = text => !!clips?.[text];
-function buffer(text) {
-  const file = clips?.[text], a = file && ctx();
-  if (!a) return Promise.resolve(null);
-  if (!buffers.has(file)) {
-    if (buffers.size > 160) buffers.delete(buffers.keys().next().value);
-    buffers.set(file, fetch(`${base}voice/${file}`).then(r => r.arrayBuffer()).then(data => new Promise((ok, bad) => a.decodeAudioData(data, ok, bad))).catch(() => null));
+function pack(key) {
+  if (!key || !packNames[key]) return Promise.resolve(null);
+  if (!packs.has(key)) packs.set(key, fetch(`${base}voice/${packNames[key]}.json`).then(r => (r.ok ? r.json() : null)).catch(() => null));
+  return packs.get(key);
+}
+// Load a customer's list of lines before they speak.
+export function preloadCustomer(type) { if (cast) pack(customerVoice(type)); }
+async function bytes(key, at, len) {
+  if (!whole.has(key)) {
+    const r = await fetch(`${base}voice/${packNames[key]}.bin`, {headers: {Range: `bytes=${at}-${at + len - 1}`}});
+    if (r.status === 206) return r.arrayBuffer();
+    // this server sent the whole pack instead: keep it and cut sentences from it from now on
+    whole.set(key, r.ok ? r.arrayBuffer() : Promise.reject(new Error(`no voice pack ${key}`)));
   }
-  return buffers.get(file);
+  return (await whole.get(key)).slice(at, at + len);
 }
-export function preload(parts) { if (settings.voice) [].concat(parts).forEach(buffer); }
+// which voice has this sentence: Arianna, the narrator, or the customer speaking. A customer whose
+// voice isn't recorded yet borrows another customer's.
+const customerVoice = type => (packNames[cast[type]] ? cast[type] : Object.entries(cast).find(([who, key]) => who !== 'narrator' && who !== 'arianna' && packNames[key])?.[1]);
+async function find(text, customer) {
+  for (const key of [cast?.arianna, cast?.narrator, customer && cast && customerVoice(customer)]) {
+    const p = await pack(key);
+    if (p?.lines[text]) return [key, ...p.lines[text]];
+  }
+  return null;
+}
+function buffer(text, customer) {
+  const a = cast && ctx();
+  if (!a) return Promise.resolve(null);
+  const id = `${customer || ''}|${text}`;
+  if (!buffers.has(id)) {
+    if (buffers.size > 160) buffers.delete(buffers.keys().next().value);
+    buffers.set(id, find(text, customer)
+      .then(hit => hit && bytes(...hit))
+      .then(data => data && new Promise((ok, bad) => a.decodeAudioData(data, ok, bad)))
+      .catch(() => null));
+  }
+  return buffers.get(id);
+}
 function playBuffer(buf) {
   return new Promise(done => {
     if (!voiceGain) { voiceGain = ac.createGain(); voiceGain.gain.value = 1.5; voiceGain.connect(ac.destination); }
@@ -120,15 +157,15 @@ function deviceSay(text) {
   });
 }
 
-export function speak(parts, {interrupt = true} = {}) {
+export function speak(parts, {interrupt = true, customer = null} = {}) {
   const list = [].concat(parts || []).filter(Boolean);
   if (!settings.voice || !list.length) return;
   if (interrupt) hush();
   const mine = ++token;
-  list.forEach(buffer);
+  list.forEach(text => buffer(text, customer));
   (async () => {
     for (const text of list) {
-      const buf = await buffer(text);
+      const buf = await buffer(text, customer);
       if (mine !== token) return;
       if (buf) await playBuffer(buf); else await deviceSay(text);
       if (mine !== token) return;
