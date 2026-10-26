@@ -1505,12 +1505,16 @@ const Build = {
   },
   draw() {
     const [top, bottom] = openArea(), room = bottom - top;
-    const gy = top + room * 0.64, front = top + room * 0.98;
-    D.siteScene(ctx, W, H, gy, now);
-    const w = Math.min(W * 0.8, room * 0.85), hit = now - this.hitAt;
-    const shake = hit < 0.15 ? Math.sin(hit * 90) * w * 0.006 : 0;
-    D.shopFront(ctx, this.id, W / 2 + shake, gy, w, this.stage, {ribbon: this.stage >= D.BUILD_STAGES && !this.cut, t: now});
-    this.site = {x: W / 2, y: gy - w * 0.1};
+    // the painted building lot (BG11) when it's there: the shop goes up behind its front fence
+    const f = D.fitArt('bg11-lot', W, H, [0, 0.2, 1, 0.8], top, bottom, true);
+    let gy = top + room * 0.64, front = top + room * 0.98, sx = W / 2, w = Math.min(W * 0.8, room * 0.85);
+    if (f) {
+      D.paintArt(ctx, f, H);
+      gy = f.sy(0.6); front = Math.min(f.sy(0.8), bottom - 4); sx = f.sx(0.53); w = Math.min(f.sx(0.84) - f.sx(0.22), (gy - top) * 1.05);
+    } else D.siteScene(ctx, W, H, gy, now);
+    const hit = now - this.hitAt, shake = hit < 0.15 ? Math.sin(hit * 90) * w * 0.006 : 0;
+    if (this.stage || !f) D.shopFront(ctx, this.id, sx + shake, gy, w, this.stage, {ribbon: this.stage >= D.BUILD_STAGES && !this.cut, t: now});
+    this.site = {x: sx, y: gy - w * 0.1};
     // everyone stands on the sidewalk in front, below the door and the ribbon
     const ch = Math.min(room * 0.31, W * 0.5), bx = W * 0.17;
     const withHammer = !this.cut && image('c2-builder-hammer');
