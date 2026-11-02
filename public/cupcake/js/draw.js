@@ -1252,7 +1252,7 @@ function paintedStreet(ctx, W, H, f, o) {
 }
 
 // Cupcakes on the counter, with how many are left.
-export function shelfDisplay(ctx, shop, menu, shelf, t, H) {
+export function shelfDisplay(ctx, shop, menu, shelf, t, H, quality = []) {
   const w = shop.win, items = menu.map((d, i) => ({d, n: shelf[i] || 0, i})).filter(x => x.d);
   const slotW = (shop.shelfW || w.w) / Math.max(items.length, 1);
   if (shop.register) placeArt(ctx, image('u2-register'), shop.register.x, shop.register.y, shop.register.h);
@@ -1263,10 +1263,13 @@ export function shelfDisplay(ctx, shop, menu, shelf, t, H) {
     if (!n) text(ctx, 'sold out', cx, base - s * 0.4, s * 0.28, {color: C.pink, weight: 700, stroke: '#fff', sw: 3});
   });
   if (!shop.painted) { rr(ctx, w.x - 10, shop.counterY - 2, w.w + 20, H * 0.03, 6); paint(ctx, C.woodD, 2); }
-  items.forEach(({d, n}, k) => {
+  items.forEach(({d, n, i}, k) => {
     const cx = w.x + slotW * (k + 0.5);
     rr(ctx, cx - 30, shop.counterY + H * 0.035, 60, H * 0.032, 8); paint(ctx, '#fff', 1.5);
     text(ctx, `$${d.price}  ×${n}`, cx, shop.counterY + H * 0.051, H * 0.019, {weight: 700});
+    // the batch's baking stars just under its price tag
+    const st = quality?.[i];
+    for (let j = 0; j < (st || 0); j++) { starPath(ctx, cx + (j - (st - 1) / 2) * H * 0.02, shop.counterY + H * 0.078, H * 0.009); paint(ctx, '#ffd23d', 1.2); }
   });
 }
 

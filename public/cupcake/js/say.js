@@ -15,7 +15,7 @@ export const CAST = {
   pug: 'am_echo@1.2', poodle: 'bf_isabella@1.1', spot: 'am_adam@1.1',
 };
 const ARIANNA = ['firstDay', 'openShop', 'designDone', 'ding', 'closing', 'comingUp', 'hereYouGo', 'salonSays', 'toySays'];
-const CUSTOMER = ['woof', 'thanks', 'bo', 'client', 'shopper'];
+const CUSTOMER = ['woof', 'thanks', 'bo', 'client', 'shopper', 'favorite', 'bargain'];
 
 export const VENDOR = {corner: 'Corner Market', barn: 'Bulk Barn'};
 export const GREET = ['Hi Arianna!', 'Hello there!', 'Ooh, cupcakes!', 'Yum, it smells so good!', 'Hi! Hi Baxter!'];
@@ -66,6 +66,8 @@ export const S = {
   notQuite: "Hmm, not quite. Let's count together!",
   countIt: n => `Let's count together. It's ${n}! Press OK.`,
   thanks: 'Thank you!',
+  favorite: "Ooh, that's my favorite!",
+  bargain: 'What a bargain!',
   tapHouse: 'Tap that house on Main Street. Our shop is 0.',
   tapCorner: 'Tap that corner. Go over first, then up.',
   yesHouse: n => `Yes! House ${n}!`,
@@ -81,6 +83,7 @@ export const S = {
   bigProfit: 'You made lots of money today!',
   noProfit: "No profit today. Let's try again tomorrow!",
   goalMet: 'And you beat your goal!',
+  newRecord: 'New record! Your best day ever!',
   newIngredient: id => `New ingredient! ${INGREDIENTS[id].name}!`,
   keepSaving: 'Not enough money yet. Keep saving!',
   bought: name => `${name}!`,
