@@ -301,3 +301,19 @@ button { font-family: inherit; color: inherit; touch-action: manipulation; }
 .stepper button.off { background: #ece6e1; color: rgba(91, 58, 41, .4); border-color: rgba(91, 58, 41, .35); box-shadow: none; }
 .stepper .why { position: absolute; right: 0; bottom: -17px; font-size: 11px; font-weight: 700; white-space: nowrap; opacity: .75; }
 .fundspot:not(:empty) { margin-top: 10px; }
+
+/* selling: the day's goal along the top */
+.goalbar { position: absolute; left: 8px; right: 8px; top: calc(env(safe-area-inset-top, 0px) + 54px); display: flex; align-items: center; gap: 6px; pointer-events: none; z-index: 6; }
+.goalbar .track { position: relative; flex: 1; height: 24px; border: 2.5px solid var(--ink); border-radius: 99px; background: rgba(255, 255, 255, .92); overflow: hidden; }
+.goalbar .track i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--pink), #ff9fc4); transition: width .6s; }
+.goalbar .track span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+.goalbar .star { font-size: 22px; filter: grayscale(1) opacity(.5); transition: filter .4s, transform .4s; }
+.goalbar.met .star { filter: none; transform: scale(1.25); }
+.goalbar.met .track i { background: linear-gradient(90deg, #ffd23d, #ffe08a); }
+.goalbar .left { background: rgba(255, 248, 238, .95); border: 2.5px solid var(--ink); border-radius: 99px; padding: 1px 8px; font-size: 13px; font-weight: 700; }
+.ticket .tstars { margin-top: 4px; font-size: 14px; }
+.ticket .tnote { margin-top: 4px; font-size: 13px; color: #b85c00; }
+.news { margin: 8px 0; background: #e2f7ec; border: 2.5px solid var(--ink); border-radius: 14px; padding: 6px 8px; font-weight: 600; font-size: 15px; }
+.fans { font-size: 13px; font-weight: 600; color: #c2457a; }
+.sticker .favs { display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 2px; }
+.sticker .favs img { width: 26px; height: 26px; }

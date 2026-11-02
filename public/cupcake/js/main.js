@@ -117,6 +117,17 @@ function cashPoint() {
   return {x: r.left - a.left + r.width / 2, y: r.top - a.top + r.height / 2};
 }
 
+// ---------- cheers ----------
+// A banner across the middle for a little win; several in a row take turns instead of piling up.
+let cheerQ = Promise.resolve();
+function cheer(text, sound = sfx.yes) {
+  cheerQ = cheerQ.then(() => new Promise(done => {
+    const el = h('div', {class: 'banner goal'}, text);
+    ui.append(el); sound();
+    setTimeout(() => { el.remove(); done(); }, 1400);
+  }));
+}
+
 // ---------- particles ----------
 const parts = [];
 function confettiBurst(x, y, n = 40) {
@@ -173,10 +184,19 @@ function arianna(pose, x, y, hgt, opts = {}) {
   if (!SEATED.includes(pose)) shadow(ctx, x, y, poseWidth('arianna', pose, hgt) * 0.8);
   if (!drawPose(ctx, 'arianna', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'arianna', x, y, hgt, {t: now, walking: pose === 'walk', ...opts});
 }
+// Tap Baxter anywhere and he hops with a little heart. baxterSpot is where he was drawn this frame.
+let baxterSpot = null, petAt = -9;
 function baxter(pose, x, y, hgt, opts = {}) {
-  if (!SEATED.includes(pose)) shadow(ctx, x, y, poseWidth('baxter', pose, hgt));
-  if (!drawPose(ctx, 'baxter', pose, x, y, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y, hgt * 1.3, {t: now, ...opts});
+  const seated = SEATED.includes(pose), k = now - petAt, pet = k < 0.7 && !seated;
+  if (!seated) shadow(ctx, x, y, poseWidth('baxter', pose, hgt));
+  if (pet && pose === 'sleep') pose = 'tilt';
+  const hop = pet ? Math.abs(Math.sin(k * 9)) * hgt * 0.18 : 0;
+  if (!drawPose(ctx, 'baxter', pose, x, y - hop, hgt, {t: now, ...opts})) D.person(ctx, 'baxter', x, y - hop, hgt * 1.3, {t: now, ...opts});
+  if (seated) return;
+  baxterSpot = {x, y, w: Math.max(poseWidth('baxter', pose, hgt), hgt * 0.6), h: hgt};
+  if (k < 1.2) D.emote(ctx, 'heart', x + hgt * 0.3, y - hgt * 1.05, hgt * 0.4, k);
 }
+function petBaxter() { petAt = now; sfx.bark(); }
 const ART_SCALE = {girl: 0.8, boy: 0.8, builder: 0.88, bunny: 0.86, cat: 0.9, duck: 0.82, bear: 1.1, pug: 0.82, poodle: 0.9, spot: 0.9};   // kids and little animals stand a bit shorter, the bear taller
 // Draw a feelings bubble for someone; it pops in again whenever the feeling changes.
 function feeling(who, kind, x, y, size) {
@@ -328,6 +348,17 @@ function confirmNew() {
     }, 'pink')));
 }
 
+// What yesterday's upgrade does, for the morning card.
+function upgradeNews(key) {
+  return {
+    oven: `🔥 Your bigger oven bakes up to ${L.ovenCap(save)} cupcakes!`,
+    pantry: `🧊 Your bigger fridge holds ${L.pantryCap(save)} of each ingredient!`,
+    sign: `🪧 Your new sign brings ${L.upgradeValue(save, 'sign')} more people by each day!`,
+    menu: `📋 Your bigger menu board fits ${L.menuSlots(save)} kinds of cupcakes! Design a new one in the kitchen.`,
+    van: '🚐 Your zoomier van drives faster, for bigger tips!',
+  }[key];
+}
+
 const DayStart = {
   enter() {
     newDay();
@@ -335,12 +366,15 @@ const DayStart = {
     hud(true);
     const lines = S.event;
     const first = save.day === 1, built = shopsOn() ? save.shops.built : [];
+    const news = save.news || [];
+    if (news.length) { delete save.news; persist(); }
     mount(h('div', {class: 'back', style: 'align-items:start;padding-top:calc(env(safe-area-inset-top,0px) + 70px)'}, h('div', {class: 'card daycard'},
       h('div', {class: 'muted'}, save.day > L.SEASON_DAYS ? 'Free play' : `Day ${save.day} of ${L.SEASON_DAYS}`),
       h('div', {class: 'num'}, `Day ${save.day}`),
       save.day <= L.SEASON_DAYS ? h('div', {class: 'season', 'aria-label': `Day ${save.day} of ${L.SEASON_DAYS}`},
         h('i', {style: `width:${Math.round(100 * save.day / L.SEASON_DAYS)}%`}), image('u3-trophy-gold') ? h('img', {src: `${BASE}art/u3-trophy-gold.webp`, alt: ''}) : null) : null,
       day.event ? h('div', {class: 'event'}, lines[day.event]) : null,
+      ...news.map(k => h('div', {class: 'news'}, upgradeNews(k))),
       first ? h('p', null, 'Buy cake, frosting and toppings at the market. Then bake, sell, and deliver around town with Baxter!') : null,
       built.length ? this.picker(built) : h('div', {class: 'actions'}, btn('Go to the market →', () => go(Market), 'pink big')))));
     // a shop with customers waiting gets a mention, to help her choose
@@ -513,7 +547,7 @@ const Kitchen = {
       // when no more fit, the + greys out and says why
       const full = L.maxMore(save, day.counts, i) < 1, why = full ? (L.ovenCap(save) <= day.counts.reduce((a, b) => a + b, 0) ? 'Oven full' : 'Out of ingredients') : null;
       slots.append(h('div', {class: 'slot' + (day.counts[i] ? ' chosen' : '')}, c,
-        h('div', null, h('div', {class: 'name'}, d.name), h('div', {class: 'meta'}, `Sells for $${d.price} · costs $${L.designCost(d)} to make`), h('button', {class: 'edit', onclick: () => { sfx.tap(); openDesigner(i); }}, 'Change it')),
+        h('div', null, h('div', {class: 'name'}, d.name), h('div', {class: 'meta'}, `Sells for $${d.price} · costs $${L.designCost(d)} to make`), fans(d), h('button', {class: 'edit', onclick: () => { sfx.tap(); openDesigner(i); }}, 'Change it')),
         h('div', {class: 'stepper'}, h('button', {onclick: step(-1), 'aria-label': 'Less', class: day.counts[i] ? '' : 'off'}, '−'), h('b', null, day.counts[i] || 0), h('button', {onclick: step(1), 'aria-label': 'More', class: full ? 'off' : ''}, '+'),
           why ? h('small', {class: 'why'}, why) : null)));
     });
@@ -538,8 +572,16 @@ const Kitchen = {
   },
 };
 
+// How many customers have something they love on this cupcake.
+function fans(d) {
+  const n = Object.values(L.CUSTOMERS).filter(c => L.parts(d).some(id => c.likes.includes(id))).length;
+  return n ? h('div', {class: 'fans'}, `💗 A favorite of ${n} customer${n === 1 ? '' : 's'}`) : null;
+}
+
 // ---------- the baking mini-game: pour, bake, frost, top ----------
 // One round for each kind of cupcake in the oven. Each step scores 0-2; the stars change what customers pay.
+const favImages = {};
+const favImage = id => favImages[id] || Object.assign(favImages[id] = new Image(), {src: D.ingredientIcon(id, L.INGREDIENTS[id].kind)});
 const dropImages = {};
 const dropImage = id => dropImages[id] || Object.assign(dropImages[id] = new Image(), {src: D.ingredientIcon(id, 'topping')});
 const STEPS = [['pour', 'Pour'], ['bake', 'Bake'], ['frost', 'Frost'], ['toppings', 'Top']];
@@ -826,10 +868,11 @@ function openDesigner(slot) {
       h('div', {class: 'label'}, 'Frosting'), pickRow('frosting'),
       h('div', {class: 'label'}, 'Toppings (up to 2)'), pickRow('topping', true),
       h('div', {class: 'label'}, 'Name'),
-      h('div', {class: 'namebox'}, ...L.NAME_WORDS.map((list, k) => h('button', {class: 'word', onclick: () => {
+      h('div', {class: 'namebox'}, ...L.NAME_WORDS.map((list, k) => h('button', {class: 'word', onclick: e => {
         words[k] = list[(list.indexOf(words[k]) + 1) % list.length];
         d.name = L.NAME_WORDS.map((l, j) => words[j] || l[0]).join(' '); input.value = d.name; sfx.pop();
-      }}, ['🎀', '🐶', '✨'][k] + ' ' + ['Word 1', 'Word 2', 'Word 3'][k])), input),
+        e.currentTarget.textContent = `🎲 ${words[k]}`;
+      }}, `🎲 ${words[k] || list[0]}`)), input),
       h('div', {class: 'label'}, 'Price'),
       h('div', {class: 'price'}, h('div', {class: 'stepper'}, h('button', {onclick: () => { if (d.price > 1) { d.price--; sfx.pop(); render(); } }}, '−')), h('b', null, `$${d.price}`), h('div', {class: 'stepper'}, h('button', {onclick: () => { if (d.price < 20) { d.price++; sfx.pop(); render(); } }}, '+'))),
       h('div', {class: 'hint' + (keep < 0 ? ' bad' : '')}, keep > 0 ? `It costs $${c} to make. Sell it for $${d.price} and you keep $${keep} each.` : keep === 0 ? `It costs $${c} to make, so at $${d.price} you keep nothing.` : `Uh oh! It costs $${c} to make. At $${d.price} you lose $${-keep} each.`),
@@ -857,11 +900,20 @@ const Street = {
     hud(true);
     this.walker = null; this.wait = back ? 0.8 : 1.0; this.closing = 0;
     this.panel = h('div', {class: 'panel'});
-    mount(this.panel);
+    this.bar = h('div', {class: 'goalbar'});
+    mount(this.panel, this.bar);
     this.idle();
     if (!back) coach('street');
   },
+  // the day's goal along the top: cupcakes sold, the goal star, and how many are left on the shelf
+  showBar() {
+    const left = day.shelf.reduce((a, b) => a + b, 0), k = Math.min(1, day.soldCount / Math.max(1, day.goal));
+    this.bar.classList.toggle('met', day.soldCount >= day.goal);
+    this.bar.replaceChildren(h('div', {class: 'track'}, h('i', {style: `width:${Math.round(k * 100)}%`}), h('span', null, `Sold ${day.soldCount} of ${day.goal}`)),
+      h('b', {class: 'star'}, '⭐'), h('div', {class: 'left'}, `🧁 ${left} left`));
+  },
   idle() {
+    this.showBar();
     const left = day.shelf.reduce((a, b) => a + b, 0);
     this.panel.replaceChildren(h('div', {class: 'status'}, h('div', {class: 'grow'}, left ? 'Waiting for customers…' : 'All sold out!'), h('div', null, `Sold ${day.soldCount} · goal ${day.goal} ${day.soldCount >= day.goal ? '⭐' : ''}`)));
   },
@@ -926,8 +978,11 @@ const Street = {
     day.order = order;
     const address = L.makeAddress(day.r, save.day, settings.bigKid);
     const greet = [L.CUSTOMERS[w.type].kind === 'dog' ? S.woof : null, GREET[Math.floor(day.r() * GREET.length)]].filter(Boolean);
-    const line1 = `${greet.join(' ')} I’d like the ${d.name}.`;
-    const spoken = [...greet, ...order.say];
+    // something on this cupcake is one of their favorites
+    const fav = L.parts(d).find(id => L.CUSTOMERS[w.type].likes.includes(id));
+    if (fav) { w.fav = fav; w.favAt = now; sfx.pop(); }
+    const line1 = `${greet.join(' ')} I’d like the ${d.name}.${fav ? ` Ooh, ${L.INGREDIENTS[fav].name.toLowerCase()} is my favorite! 💗` : ''}`;
+    const spoken = [...greet, fav ? S.favorite : null, ...order.say].filter(Boolean);
     let typed = '', misses = 0;
     const hintBox = h('div');
     this.bubble?.remove();
@@ -946,7 +1001,7 @@ const Street = {
     };
     const submit = () => {
       if (!typed) { sfx.gentle(); return; }
-      if (+typed === order.answer) return this.sold(w, slot, order, address);
+      if (+typed === order.answer) { day.streak = misses ? 0 : (day.streak || 0) + 1; return this.sold(w, slot, order, address); }
       misses++;
       sfx.gentle(); w.face = 'hmm'; this.oopsAt = now;
       hintBox.replaceChildren(hintDots(order, misses >= 2));
@@ -969,34 +1024,40 @@ const Street = {
   },
   sold(w, slot, order, address) {
     removeEventListener('keydown', this.keyHandler);
-    const d = save.menu[slot], total = order.answer * d.price;
+    const d = save.menu[slot], total = order.answer * d.price, first = !day.soldCount;
     day.shelf[slot] -= order.answer;
     day.sold[slot] = (day.sold[slot] || 0) + order.answer;
     day.soldCount += order.answer;
+    // little wins along the way, each with its own banner
+    if (first) cheer('🎉 First sale of the day!', sfx.pop);
     if (!day.goalHit && day.soldCount >= day.goal) {
-      // the day's goal, reached mid-day: a cheer right away
       day.goalHit = true;
-      const cheer = h('div', {class: 'banner goal'}, '⭐ Goal reached! ⭐');
-      ui.append(cheer); sfx.unlock(); confettiBurst(W / 2, H * 0.3, 40);
-      setTimeout(() => cheer.remove(), 1600);
-    }
+      cheer('⭐ Goal reached! ⭐', sfx.unlock); confettiBurst(W / 2, H * 0.3, 40);
+    } else if (!first && !day.halfHit && day.soldCount * 2 >= day.goal) { day.halfHit = true; cheer('Halfway to your goal!', sfx.pop); }
+    if (day.streak === 3) { cheer('🔥 3 in a row!'); petAt = now; }
+    if (day.streak === 5) { cheer('🔥 5 in a row! Bonus coin! 🪙', sfx.chaChing); day.tips += 1; save.cash += 1; petAt = now; }
     day.sales += total; save.cash += total;
-    if (L.willingToPay(w.type, d, save.day, w.mood, day.quality?.[slot]) - d.price >= 3) day.cheap[slot] = (day.cheap[slot] || 0) + 1;
+    const bargain = L.willingToPay(w.type, d, save.day, w.mood, day.quality?.[slot]) - d.price >= 3;
+    if (bargain) day.cheap[slot] = (day.cheap[slot] || 0) + 1;
+    const stars = day.quality?.[slot];
     const newSticker = !save.stickers[w.type];
     save.stickers[w.type] = (save.stickers[w.type] || 0) + 1;
     w.face = 'wow';
     sfx.chaChing(); cashChanged(); speak(S.comingUp);
+    this.showBar();
     const g = this.geom();
     coinsTo(g.spot, g.feet - g.ch * 0.6, Math.min(12, order.answer * 2));
     this.servedAt = now;
-    const ticket = h('div', {class: 'ticket'}, 'Order ticket', h('br'), h('b', null, `${order.answer} × ${d.name}`), h('br'), `${order.answer} × $${d.price} = $${total}`, newSticker ? h('div', {style: 'margin-top:6px;color:#f27aa9'}, '⭐ New sticker!') : null);
+    const ticket = h('div', {class: 'ticket'}, 'Order ticket', h('br'), h('b', null, `${order.answer} × ${d.name}`), h('br'), `${order.answer} × $${d.price} = $${total}`,
+      stars ? h('div', {class: 'tstars'}, `${'⭐'.repeat(stars)}${stars === 3 ? ' perfect batch!' : ''}`) : null,
+      bargain ? h('div', {class: 'tnote'}, '💡 What a bargain! They’d pay more.') : null, newSticker ? h('div', {style: 'margin-top:6px;color:#f27aa9'}, '⭐ New sticker!') : null);
     ui.append(ticket);
     const msg = `${S.thanks} ${L.addressText(address)}`;
     setTimeout(() => {
       ticket.remove();
       if (scene !== this) return;
       this.bubble.replaceChildren(h('div', {class: 'who'}, L.CUSTOMERS[w.type].name), h('div', {class: 'say'}, h('div', null, h('b', null, msg)), speakerButton(() => [S.thanks, ...L.addressSpoken(address)], w.type)));
-      speak([S.thanks, ...L.addressSpoken(address)], {customer: w.type});
+      speak([bargain ? S.bargain : null, S.thanks, ...L.addressSpoken(address)].filter(Boolean), {customer: w.type});
       this.panel.className = 'panel';
       this.panel.replaceChildren(btn(address.mode === 'line' ? 'Find the house →' : 'Find it on the map →', () => go(Find, {w, slot, order, address}), 'pink big wide'));
     }, 1700);
@@ -1012,7 +1073,7 @@ const Street = {
       drawPose(ctx, 'arianna', 'serve', shop.win.x + shop.win.w * 0.68, shop.counterY + shop.win.h * 0.06, shop.win.h * 1.02, {t: now});
     } else arianna(now - (this.oopsAt ?? -9) < 2.5 ? 'oops' : this.walker?.state === 'order' ? 'think' : this.closing ? 'cheer' : 'stand', shop.win.x + shop.win.w * 0.72, shop.win.y + shop.win.h * 1.35, shop.win.h * 1.45);
     ctx.restore();
-    D.shelfDisplay(ctx, shop, save.menu, day.shelf, now, H);
+    D.shelfDisplay(ctx, shop, save.menu, day.shelf, now, H, day.quality);
     if (day.event === 'birthday' && !shop.painted) for (let i = 0; i < 7; i++) { ctx.fillStyle = ['#ffd23d', '#9fe3c0', '#c3a6ec', '#ff9fc4'][i % 4]; ctx.beginPath(); const bx = W * 0.08 + i * W * 0.12; ctx.moveTo(bx, H * 0.27); ctx.lineTo(bx + W * 0.1, H * 0.27); ctx.lineTo(bx + W * 0.05, H * 0.3); ctx.fill(); }
     D.vanSide(ctx, W * 0.02, g.road, Math.min(W * 0.5, H * 0.3), save.paint, {t: now, name: D.streetArt(W, H) ? '' : SHOP_NAME});
     baxter(this.walker?.state === 'order' ? 'excited' : day.event === 'birthday' ? 'party' : 'sit', W * 0.88, g.feet - H * 0.005, Math.min(H * 0.11, W * 0.24));
@@ -1020,7 +1081,10 @@ const Street = {
     if (w) {
       drawCustomer(ctx, w.type, w.x, g.feet, g.ch, {t: now + w.t, walking: w.state === 'in' || w.state === 'out', face: w.face, dir: -1});
       // a feelings bubble: a heart when served, a question mark for a wrong count, a sweat drop at a high price
-      feeling(w, w.face === 'wow' ? 'heart' : w.face === 'hmm' ? (now - (this.oopsAt ?? -9) < 2.5 ? 'question' : 'sweat') : null, w.x + g.ch * 0.2, g.feet - g.ch * (ART_SCALE[w.type] || 1) * 0.98, g.ch * 0.26);
+      const top = g.feet - g.ch * (ART_SCALE[w.type] || 1) * 0.98, favNow = w.fav && w.state === 'order' && now - w.favAt < 3.5;
+      feeling(w, w.face === 'wow' || favNow ? 'heart' : w.face === 'hmm' ? (now - (this.oopsAt ?? -9) < 2.5 ? 'question' : 'sweat') : null, w.x + g.ch * 0.2, top, g.ch * 0.26);
+      // their favorite ingredient floats up beside the heart
+      if (favNow) { const img = favImage(w.fav), k = Math.min(1, (now - w.favAt) / 0.3), s = g.ch * 0.22 * k; if (img.complete) ctx.drawImage(img, w.x - g.ch * 0.25 - s / 2, top - g.ch * 0.2 - s / 2 - Math.sin(now * 3) * 3, s, s); }
     }
     // the light warms towards sunset as the day's customers go by
     const late = Math.min(1, (day.next + (this.closing ? 2 : 0)) / Math.max(1, day.passers.length));
@@ -1345,6 +1409,7 @@ const Results = {
   enter() {
     hud(true);
     const leftovers = day.shelf.reduce((a, b) => a + b, 0);
+    const best = save.history.length ? Math.max(...save.history.map(e => e.profit)) : null;
     const sold = save.menu.map((d, i) => d && {name: d.name, count: day.sold[i] || 0, design: d}).filter(Boolean);
     const {entry, unlocked} = L.endDay(save, {sales: day.sales, tips: day.tips, spent: day.spent, sold: sold.map(s => ({name: s.name, count: s.count})), leftovers, goal: day.goal, soldCount: day.soldCount, cheap: Object.keys(day.cheap).filter(i => day.cheap[i] >= 2).map(i => save.menu[i]?.name)});
     SH.afterCupcakeDay(save);
@@ -1352,6 +1417,8 @@ const Results = {
     this.entry = entry;
     const bars = h('canvas'), line = h('canvas');
     const notes = [];
+    const record = best != null && entry.profit > best && entry.profit > 0;
+    if (record) notes.push('🏆 New record! Your best day ever!');
     if (entry.goalMet) notes.push(`⭐ You beat today’s goal of ${entry.goal}!`); else notes.push(`Goal was ${entry.goal}. So close! Try again tomorrow.`);
     if (leftovers) notes.push(`${leftovers} leftover cupcake${leftovers > 1 ? 's' : ''} went to the neighbors.`);
     for (const [i, n] of Object.entries(day.cheap)) if (n >= 2) notes.push(`💡 ${n} customers would have happily paid more for ${save.menu[i].name}.`);
@@ -1376,7 +1443,8 @@ const Results = {
     );
     mount(h('div', {class: 'back', style: 'background:transparent;align-items:start;padding-top:calc(env(safe-area-inset-top,0px) + 56px)'}, card));
     requestAnimationFrame(() => { drawBars(bars, sold); if (save.history.length >= 3) drawLine(line, save.history); });
-    speak([S.dayDone(entry.day), entry.profit > 200 ? S.bigProfit : entry.profit > 0 ? S.profit(entry.profit) : S.noProfit, entry.goalMet ? S.goalMet : null]);
+    speak([S.dayDone(entry.day), entry.profit > 200 ? S.bigProfit : entry.profit > 0 ? S.profit(entry.profit) : S.noProfit, record ? S.newRecord : null, entry.goalMet ? S.goalMet : null]);
+    if (record) setTimeout(() => { cheer('🏆 New record! 🏆', sfx.unlock); confettiBurst(W / 2, H * 0.25, 60); }, 600);
     if (entry.goalMet) confettiBurst(W / 2, H * 0.3, 50);
     if (unlocked.length) setTimeout(() => showUnlock(unlocked), 900);
   },
@@ -1477,7 +1545,7 @@ const Upgrades = {
       const cost = L.upgradeCost(save, key), lvl = save.upg[key];
       list.append(h('div', {class: 'up'},
         h('div', null, h('div', {class: 'name'}, u.name), h('div', {class: 'muted'}, u.what), h('div', {class: 'lv'}, ...u.levels.map((_, i) => h('i', {class: i <= lvl ? 'on' : ''})))),
-        cost == null ? h('b', null, 'Max!') : btn(`$${cost}`, () => this.buy(() => L.buyUpgrade(save, key), u.name), save.cash >= cost ? 'pink small' : 'ghost small')));
+        cost == null ? h('b', null, 'Max!') : btn(`$${cost}`, () => this.buy(() => L.buyUpgrade(save, key), u.name, key), save.cash >= cost ? 'pink small' : 'ghost small')));
     }
     list.append(h('div', {class: 'section'}, 'Shop decorations'));
     list.append(h('div', {class: 'swatches'}, ...Object.entries(L.DECOR).map(([id, d]) => h('button', {class: 'swatch' + (save.deco.includes(id) ? ' on' : ''), onclick: () => { if (!save.deco.includes(id)) this.buy(() => L.buyDecor(save, id), d.name); }},
@@ -1490,10 +1558,13 @@ const Upgrades = {
   },
   // the building fund jar, saving for the next new shop
   fund() { const card = fundCard(() => this.render()); return card ? [h('div', {class: 'section'}, 'Building fund'), card] : []; },
-  buy(fn, name) {
+  buy(fn, name, upgrade = null) {
     const res = fn();
     if (res === 'broke') { sfx.gentle(); toast(S.keepSaving); speak(S.keepSaving); return; }
-    if (res === 'ok') { sfx.unlock(); cashChanged(); confettiBurst(W / 2, H * 0.25, 24); speak(S.bought(name)); persist(); }
+    if (res === 'ok') {
+      if (upgrade) save.news = [...new Set([...(save.news || []), upgrade])];   // shown on tomorrow's morning card
+      sfx.unlock(); cashChanged(); confettiBurst(W / 2, H * 0.25, 24); speak(S.bought(name)); persist();
+    }
     this.render();
   },
   draw() {
@@ -2012,9 +2083,11 @@ function openStickers() {
   const have = save?.stickers || {};
   for (const [type, c] of Object.entries(L.CUSTOMERS)) {
     const cnv = portrait(type, 'stand', 150, have[type] ? 'wow' : null); // collected stickers show them delighted
-    grid.append(h('div', {class: 'sticker' + (have[type] ? '' : ' locked')}, cnv, have[type] ? c.name : '???'));
+    // once she's met them, their favorite ingredients show under their name
+    const favs = have[type] ? h('div', {class: 'favs'}, '💗', ...c.likes.map(id => h('img', {src: D.ingredientIcon(id, L.INGREDIENTS[id].kind, 48), alt: L.INGREDIENTS[id].name, title: L.INGREDIENTS[id].name}))) : null;
+    grid.append(h('div', {class: 'sticker' + (have[type] ? '' : ' locked')}, cnv, have[type] ? c.name : '???', favs));
   }
-  const close = modal(h('h2', null, 'Sticker book'), h('p', {class: 'center muted'}, `Serve a customer to get their sticker. ${Object.keys(have).length} of ${Object.keys(L.CUSTOMERS).length}`), grid, h('div', {class: 'actions'}, btn('Close', () => close(), 'pink')));
+  const close = modal(h('h2', null, 'Sticker book'), h('p', {class: 'center muted'}, `Serve a customer to get their sticker and learn their favorites! ${Object.keys(have).length} of ${Object.keys(L.CUSTOMERS).length}`), grid, h('div', {class: 'actions'}, btn('Close', () => close(), 'pink')));
 }
 function openMenu() {
   const close = modal(h('h2', null, 'Paused'),
@@ -2032,9 +2105,10 @@ function resize() {
 }
 addEventListener('resize', resize);
 cv.addEventListener('pointerdown', e => {
-  const r = cv.getBoundingClientRect();
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, b = baxterSpot;
   unlock();
-  scene?.tap?.(e.clientX - r.left, e.clientY - r.top);
+  if (b && Math.abs(x - b.x) < b.w / 2 && y < b.y && y > b.y - b.h) { petBaxter(); return; }
+  scene?.tap?.(x, y);
   scene?.press?.();
 });
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) cv.addEventListener(ev, () => scene?.release?.());
@@ -2050,6 +2124,7 @@ function frame(ts) {
     if (!document.querySelector('.back:not(#ui .back), .designer')) scene?.update?.(dt);
     updateParts(dt);
     ctx.clearRect(0, 0, W, H);
+    baxterSpot = null;
     scene?.draw?.();
     if (fadeFrom) {
       const k = (now - fadeFrom.t) / 0.3;
